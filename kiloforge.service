@@ -1,0 +1,44 @@
+[Unit]
+Description=Kiloforge Bluesky Follower Engine
+Documentation=file:///opt/kiloforge/DEPLOY.md
+# Wait for the network to be reachable; Bluesky and Groq are remote APIs.
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=kiloforge
+Group=kiloforge
+WorkingDirectory=/opt/kiloforge
+
+# Secrets come from a root-owned, mode-600 file. Never bake them into the
+# unit, never pass them on the command line (they would leak into ps and the
+# journal).
+EnvironmentFile=/etc/kiloforge/kiloforge.env
+
+# The venv is colocated with the code. Adjust if you install elsewhere.
+ExecStart=/opt/kiloforge/venv/bin/python /opt/kiloforge/run.py
+
+# Crash recovery: restart on any non-clean exit, but back off so a hard
+# loop (e.g., bad credentials) does not spin and spam the journal.
+Restart=always
+RestartSec=10s
+StartLimitBurst=5
+StartLimitIntervalSec=300
+
+# All output (logger -> stderr, plus anything stray) goes to journald.
+# Read it with: journalctl -u kiloforge -f
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=kiloforge
+
+# Light hardening. The process needs to write state files in WorkingDirectory
+# and read its env file; deny everything else.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/kiloforge
+
+[Install]
+WantedBy=multi-user.target

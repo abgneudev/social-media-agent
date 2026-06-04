@@ -1,0 +1,5 @@
+# Kiloforge runtime dependencies. Pinned to the versions tested locally;
+# bump deliberately, not opportunistically.
+atproto>=0.0.46
+groq>=0.11.0
+PyYAML>=6.0

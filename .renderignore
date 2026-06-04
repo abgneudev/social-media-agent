@@ -1,0 +1,40 @@
+# Render does NOT need any of this. Excluding it from the build context
+# keeps deploys faster and prevents accidental leakage of local state or
+# unrelated experiments into the worker filesystem.
+
+# Unrelated experimental agent.
+newagent/
+
+# Local dev state files. The Render deploy generates its own under
+# KF_STATE_DIR on the mounted disk.
+bandit_state.json
+action_ledger.json
+account_snapshots.json
+seen_targets.json
+engine_state.json
+circuit_breaker.json
+pending_writes.json
+status.json
+engine_status.txt
+
+# Old leftovers from earlier iterations, not used by current code.
+agent_memory.json
+agent_run.log
+strike_ledger.json
+
+# Build/cache artifacts.
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Virtualenvs and editor files.
+venv/
+.venv/
+env/
+.vscode/
+.idea/
+.claude/
+
+# Secrets must come from Render dashboard, never the repo.
+kiloforge.env
+.env

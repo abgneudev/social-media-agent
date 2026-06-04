@@ -1,0 +1,46 @@
+# Render Blueprint for Kiloforge.
+#
+# Deploys the agent as a long-lived background worker with a persistent disk
+# for runtime state. Render restarts a crashed worker automatically, which
+# fills the same role as Restart=always in the systemd unit.
+#
+# Secrets are declared here by name only (sync: false). Set their values in
+# the Render dashboard after the first deploy; nothing sensitive is committed.
+
+services:
+  - type: worker
+    name: kiloforge
+    runtime: python
+    # The default plan is fine for a single agent; bump if you run multiple
+    # accounts off the same blueprint.
+    plan: starter
+    autoDeploy: true
+    buildCommand: pip install -r requirements.txt
+    startCommand: python run.py
+
+    # Persistent disk. Anything written outside the disk is wiped on every
+    # deploy. KF_STATE_DIR (set below) routes every state file the agent
+    # writes onto this mount.
+    disk:
+      name: kiloforge-state
+      mountPath: /var/lib/kiloforge
+      sizeGB: 1
+
+    envVars:
+      # Tell the agent where to write state. Must match the disk mountPath
+      # above. If you change one, change both.
+      - key: KF_STATE_DIR
+        value: /var/lib/kiloforge
+
+      # Optional: override log level. Default INFO.
+      - key: KILOFORGE_LOG_LEVEL
+        value: INFO
+
+      # Secrets. Set values in the Render dashboard, never in this file.
+      # sync: false means "do not auto-sync from blueprint", i.e. dashboard wins.
+      - key: BLUESKY_HANDLE
+        sync: false
+      - key: BLUESKY_PASSWORD
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false

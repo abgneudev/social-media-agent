@@ -1,0 +1,45 @@
+# Secrets. NEVER commit the populated env file.
+kiloforge.env
+.env
+*.env
+!*.env.example
+
+# Local runtime state written by the engine. Crash-safe state belongs on the
+# host where the daemon runs, not in version control.
+bandit_state.json
+action_ledger.json
+account_snapshots.json
+seen_targets.json
+engine_state.json
+circuit_breaker.json
+pending_writes.json
+status.json
+engine_status.txt
+agent_run.log
+agent_memory.json
+strike_ledger.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Editor/IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Claude Code working files (assistant session state, not part of the deploy).
+.claude/
+
+# Unrelated experimental agent kept in the same repo for reference. Never
+# part of the Kiloforge deploy. .renderignore enforces the same on Render
+# even if this folder is ever committed by accident.
+newagent/
