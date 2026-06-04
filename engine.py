@@ -39,6 +39,7 @@ import analyzer
 import klipy
 import serper
 import web_research
+import utils
 
 
 # ==========================================
@@ -131,7 +132,9 @@ class FollowerEngine:
     def __init__(self, handle, password):
         self.store = Store()
         self.net = BlueskyAdapter(handle, password)
-        self.ai = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+
+        import llm
+        self.llm = llm.LLMClient(PERSONA)
         self.breaker = CircuitBreaker()
         self.rate = {k: RateBudget(v["capacity"], v["refill_per_sec"])
                      for k, v in RATE_BUDGETS.items()}
@@ -708,7 +711,7 @@ class FollowerEngine:
                 try:
                     import memory
                     for p in posts:
-                        eng = float(get_total_engagement(p))
+                        eng = float(utils.get_total_engagement(p))
                         if eng > 50:  # threshold for "high engagement"
                             text = getattr(p.record, "text", "")
                             if text:
@@ -834,7 +837,7 @@ class FollowerEngine:
             for p in posts:
                 author = getattr(p, "author", None)
                 if author:
-                    eng = get_total_engagement(p)
+                    eng = utils.get_total_engagement(p)
                     if eng > 2: # Filter for mild engagement to find credible accounts
                         authors.append((eng, author))
                         
@@ -886,7 +889,7 @@ class FollowerEngine:
             for item in getattr(feed, "feed", []):
                 p = getattr(item, "post", None)
                 if not p: continue
-                eng = get_total_engagement(p)
+                eng = utils.get_total_engagement(p)
                 if eng > max_eng:
                     max_eng = eng
                     best_post = p
@@ -1133,14 +1136,14 @@ class FollowerEngine:
                 continue
             
             # High-Volume Filter: Only operate in areas with existing traction
-            eng = get_total_engagement(c)
+            eng = utils.get_total_engagement(c)
             if eng < 3:
                 continue
                 
             cands.append(c)
             
         import heapq
-        cands = heapq.nlargest(10, cands, key=get_total_engagement)
+        cands = heapq.nlargest(10, cands, key=utils.get_total_engagement)
         return cands, keyword
 
     def _is_relevant_content(self, post) -> bool:
@@ -1175,7 +1178,7 @@ class FollowerEngine:
             uri, cid = getattr(c, "uri", None), getattr(c, "cid", None)
             if not uri or not cid or self.store.already_acted_on(f"quote:{uri}"):
                 continue
-            eng = get_total_engagement(c)
+            eng = utils.get_total_engagement(c)
             if eng > best_eng:
                 best_eng, best = eng, c
         if not best:
