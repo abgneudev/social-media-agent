@@ -132,7 +132,7 @@ MAX_LIKES_PER_TICK = 4               # stay human, avoid bot-like like-spray
 CIRCUIT_BREAKER_THRESHOLD = 3
 CIRCUIT_BREAKER_COOLDOWN = 20 * 60
 PENDING_GRACE_SECONDS = 60 * 60      # after this, give up on an unresolved intent
-STALL_THRESHOLD = 8                  # consecutive active-but-empty ticks before tripping breaker
+STALL_THRESHOLD = 200                  # consecutive active-but-empty ticks before tripping breaker
 
 ANCHOR_POST_TARGET = 3
 PROFILE_OPT_MIN_TRIALS = 5           # data-sufficiency trigger for bio rewrite
