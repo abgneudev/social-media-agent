@@ -513,7 +513,8 @@ class FollowerEngine:
 
         # 1. Seed anchor posts up front; keep posting in later phases.
         should_post = (self.store.anchor_posts < ANCHOR_POST_TARGET
-                       or phase_name in ("compound", "community", "scaling"))
+                       or phase_name in ("compound", "community", "scaling")
+                       or self.store.tick % 6 == 0)
         if should_post and self.rate["post"].try_consume():
             # _original_post samples its own distinct archetypes per variant;
             # the _decide-level post_hook is only used by _quote_best below.
