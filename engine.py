@@ -45,7 +45,7 @@ import klipy
 def wilson_lower_bound(successes, trials, z=1.96):
     if trials == 0:
         return 0.0
-    p = successes / trials
+    p = max(0.0, min(1.0, successes / trials))
     denom = 1 + z * z / trials
     center = p + z * z / (2 * trials)
     margin = z * math.sqrt((p * (1 - p) + z * z / (4 * trials)) / trials)
@@ -159,7 +159,7 @@ class FollowerEngine:
 
     # ---- crash-safe publishing ----
     def _publish_with_reconcile(self, kind, text, sector, hook, write_fn,
-                                 learnable=True, target_did=None, target_handle=None):
+                                 learnable=True, target_did=None, target_handle=None, keyword=None):
         """Crash-safe wrapper around a publishing write (post/reply/quote).
 
         Persists the intent BEFORE the network write. If the write raises but
@@ -178,7 +178,7 @@ class FollowerEngine:
         intent_id = uuid.uuid4().hex[:12]
         self.store.add_pending({
             "intent_id": intent_id, "kind": kind, "content_hash": ch,
-            "text": text, "sector": sector, "hook": hook,
+            "text": text, "sector": sector, "hook": hook, "keyword": keyword,
             "target_did": target_did, "target_handle": target_handle,
             "learnable": learnable, "ts": time.time(),
         })
@@ -218,6 +218,7 @@ class FollowerEngine:
                         target_handle=p.get("target_handle"),
                         text=p.get("text"),
                         learnable=p.get("learnable", True),
+                        keyword=p.get("keyword")
                     )
                 self.store.mark_seen(ch)
                 self.store.remove_pending(p["intent_id"])
@@ -281,6 +282,9 @@ class FollowerEngine:
 
         if t % 4 == 0:
             self._courtesy_follow_back()
+            
+        if t % 15 == 0:
+            self._run_evolution()
 
     def _run_analyzer(self):
         """One analyzer pass guarded by the same kill switch and breaker
@@ -411,28 +415,50 @@ class FollowerEngine:
         logger.info(f"[LEARN] scoring {len(due)} matured action(s)")
         for a in due:
             try:
+                eng = 0
                 if a["kind"] == "follow":
                     # Follow attribution stays binary: a follow-back either
                     # happened or it did not.
                     reward = 1.0 if self.net.followed_back_by(a["target_did"]) else 0.0
                     label = "FOLLOW-BACK" if reward >= 1.0 else "no follow-back"
                 else:
-                    # Content actions earn fractional reward: a post with 1
-                    # like is not the same as a post with 6. min/cap keeps
-                    # one viral post from drowning the others.
-                    eng = self.net.post_engagement(a["uri"])
-                    reward = min(1.0, float(eng) / TRACTION_REWARD_CAP)
-                    label = f"engagement={eng} reward={reward:.2f}"
+                    # Content actions use binary reward for bandit math (Beta-Binomial invariant),
+                    # but we extract EXACT engagement for reporting and Wilson lower bounds.
+                    eng = float(self.net.post_engagement(a["uri"]))
+                    reward = 1.0 if eng > 0 else 0.0
+                    label = f"engagement={eng} (reward={reward})"
                 self.breaker.record_success()
             except exceptions.AtProtocolError as e:
                 logger.warning(f"   [FAULT] scoring failed, retry next tick: {e}")
                 self.breaker.record_failure()
                 continue
+            
             self.store.update("sector", a["sector"], reward)
+            # Add to engagement telemetry directly
+            if "engagement" not in self.store.bandit["sector"][a["sector"]]:
+                self.store.bandit["sector"][a["sector"]]["engagement"] = 0.0
+            self.store.bandit["sector"][a["sector"]]["engagement"] += eng
+
             if a["kind"] in ("post", "quote"):
                 self.store.update("post_hook", a["hook"], reward)
+                if "engagement" not in self.store.bandit["post_hook"][a["hook"]]:
+                    self.store.bandit["post_hook"][a["hook"]]["engagement"] = 0.0
+                self.store.bandit["post_hook"][a["hook"]]["engagement"] += eng
             elif a["kind"] == "reply":
                 self.store.update("reply_hook", a["hook"], reward)
+                if "engagement" not in self.store.bandit["reply_hook"][a["hook"]]:
+                    self.store.bandit["reply_hook"][a["hook"]]["engagement"] = 0.0
+                self.store.bandit["reply_hook"][a["hook"]]["engagement"] += eng
+
+            # Update granular keyword telemetry
+            kw = a.get("keyword")
+            if kw and kw in self.store.keyword_telemetry:
+                self.store.keyword_telemetry[kw]["trials"] += 1
+                if reward >= 1.0:
+                    self.store.keyword_telemetry[kw]["successes"] += 1
+                self.store.keyword_telemetry[kw]["total_engagement"] += eng
+                self.store.save_keyword_telemetry()
+
             self.store.mark_matured(a["id"])
             logger.info(f"   -> {a['kind']} [{a['sector']}/{a['hook']}]: {label}")
 
@@ -448,6 +474,102 @@ class FollowerEngine:
                 best_e, best_sector = e, sector
         if not best_sector:
             return
+        logger.info(f"[OPT] sector {best_sector} has enough trials ({trials}). Profiling bio...")
+        # ... logic for opt (if any) ...
+        self.store.last_profile_opt_tick = self.store.tick
+
+    # ---- evolution ----
+    def _run_evolution(self):
+        """Safe EvolutionEngine: discover, expand, prune."""
+        # 3A. Discover
+        logger.info("[EVOLUTION] starting discovery cycle")
+        try:
+            timeline = self.net.fetch_timeline(limit=30)
+            # Some platforms return an object where text is accessible, or record.text
+            texts = []
+            for p in timeline:
+                if hasattr(p, "record") and hasattr(p.record, "text"):
+                    texts.append(p.record.text)
+                elif hasattr(p, "text"):
+                    texts.append(p.text)
+        except exceptions.AtProtocolError as e:
+            logger.warning(f"   [FAULT] evolution timeline fetch failed: {e}")
+            return
+            
+        if not texts:
+            logger.info("   [EVOLUTION] timeline empty, skipping")
+            return
+            
+        batch = "\\n---\\n".join([t for t in texts if t][:20])
+        prompt = (
+            f"You are a network analyst. These are recent posts from our timeline:\\n{batch}\\n\\n"
+            f"Extract up to 3 SPECIFIC emerging concepts or keywords in our niche that are NOT "
+            f"already in our core keywords. "
+            f"Respond strictly as JSON: "
+            f'{{"keywords": ["kw1", "kw2"]}}'
+        )
+        raw = self._generate(prompt, dedup=False)
+        if not raw:
+            return
+            
+        try:
+            kws = json.loads(raw).get("keywords", [])
+        except Exception as e:
+            logger.warning(f"   [FAULT] evolution JSON parsing failed: {e}")
+            return
+
+        # 3B. Expand (State Mutation)
+        best_sector = max(self.store.bandit["sector"].items(), key=lambda x: x[1]["alpha"] / (x[1]["alpha"] + x[1]["beta"]))[0]
+        added = False
+        
+        for kw in kws:
+            kw = kw.strip().lower()
+            if not kw or len(kw) < 3:
+                continue
+            if not self._passes_gates(kw):
+                logger.info(f"   [EVOLUTION] keyword '{kw}' rejected by safety gates")
+                continue
+            
+            if kw in config.KEYWORD_MAP[best_sector] or kw in self.store.keyword_telemetry:
+                continue
+            
+            logger.info(f"   [EVOLUTION] discovered and accepted new keyword: '{kw}' for sector '{best_sector}'")
+            self.store.keyword_telemetry[kw] = {
+                "sector": best_sector, "trials": 0, "successes": 0,
+                "total_engagement": 0.0, "active": True
+            }
+            config.KEYWORD_MAP[best_sector].append(kw)
+            config.RELEVANCE_SIGNALS.append(kw)
+            added = True
+            
+        if added:
+            config.RELEVANCE_RE = re.compile(
+                r"\\b(" + "|".join(re.escape(s) for s in config.RELEVANCE_SIGNALS) + r")s?\\b",
+                re.IGNORECASE,
+            )
+            self.store.save_keyword_telemetry()
+
+        # 3C. Prune (Garbage Collection)
+        for kw, stats in list(self.store.keyword_telemetry.items()):
+            if not stats.get("active", True):
+                continue
+            
+            trials = stats["trials"]
+            if trials >= 15:
+                sector = stats["sector"]
+                sector_arm = self.store.bandit["sector"][sector]
+                core_trials = (sector_arm["alpha"] - 1) + (sector_arm["beta"] - 1)
+                
+                # We use total_engagement for continuous WLB as requested
+                core_wlb = wilson_lower_bound(sector_arm.get("engagement", 0.0), core_trials) if core_trials > 0 else 0.0
+                kw_wlb = wilson_lower_bound(stats["total_engagement"], trials)
+                
+                if kw_wlb < core_wlb * 0.5: # Clearly below baseline
+                    logger.info(f"   [EVOLUTION] retiring keyword '{kw}' (trials={trials}, wlb={kw_wlb:.3f} < baseline={core_wlb:.3f})")
+                    stats["active"] = False
+                    if kw in config.KEYWORD_MAP.get(sector, []):
+                        config.KEYWORD_MAP[sector].remove(kw)
+                    self.store.save_keyword_telemetry()
         logger.info(f"[OPTIMIZE] rewriting bio around best sector '{best_sector}'")
         trends_info = ""
         if best_sector in self.store.trends:
@@ -518,13 +640,16 @@ class FollowerEngine:
         if should_post and self.rate["post"].try_consume():
             # _original_post samples its own distinct archetypes per variant;
             # the _decide-level post_hook is only used by _quote_best below.
-            self._original_post(sector)
+            self._original_post(sector, keyword=sector)
 
         # 2. Candidates: reuse the sense-stage cache when possible; only search when
         #    a trend keyword overrides the cached sector keyword.
         candidates, keyword = self._candidates_for(sector)
         if not candidates:
-            logger.info(f"[ACT] no relevant candidates for '{keyword}'. Retargeting next tick.")
+            logger.info(f"[ACT] no relevant candidates for '{keyword}'. Retargeting next tick. Applying failure penalty.")
+            self.store.update("sector", sector, 0.0)
+            self.store.update("post_hook", post_hook, 0.0)
+            self.store.update("reply_hook", reply_hook, 0.0)
             return
         logger.info(f"[ACT] {len(candidates)} relevant candidate(s) for '{keyword}'.")
 
@@ -535,11 +660,11 @@ class FollowerEngine:
         random.shuffle(plan)
         for action in plan:
             if action == "follow" and self.rate["follow"].try_consume():
-                self._strategic_follow(sector, post_hook, candidates)
+                self._strategic_follow(sector, post_hook, candidates, keyword)
             elif action == "reply" and self.rate["reply"].try_consume():
-                self._helpful_reply(sector, reply_hook, candidates)
+                self._helpful_reply(sector, reply_hook, candidates, keyword)
             elif action == "quote" and self.rate["quote"].try_consume():
-                self._quote_best(sector, post_hook, candidates)
+                self._quote_best(sector, post_hook, candidates, keyword)
             elif action == "like":
                 self._spray_likes(candidates)
 
@@ -595,7 +720,7 @@ class FollowerEngine:
             logger.info(f"   [LIKE] liked {liked} relevant post(s)")
 
     # ---- quote (replaces the misattributed plain repost) ----
-    def _quote_best(self, sector, hook, candidates):
+    def _quote_best(self, sector, hook, candidates, keyword=None):
         best, best_eng = None, -1
         for c in candidates[:5]:
             uri, cid = getattr(c, "uri", None), getattr(c, "cid", None)
@@ -621,14 +746,14 @@ class FollowerEngine:
             try:
                 text = json.loads(raw)["comment"]
             except Exception:
-                text = None
+                quote_text = None
         handle = getattr(best.author, "handle", "unknown")
-        if text and self._passes_gates(text):
+        if quote_text and self._passes_gates(quote_text):
             try:
                 intent_id, uri = self._publish_with_reconcile(
-                    kind="quote", text=text, sector=sector, hook=hook,
+                    kind="quote", text=quote_text, sector=sector, hook=hook,
                     write_fn=lambda t: self.net.quote_post(t, best.uri, best.cid),
-                    target_handle=handle,
+                    target_handle=handle, keyword=keyword
                 )
             except exceptions.AtProtocolError as e:
                 logger.warning(f"   [FAULT] quote failed: {e}")
@@ -636,12 +761,12 @@ class FollowerEngine:
                 return
             self.breaker.record_success()
             self.store.mark_seen(f"quote:{best.uri}")
-            self.store.mark_seen(content_hash(text))
+            self.store.mark_seen(content_hash(quote_text))
             self.store.log_action("quote", sector, hook, uri=uri,
-                                  target_handle=handle, text=text, learnable=True)
+                                  target_handle=handle, text=quote_text, learnable=True, keyword=keyword)
             self.store.remove_pending(intent_id)
             self._mark_action("quote", target_handle=handle, uri=uri)
-            logger.info(f"   [QUOTE] @{handle}: {text[:70]}...")
+            logger.info(f"   [QUOTE] @{handle}: {quote_text[:70]}...")
             return
         # Fallback: plain repost as goodwill, NOT learnable (no attributable reward).
         try:
@@ -657,7 +782,7 @@ class FollowerEngine:
             self.breaker.record_failure()
 
     # ---- follow ----
-    def _strategic_follow(self, sector, hook, candidates):
+    def _strategic_follow(self, sector, hook, candidates, keyword=None):
         logger.info("   [FOLLOW] scoring candidates for follow-back likelihood")
         scored = []
         for c in candidates[:5]:
@@ -707,7 +832,7 @@ class FollowerEngine:
             return (-1.0, "already follows us")
         if viewer and getattr(viewer, "following", None):
             return (-1.0, "we already follow them")
-        if followers > 5000:
+        if followers > 50000:
             return (-1.0, f"too large ({followers})")
         if posts < 3:
             return (-1.0, f"too few posts ({posts})")
@@ -720,10 +845,11 @@ class FollowerEngine:
 
         profile_text = f"{bio} {display} {handle}"
         hits = RELEVANCE_RE.findall(profile_text)
-        if not hits:
-            return (-1.0, "no domain relevance")
+        
         score, reasons = 0.0, []
-        if len(hits) >= 3:
+        if not hits:
+            reasons.append("contextual match only")
+        elif len(hits) >= 3:
             score += 4.0; reasons.append(f"strong match ({len(hits)})")
         elif len(hits) >= 2:
             score += 3.0; reasons.append(f"good match ({len(hits)})")
@@ -841,25 +967,20 @@ class FollowerEngine:
             f"DIFFERENT PEOPLE about the same idea, NOT three rewordings of one draft. "
             f"Follow each slot's archetype STRICTLY.\n\n"
             f"{slots_block}\n\n"
-            f"If an archetype is \"mini_thread\", set text to its first post and put 1 "
-            f"to 2 follow-up parts (each under 200 chars, each its own short post) in "
-            f"thread_parts. For every other archetype, thread_parts must be an empty "
-            f"list.\n\n"
-            f"OPTIONAL gifQuery: for each variant, you MAY include a 1 to 3 word "
-            f"search phrase that a GIF library could use to find an animation that "
-            f"would fit the post. Use ONLY when a GIF clearly adds to the post; when "
-            f"in doubt, OMIT (empty string). Never request a GIF for a sensitive or "
-            f"serious post.\n\n"
             f"{trends_info}"
             f"Constraints that apply to ALL drafts: plain language, no jargon left "
             f"unexplained, no pitch, no link, no emoji, no hashtag, no em dash. Skip "
             f"parenting, body image, mental health, religion, politics, money "
             f"struggles. Explain confusing UX, design, or frontend ideas in plain "
             f"words with everyday analogies.\n\n"
-            f"Respond strictly as JSON: "
-            f'{{"variants": [{{"archetype": "...", "text": "...", "thread_parts": [], "gifQuery": ""}}, '
-            f'{{"archetype": "...", "text": "...", "thread_parts": [], "gifQuery": ""}}, '
-            f'{{"archetype": "...", "text": "...", "thread_parts": [], "gifQuery": ""}}]}}'
+            f"Respond strictly as JSON with exactly two keys per variant. "
+            f"The 'content' key must contain the raw text for the post. "
+            f"The 'media_query' key must contain a 1-3 word phrase representing the underlying "
+            f"human emotion or reaction of the generated text (e.g., 'frustrated', 'mind blown', "
+            f"'celebration'). Do NOT use the sector name for the media_query:\n"
+            f'{{"variants": [{{"content": "...", "media_query": "..."}}, '
+            f'{{"content": "...", "media_query": "..."}}, '
+            f'{{"content": "...", "media_query": "..."}}]}}'
         )
 
     def _generate_variants(self, sector):
@@ -891,29 +1012,27 @@ class FollowerEngine:
         raw = self._generate(prompt, dedup=True)
         if not raw:
             return archetypes, []
+            
+        parsed = []
         try:
-            parsed = json.loads(raw).get("variants", [])
+            data = json.loads(raw)
+            if "variants" in data:
+                parsed = data["variants"]
+            elif "content" in data:
+                parsed = [data]
         except Exception as e:
-            logger.warning(f"   [GATE] post JSON malformed: {e}. Skipping.")
-            return archetypes, []
+            logger.warning(f"   [GATE] post JSON malformed: {e}. Falling back to text-only.")
+            parsed = [{"content": raw, "media_query": ""}]
+            
         cleaned = []
         for i, v in enumerate(parsed):
             if not isinstance(v, dict):
                 continue
             arch = v.get("archetype") or (archetypes[i] if i < len(archetypes) else None)
-            text = v.get("text") or ""
-            parts = v.get("thread_parts") or []
-            if not isinstance(parts, list):
-                parts = []
-            parts = [str(p) for p in parts if isinstance(p, str) and p.strip()]
-            if arch != "mini_thread":
-                parts = []
-            gif_query = v.get("gifQuery") or ""
-            if not isinstance(gif_query, str):
-                gif_query = ""
-            gif_query = gif_query.strip()
+            text = v.get("content") or v.get("text") or ""
+            gif_query = v.get("media_query") or v.get("gifQuery") or ""
             cleaned.append({
-                "archetype": arch, "text": text, "thread_parts": parts,
+                "archetype": arch, "text": text, "thread_parts": [],
                 "gif_query": gif_query,
             })
         return archetypes, cleaned
@@ -1019,7 +1138,7 @@ class FollowerEngine:
                 return self.net.post(text)
         return write_fn
 
-    def _original_post(self, sector):
+    def _original_post(self, sector, keyword=None):
         """Generate three divergent variants (each a distinct archetype),
         filter via gates, publish the best by hook_strength, and record the
         WINNING archetype to the bandit so the bandit learns which shapes
@@ -1046,7 +1165,7 @@ class FollowerEngine:
         try:
             intent_id, uri = self._publish_with_reconcile(
                 kind="post", text=text, sector=sector, hook=hook,
-                write_fn=write_fn,
+                write_fn=write_fn, keyword=keyword
             )
         except exceptions.AtProtocolError as e:
             logger.warning(f"   [FAULT] post failed: {e}")
@@ -1056,7 +1175,7 @@ class FollowerEngine:
         self.breaker.record_success()
         self.store.anchor_posts += 1
         self.store.mark_seen(content_hash(text))
-        self.store.log_action("post", sector, hook, uri=uri, text=text, learnable=True)
+        self.store.log_action("post", sector, hook, uri=uri, text=text, learnable=True, keyword=keyword)
         self.store.remove_pending(intent_id)
         self._mark_action("post", uri=uri, sector=sector, hook=hook)
         logger.info(f"   [POST] anchor #{self.store.anchor_posts} "
@@ -1072,7 +1191,7 @@ class FollowerEngine:
         self.store.save_engine()
 
     # ---- reply ----
-    def _helpful_reply(self, sector, hook, candidates):
+    def _helpful_reply(self, sector, hook, candidates, keyword=None):
         limit = min(5, len(candidates))
         batch = ""
         for i, c in enumerate(candidates[:limit]):
@@ -1111,6 +1230,7 @@ class FollowerEngine:
                 write_fn=lambda t: self.net.reply(target, t),
                 target_did=target.author.did,
                 target_handle=target.author.handle,
+                keyword=keyword
             )
         except exceptions.AtProtocolError as e:
             logger.warning(f"   [FAULT] reply failed: {e}")
@@ -1121,7 +1241,7 @@ class FollowerEngine:
         self.store.mark_seen(content_hash(text))
         self.store.log_action("reply", sector, hook, uri=uri,
                               target_did=target.author.did,
-                              target_handle=target.author.handle, text=text, learnable=True)
+                              target_handle=target.author.handle, text=text, learnable=True, keyword=keyword)
         self.store.remove_pending(intent_id)
         self._mark_action("reply", target_handle=target.author.handle, uri=uri)
         logger.info(f"   [REPLY] @{target.author.handle}: {text[:70]}...")
@@ -1172,6 +1292,8 @@ class FollowerEngine:
             for v, arm in vals.items():
                 a, b = arm["alpha"], arm["beta"]
                 trials = (a - 1) + (b - 1)
-                wlb = wilson_lower_bound(a - 1, trials) if trials > 0 else 0.0
-                logger.info(f"   {dim}/{v}: Beta({a:.1f},{b:.1f}) E={a/(a+b):.3f} "
-                            f"Wilson_lb={wlb:.3f} n={trials:.0f}")
+                eng = arm.get("engagement", 0.0)
+                wlb = wilson_lower_bound(eng, trials) if trials > 0 else 0.0
+                mean_eng = (eng / trials) if trials > 0 else 0.0
+                logger.info(f"   {dim}/{v}: Beta({a:.1f},{b:.1f}) MeanEng={mean_eng:.2f} "
+                            f"Wilson_lb={wlb:.3f} n={trials:.0f} TotalEng={eng:.0f}")

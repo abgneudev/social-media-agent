@@ -20,7 +20,7 @@ import random
 import config
 from config import (
     logger, configure_logging,
-    TARGFOLLOWER_ET, TICK_INTERVAL,
+    FOLLOWER_TARGET, TICK_INTERVAL,
     CONTENT_ATTRIBUTION_SECONDS, FOLLOW_ATTRIBUTION_SECONDS,
     SECTORS,
 )

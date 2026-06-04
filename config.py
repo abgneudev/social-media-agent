@@ -101,6 +101,7 @@ STATUS_FILE = STATE_DIR / "status.json"
 # variant generator. Graceful absence: when missing, generation and the
 # bandit run exactly as without it.
 NICHE_INSIGHTS_FILE = STATE_DIR / "niche_insights.json"
+KEYWORD_TELEMETRY_FILE = STATE_DIR / "keyword_telemetry.json"
 
 
 # ==========================================
@@ -114,7 +115,11 @@ TICK_INTERVAL = 150                  # 2.5 min/tick, ~24 ticks/hour, human-paced
 # is wall-clock based (mature_actions compares now - ts to the window) so it
 # survives restarts and ticks that arrive days after the action was logged.
 CONTENT_ATTRIBUTION_SECONDS = 24 * 60 * 60
-FOLLOW_ATTRIBUTION_SECONDS = 1500    # 25 min: follow-backs need real-human time
+# Human reaction times vary widely. 24 hours matches the content window and
+# gives users enough time to see the notification and follow back. If this
+# is too short, almost all follows will be marked as failures, training
+# the bandit on false negatives.
+FOLLOW_ATTRIBUTION_SECONDS = 86400
 MAX_LIKES_PER_TICK = 4               # stay human, avoid bot-like like-spray
 
 CIRCUIT_BREAKER_THRESHOLD = 3

@@ -56,6 +56,7 @@ class Store:
         self.snapshots = load_json(config.SNAPSHOT_FILE, [])
         self.seen = set(load_json(config.SEEN_FILE, []))
         self.pending = load_json(config.PENDING_WRITES_FILE, [])
+        self.keyword_telemetry = load_json(config.KEYWORD_TELEMETRY_FILE, {})
         es = load_json(config.ENGINE_STATE_FILE, {})
         self.tick = es.get("tick", 0)
         self.anchor_posts = es.get("anchor_posts", 0)
@@ -106,6 +107,7 @@ class Store:
     def save_snapshots(self): atomic_write_json(config.SNAPSHOT_FILE, self.snapshots)
     def save_seen(self):    atomic_write_json(config.SEEN_FILE, sorted(self.seen))
     def save_pending(self): atomic_write_json(config.PENDING_WRITES_FILE, self.pending)
+    def save_keyword_telemetry(self): atomic_write_json(config.KEYWORD_TELEMETRY_FILE, self.keyword_telemetry)
 
     def add_pending(self, entry):
         """Persist a write intent BEFORE the network call. Survives a crash
@@ -165,11 +167,11 @@ class Store:
         self.save_bandit()
 
     def log_action(self, kind, sector, hook, uri=None, target_did=None,
-                   target_handle=None, text=None, learnable=True):
+                   target_handle=None, text=None, learnable=True, keyword=None):
         self.ledger.append({
             "id": uuid.uuid4().hex[:12], "kind": kind, "sector": sector, "hook": hook,
             "uri": uri, "target_did": target_did, "target_handle": target_handle,
-            "text": text, "learnable": learnable,
+            "text": text, "learnable": learnable, "keyword": keyword,
             "ts": time.time(), "hour": int(time.strftime("%H")), "matured": False,
         })
         self.save_ledger()
