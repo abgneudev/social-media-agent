@@ -126,7 +126,7 @@ def resolve(query: str):
                 return None
                 
             try:
-                return items[0]["file"]["md"]["gif"]["url"]
+                return items[0]["file"]["md"]["mp4"]["url"]
             except (KeyError, IndexError, TypeError):
                 logger.error(f"[KLIPY] Failed to extract GIF URL from response. Raw data: {data}")
                 return None

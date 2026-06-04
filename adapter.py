@@ -162,6 +162,11 @@ class BlueskyAdapter:
         ref = self.client.send_post(text=text, embed=embed)
         return ref.uri if hasattr(ref, "uri") else str(ref)
 
+    def post_with_video(self, text, video_bytes, alt_text="") -> str:
+        """Post text plus a single native video embed. Used for animated GIFs (which must be uploaded as MP4s to animate on Bluesky)."""
+        ref = self.client.send_video(text=text, video=video_bytes, video_alt=alt_text or "")
+        return ref.uri if hasattr(ref, "uri") else str(ref)
+
     def post_in_thread(self, text, root_uri, root_cid, parent_uri, parent_cid) -> str:
         """Post a continuation in a thread we already started. Used by
         mini_thread to chain 2 to 3 short posts. root is always the first

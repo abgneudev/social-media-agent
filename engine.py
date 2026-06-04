@@ -37,7 +37,7 @@ from governance import RateBudget, CircuitBreaker
 from adapter import BlueskyAdapter
 import analyzer
 import klipy
-import serpapi
+import serper
 
 
 # ==========================================
@@ -920,6 +920,8 @@ class FollowerEngine:
                 continue
             if not allow_whales and self.store.already_acted_on(did):
                 continue
+            if self._is_bot(c.author):
+                continue
             if not self._is_relevant_content(c):
                 continue
             cands.append(c)
@@ -1069,6 +1071,35 @@ class FollowerEngine:
             logger.warning(f"   [FAULT] follow failed: {e}")
             self.breaker.record_failure()
 
+    def _is_bot(self, profile):
+        """Returns True if the profile looks like an automated account or engagement farmer."""
+        followers = int(getattr(profile, "followers_count", 0) or 0)
+        following = int(getattr(profile, "follows_count", 0) or 0)
+        bio = getattr(profile, "description", "") or ""
+        handle = getattr(profile, "handle", "") or ""
+        display = getattr(profile, "display_name", "") or ""
+
+        # Engagement farming ratio (follows massive numbers, nobody follows back)
+        if following > 5000 and followers < 500:
+            return True
+
+        bot_markers = [
+            "brid.gy", ".ap.", "activitypub", "awakari", "job-alert", "-bot", "trending", "job-",
+            "bot", "rss", "automated", "feed", "aggregator"
+        ]
+        farming_markers = ["giveaway", "airdrop", "crypto", "web3", "nft", "follow back", "follow-back"]
+        
+        handle_lower = handle.lower()
+        bio_lower = bio.lower()
+        display_lower = display.lower()
+        
+        text_to_check = f"{handle_lower} {bio_lower} {display_lower}"
+        
+        if any(m in text_to_check for m in bot_markers + farming_markers):
+            return True
+            
+        return False
+
     def _score_follow_target(self, profile):
         # Future externalization candidate: these thresholds live in code
         # for now because a weak soul could otherwise dial the agent to
@@ -1091,11 +1122,8 @@ class FollowerEngine:
         if posts < 3:
             return (-1.0, f"too few posts ({posts})")
 
-        bot_markers = ["brid.gy", ".ap.", "activitypub", "awakari", "job-alert", "-bot", "trending", "job-"]
-        handle_lower = handle.lower()
-        bio_lower = bio.lower()
-        if any(m in handle_lower for m in bot_markers) or any(m in bio_lower for m in ["aggregator", "feed", "automated", "bot"]):
-            return (-1.0, "automated feed/bot")
+        if self._is_bot(profile):
+            return (-1.0, "automated feed/bot or farmer")
 
         profile_text = f"{bio} {display} {handle}"
         hits = RELEVANCE_RE.findall(profile_text)
@@ -1265,7 +1293,7 @@ class FollowerEngine:
             )
         prompt = self._build_variant_prompt(sector, archetypes, length_slots,
                                             opening_slots, trends_info)
-        raw = self._generate(prompt, dedup=True)
+        raw = self._generate(prompt, dedup=True, enable_tools=True)
         if not raw:
             return archetypes, []
             
@@ -1352,7 +1380,7 @@ class FollowerEngine:
             resolved_url = None
             if media_query:
                 if media_type == "image":
-                    resolved_url = serpapi.search_image(media_query)
+                    resolved_url = serper.search_images(media_query)
                 else:
                     resolved_url = klipy.resolve(media_query)
                     
@@ -1383,10 +1411,10 @@ class FollowerEngine:
                 return self.net.post(text)
             try:
                 if media_type == "image":
-                    media_url = serpapi.search_image(media_query)
+                    media_url = serper.search_images(media_query)
                     if not media_url:
                         return self.net.post(text)
-                    fetched = serpapi.fetch_image_bytes(media_url)
+                    fetched = serper.fetch_image_bytes(media_url)
                 else:
                     media_url = klipy.resolve(media_query)
                     if not media_url:
@@ -1397,9 +1425,14 @@ class FollowerEngine:
                     return self.net.post(text)
                     
                 image_bytes, _mime = fetched
-                uri = self.net.post_with_image(
-                    text, image_bytes, alt_text=media_query,
-                )
+                if media_type == "image":
+                    uri = self.net.post_with_image(
+                        text, image_bytes, alt_text=media_query,
+                    )
+                else:
+                    uri = self.net.post_with_video(
+                        text, image_bytes, alt_text=media_query,
+                    )
                 logger.info(f"   [MEDIA] attached {media_type} '{media_query}' to: "
                             f"{text_for_log[:50]}...")
                 return uri
@@ -1502,7 +1535,7 @@ class FollowerEngine:
             f"{vision_hint}\n"
             f'Respond strictly as JSON: {{"index": int, "reply": "..."}}'
         )
-        raw = self._generate(prompt, dedup=True, image_b64=top_image_b64)
+        raw = self._generate(prompt, dedup=True, image_b64=top_image_b64, enable_tools=True)
         if not raw:
             return
         try:
@@ -1540,14 +1573,13 @@ class FollowerEngine:
         logger.info(f"   [REPLY] @{target.author.handle}: {text[:70]}...")
 
     # ---- generation + gates ----
-    def _generate(self, prompt, dedup=False, image_b64=None):
+    def _generate(self, prompt, dedup=False, image_b64=None, enable_tools=False):
         if dedup:
             recent = self.store.recent_content_texts(5)
             if recent:
                 prompt += ("\n\nDo NOT repeat the concepts, phrases, or angles of "
                            "these recent posts:\n" + "\n".join(f"- {t}" for t in recent))
 
-        # Model selection: use vision model when an image is provided
         if image_b64:
             model = "llama-4-scout-17b-16e-instruct"
             user_content = [
@@ -1560,17 +1592,88 @@ class FollowerEngine:
             model = "llama-3.3-70b-versatile"
             user_content = prompt
 
-        try:
-            resp = self.ai.chat.completions.create(
-                model=model,
-                messages=[{"role": "system", "content": self.persona},
-                          {"role": "user", "content": user_content}],
-                response_format={"type": "json_object"},
-            )
-            return resp.choices[0].message.content.strip()
-        except Exception as e:
-            logger.warning(f"   [FAULT] generation failed ({model}): {e}")
-            return None
+        messages = [
+            {"role": "system", "content": self.persona},
+            {"role": "user", "content": user_content}
+        ]
+
+        tools = []
+        if enable_tools:
+            tools = [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "search_news",
+                        "description": "Searches Google News for the latest headlines and snippets on a technical topic. Use to find real-world updates before writing.",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "query": {"type": "string", "description": "The topic to search for (e.g. 'React 19 updates')"}
+                            },
+                            "required": ["query"]
+                        }
+                    }
+                },
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "search_images",
+                        "description": "Searches Google Images for diagrams, mockups, or technical visuals.",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "query": {"type": "string", "description": "The image to search for"}
+                            },
+                            "required": ["query"]
+                        }
+                    }
+                }
+            ]
+
+        import serper
+        
+        for turn in range(3):
+            try:
+                kwargs = {
+                    "model": model,
+                    "messages": messages,
+                    "response_format": {"type": "json_object"}
+                }
+                if tools:
+                    kwargs["tools"] = tools
+                    kwargs["tool_choice"] = "auto"
+
+                resp = self.ai.chat.completions.create(**kwargs)
+                msg = resp.choices[0].message
+                
+                if getattr(msg, "tool_calls", None):
+                    messages.append(msg)
+                    for tc in msg.tool_calls:
+                        func_name = tc.function.name
+                        try:
+                            args = json.loads(tc.function.arguments)
+                        except:
+                            args = {}
+                            
+                        logger.info(f"   [TOOL] LLM autonomously called {func_name}({args})")
+                        res = "No results."
+                        if func_name == "search_news":
+                            res = serper.search_news(args.get("query", "")) or "No results."
+                        elif func_name == "search_images":
+                            res = serper.search_images(args.get("query", "")) or "No results."
+                            
+                        messages.append({
+                            "role": "tool",
+                            "tool_call_id": tc.id,
+                            "name": func_name,
+                            "content": res
+                        })
+                else:
+                    return msg.content.strip()
+            except Exception as e:
+                logger.warning(f"   [FAULT] generation failed ({model}) turn {turn}: {e}")
+                return "{}"
+        return "{}"
 
     def _passes_gates(self, text) -> bool:
         if not text or not text.strip() or len(text) > 300:
