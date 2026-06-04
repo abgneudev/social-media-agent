@@ -643,6 +643,9 @@ class FollowerEngine:
             logger.info("[SENSE] scanning network activity across sectors")
             self.sector_activity, self.sector_posts = {}, {}
             for sector in SECTORS:
+                if not KEYWORD_MAP.get(sector):
+                    logger.warning(f"   {sector}: no keywords available (bootstrapper failed or empty). Skipping.")
+                    continue
                 keyword = random.choice(KEYWORD_MAP[sector])
                 try:
                     posts = self.net.search_posts(keyword, limit=12)
@@ -1701,7 +1704,7 @@ class FollowerEngine:
                            "these recent posts:\n" + "\n".join(f"- {t}" for t in recent))
 
         if image_b64:
-            model = "llama-4-scout-17b-16e-instruct"
+            model = "llama-3.1-8b-instant"
             user_content = [
                 {"type": "text", "text": prompt},
                 {"type": "image_url", "image_url": {
@@ -1709,7 +1712,7 @@ class FollowerEngine:
                 }},
             ]
         else:
-            model = "llama-4-scout-17b-16e-instruct"
+            model = "llama-3.1-8b-instant"
             user_content = prompt
 
         messages = [
