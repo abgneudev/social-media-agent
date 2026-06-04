@@ -1865,7 +1865,7 @@ class FollowerEngine:
         except Exception as e:
             logger.warning(f"   [GATE] reply JSON malformed: {e}. Skipping.")
             return
-        if idx < 0 or idx >= limit or not self._passes_gates(text):
+        if idx < 0 or idx >= len(candidates) or not self._passes_gates(text):
             logger.warning("   [GATE] reply skipped (sensitive/range/quality).")
             return
         target = candidates[idx]
