@@ -11,26 +11,28 @@ class LLMClient:
         self.ai = groq.Groq(api_key=os.environ.get("GROQ_API_KEY"))
         self.persona = persona
 
-    def generate(self, prompt, dedup_texts=None, image_b64=None, enable_tools=False):
+    def generate(self, prompt, dedup_texts=None, image_b64=None, enable_tools=False, model_purpose="versatile"):
         """
         Executes a prompt against the Groq API. Handles tools, vision payloads, and 
         automatic deduplication rules.
+        model_purpose: 'fast' (Llama 8B), 'reasoning' (GPT-OSS 120B), 'versatile' (Llama 70B)
         """
         if dedup_texts:
             prompt += ("\n\nDo NOT repeat the concepts, phrases, or angles of "
                        "these recent posts:\n" + "\n".join(f"- {t}" for t in dedup_texts))
 
-        if image_b64:
-            model = "llama-3.2-11b-vision-preview"
-            user_content = [
-                {"type": "text", "text": prompt},
-                {"type": "image_url", "image_url": {
-                    "url": f"data:image/jpeg;base64,{image_b64}"
-                }},
-            ]
-        else:
+        # Model Routing Logic
+        if model_purpose == "fast":
             model = "llama-3.1-8b-instant"
-            user_content = prompt
+        elif model_purpose == "reasoning":
+            model = "openai/gpt-oss-120b"
+        else:
+            model = "llama-3.3-70b-versatile"
+            
+        user_content = prompt
+        
+        if image_b64:
+            logger.warning("   [LLM] Vision requested but no vision models available in tier. Ignoring image.")
 
         messages = [
             {"role": "system", "content": self.persona},
@@ -150,7 +152,7 @@ class LLMClient:
             return parsed[extract_key]
         return parsed
 
-    def generate_json(self, prompt, dedup_texts=None, enable_tools=False, extract_key=None):
+    def generate_json(self, prompt, dedup_texts=None, enable_tools=False, extract_key=None, model_purpose="versatile"):
         """Helper to generate text and parse it as JSON immediately."""
-        raw = self.generate(prompt, dedup_texts=dedup_texts, enable_tools=enable_tools)
+        raw = self.generate(prompt, dedup_texts=dedup_texts, enable_tools=enable_tools, model_purpose=model_purpose)
         return self.parse_json(raw, extract_key=extract_key)

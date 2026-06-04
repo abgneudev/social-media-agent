@@ -747,7 +747,7 @@ class FollowerEngine:
             f"Respond strictly as JSON: "
             f'{{"keywords": ["kw1","kw2","kw3"]}}'
         )
-        raw = self._generate(prompt, dedup=False)
+        raw = self._generate(prompt, dedup=False, model_purpose="fast")
         if not raw:
             return
         try:
@@ -862,20 +862,23 @@ class FollowerEngine:
                 prompt = (
                     f"You are an elite Brand Strategist optimizing the profile of an autonomous AI agent.\n"
                     f"The agent's core identity (which you must retain) is:\n{config.PERSONA}\n\n"
-                    f"CRITICAL: If the core identity contains any Call To Actions (CTAs), website links, contact emails, or secondary account handles, YOU MUST INCLUDE THEM IN THE BIO.\n\n"
+                    f"CRITICAL RULES:\n"
+                    f"1. You MUST include any Call To Actions (CTAs), website links, contact emails, or secondary account handles from the core identity in the new bio.\n"
+                    f"2. DO NOT change the agent's core identity, persona, beliefs, or mission to match trending topics. You are ONLY borrowing the structural formatting (e.g., bullet points, conciseness, punctuation style) of the credible creators, NOT their actual content or job titles.\n"
+                    f"3. Strict Character Limits: Display Name must be under 50 characters. Bio must be under 250 characters.\n\n"
                     f"The agent's most successful topic is: '{best_sector}'.\n"
                     f"Here are the bios of 5 highly credible creators in this exact space:\n{bio_context}\n\n"
-                    f"Analyze why these bios project authority (e.g., concise, lists achievements, clear niche). "
-                    f"Based on this, generate a new Display Name (max 30 chars) and Bio (max 200 chars) for the agent. "
-                    f"The identity should authentically reflect the core persona but strategically adopt the structural authority markers of the top creators.\n\n"
                     f"Respond STRICTLY as JSON:\n"
                     f"{{\n  \"display_name\": \"...\",\n  \"bio\": \"...\"\n}}"
                 )
-                raw = self._generate(prompt, dedup=False, enable_tools=False)
+                raw = self._generate(prompt, dedup=False, enable_tools=False, model_purpose="reasoning")
                 data = self.llm.parse_json(raw)
                 new_name = data.get("display_name")
                 new_bio = data.get("bio")
                 if new_name and new_bio:
+                    # Enforce hard limits before pushing to ATProto
+                    new_name = new_name[:64]
+                    new_bio = new_bio[:256]
                     self.net.set_profile(name=new_name, description=new_bio)
                     logger.info(f"   [OPT] Updated profile: Name='{new_name}', Bio='{new_bio[:30]}...'")
             except Exception as e:
@@ -1589,7 +1592,7 @@ class FollowerEngine:
             )
         prompt = self._build_variant_prompt(sector, archetypes, length_slots,
                                             opening_slots, trends_info)
-        raw = self._generate(prompt, dedup=True, enable_tools=False)
+        raw = self._generate(prompt, dedup=True, enable_tools=False, model_purpose="versatile")
         if not raw:
             return archetypes, []
             
@@ -1830,16 +1833,9 @@ class FollowerEngine:
             "contrarian to the original author. "
         )
 
-        # Vision pipeline: try to extract an image from the top candidate
+        # Vision is currently disabled due to provider limits
         top_image_b64 = None
-        if candidates:
-            top_image_b64 = self.net.get_post_image_b64(candidates[0])
-        vision_hint = (
-            "An image is attached to this post. Analyze its structural design "
-            "(e.g., layout, typography, code architecture, algorithmic patterns) "
-            "and synthesize that into your response. Do not explicitly say "
-            "'In this image', just integrate the analysis naturally. "
-        ) if top_image_b64 else ""
+        vision_hint = ""
 
         prompt = (
             f"These are live posts about '{sector}':\n\n{batch}\n"
@@ -1856,7 +1852,7 @@ class FollowerEngine:
             f"{vision_hint}\n"
             f'Respond strictly as JSON: {{"index": int, "reply": "..."}}'
         )
-        raw = self._generate(prompt, dedup=True, image_b64=top_image_b64, enable_tools=True)
+        raw = self._generate(prompt, dedup=True, image_b64=top_image_b64, enable_tools=True, model_purpose="versatile")
         if not raw:
             return
         try:
@@ -1899,9 +1895,9 @@ class FollowerEngine:
         logger.info(f"   [REPLY] @{target.author.handle}: {text[:70]}...")
 
     # ---- generation + gates ----
-    def _generate(self, prompt, dedup=False, image_b64=None, enable_tools=False):
+    def _generate(self, prompt, dedup=False, image_b64=None, enable_tools=False, model_purpose="versatile"):
         dedup_texts = self.store.recent_content_texts(5) if dedup else None
-        return self.llm.generate(prompt, dedup_texts=dedup_texts, image_b64=image_b64, enable_tools=enable_tools)
+        return self.llm.generate(prompt, dedup_texts=dedup_texts, image_b64=image_b64, enable_tools=enable_tools, model_purpose=model_purpose)
 
     def _passes_gates(self, text) -> bool:
         if not text or not text.strip() or len(text) > 300:
