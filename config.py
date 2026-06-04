@@ -106,7 +106,7 @@ NICHE_INSIGHTS_FILE = STATE_DIR / "niche_insights.json"
 # ==========================================
 # SCALARS
 # ==========================================
-FOLLOWER_TARGET = 1
+FOLLOWER_TARGET = 100
 TICK_INTERVAL = 150                  # 2.5 min/tick, ~24 ticks/hour, human-paced
 # Content attribution: 24h is realistic for organic Bluesky reach on a small
 # account. The prior 9-minute window meant almost everything matured as a
