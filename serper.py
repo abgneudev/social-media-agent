@@ -153,3 +153,39 @@ def fetch_image_bytes(url):
     except Exception as e:
         logger.warning(f"   [SERPER] Image fetch failed from {url[:50]}... : {e}")
         return None
+
+def search_web_organic(query: str, num_results=3):
+    """Fetches top organic web results for a given query."""
+    clean_query = query.replace('"', '').replace("'", "").strip()
+    cache_key = f"web:{clean_query}"
+    
+    api_key, cache = _check_budget(clean_query)
+    if not api_key: return []
+    
+    data = _post_request("https://google.serper.dev/search", api_key, {"q": clean_query, "num": num_results})
+    if not data: return []
+    
+    _record_usage(cache)
+    
+    organic = data.get("organic", [])
+    results = []
+    for item in organic:
+        results.append({
+            "title": item.get("title", ""),
+            "link": item.get("link", ""),
+            "snippet": item.get("snippet", "")
+        })
+    return results
+
+def fetch_web_markdown(url: str):
+    """Fetches the content of a URL and converts it to markdown using r.jina.ai"""
+    jina_url = f"https://r.jina.ai/{url}"
+    try:
+        req = urllib.request.Request(jina_url, headers={"User-Agent": "kiloforge/1"})
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            text = resp.read().decode("utf-8")
+            # Truncate if it's absurdly long to save LLM context
+            return text[:15000]
+    except Exception as e:
+        logger.warning(f"   [SERPER] Fetch web markdown failed for {url[:50]}... : {e}")
+        return None

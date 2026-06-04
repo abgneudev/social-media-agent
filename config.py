@@ -337,10 +337,10 @@ SOUL = load_soul()
 NAME_TEXT = SOUL.name
 BIO_TEXT = SOUL.bio
 PERSONA = SOUL.persona
-POST_HOOKS = SOUL.post_hooks
-REPLY_HOOKS = SOUL.reply_hooks
-POST_HOOK_GUIDANCE = SOUL.post_hook_guidance
-REPLY_HOOK_GUIDANCE = SOUL.reply_hook_guidance
+POST_HOOKS = list(SOUL.post_hooks)
+REPLY_HOOKS = list(SOUL.reply_hooks)
+POST_HOOK_GUIDANCE = dict(SOUL.post_hook_guidance)
+REPLY_HOOK_GUIDANCE = dict(SOUL.reply_hook_guidance)
 KEYWORD_MAP = SOUL.keyword_map
 RELEVANCE_SIGNALS = SOUL.relevance_signals
 TOPIC_ANGLE_EXAMPLES = SOUL.topic_angle_examples
@@ -361,6 +361,33 @@ SENSITIVE_PHRASES = sorted(set(SENSITIVE_PHRASES_FLOOR) | set(SOUL.extra_sensiti
 SENSITIVE_WORDS = sorted(set(SENSITIVE_WORDS_FLOOR) | set(SOUL.extra_sensitive_words))
 SPAM_PHRASES = sorted(set(SPAM_PHRASES_FLOOR) | set(SOUL.extra_spam_phrases))
 
+def load_dynamic_strategy():
+    try:
+        import json
+        with open(STATE_DIR / "dynamic_strategy.json", "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+def reload_dynamic_strategy():
+    global PERSONA, POST_HOOKS, POST_HOOK_GUIDANCE
+    strategy = load_dynamic_strategy()
+    if not strategy:
+        return
+        
+    override = strategy.get("persona_override", "")
+    if override:
+        PERSONA = SOUL.persona + f"\n\n[STRATEGY OVERRIDE: {override}]"
+        
+    extra_hooks = strategy.get("extra_hooks", [])
+    for hook_obj in extra_hooks:
+        name = hook_obj.get("name")
+        guidance = hook_obj.get("guidance")
+        if name and guidance and name not in POST_HOOKS:
+            POST_HOOKS.append(name)
+            POST_HOOK_GUIDANCE[name] = guidance
+
+reload_dynamic_strategy()
 
 # ==========================================
 # SMALL UTILITIES

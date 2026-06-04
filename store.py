@@ -83,9 +83,17 @@ class Store:
         cleanup, deprecated hooks would persist in the JSON forever even
         though _decide never samples them.
         """
+        # Retain dynamic hooks from web research
+        web_insights = load_json(config.STATE_DIR / "web_insights.json", {})
+        dynamic_hooks = [h.get("hook_name") for h in web_insights.get("experimental_hooks", []) if h.get("hook_name")]
+        if web_insights.get("curated_links"):
+            dynamic_hooks.append("curated_link")
+
+        all_post_hooks = set(POST_HOOKS) | set(dynamic_hooks)
+
         fresh = {dim: {v: {"alpha": 1.0, "beta": 1.0} for v in vals}
                  for dim, vals in (("sector", SECTORS),
-                                   ("post_hook", POST_HOOKS),
+                                   ("post_hook", all_post_hooks),
                                    ("reply_hook", REPLY_HOOKS))}
         if loaded is None:
             return fresh

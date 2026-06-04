@@ -1,0 +1,22 @@
+{
+  "experimental_hooks": [
+    {
+      "hook_name": "myth_buster",
+      "guidance": "Bust a UX myth."
+    }
+  ],
+  "strategic_guidance": [
+    "Keep your tone analytical and sharp."
+  ],
+  "trending_topics": [
+    "Bento box UI",
+    "AI generated interfaces"
+  ],
+  "curated_links": [
+    {
+      "url": "https://example.com/ux-guide",
+      "title": "UX Guide",
+      "summary": "Great guide"
+    }
+  ]
+}

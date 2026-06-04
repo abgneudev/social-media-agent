@@ -1,0 +1,11 @@
+{
+  "ts": 1780603989.909598,
+  "ts_iso": "2026-06-04T16:13:09",
+  "persona_override": "Be more aggressive and focus on 'myth_bust' style posts.",
+  "extra_hooks": [
+    {
+      "name": "brutal_teardown",
+      "guidance": "Tear down a bad design without holding back."
+    }
+  ]
+}

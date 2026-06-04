@@ -38,6 +38,7 @@ from adapter import BlueskyAdapter
 import analyzer
 import klipy
 import serper
+import web_research
 
 
 # ==========================================
@@ -531,6 +532,26 @@ class FollowerEngine:
         # start generating new content, so the dedup gates see the right state.
         self._reconcile_pending()
 
+        # Web Research: Load daily insights and inject experimental hooks
+        try:
+            web_insights = web_research.load_insights()
+            if web_insights:
+                for h in web_insights.get("experimental_hooks", []):
+                    hook_name = h.get("hook_name")
+                    if hook_name and hook_name not in config.POST_HOOKS:
+                        config.POST_HOOKS.append(hook_name)
+                        config.POST_HOOK_GUIDANCE[hook_name] = h.get("guidance", "Experimental hook.")
+                if web_insights.get("curated_links") and "curated_link" not in config.POST_HOOKS:
+                    config.POST_HOOKS.append("curated_link")
+                    config.POST_HOOK_GUIDANCE["curated_link"] = "Share a highly credible curated link with your audience. Give a sharp take on it."
+                
+                # Make sure the store knows about dynamic hooks
+                for h in config.POST_HOOKS:
+                    if h not in self.store.bandit["post_hook"]:
+                        self.store.bandit["post_hook"][h] = {"alpha": 1.0, "beta": 1.0}
+        except Exception as e:
+            logger.warning(f"   [WEB RESEARCH] Failed to load/inject insights: {e}")
+
         # Niche insights are a cheap atomic read; refresh once per tick so
         # any in-flight analyzer write is picked up by the next pass without
         # racing the read.
@@ -553,6 +574,18 @@ class FollowerEngine:
         if t == 1 or t % ANALYZER_CADENCE_TICKS == 0:
             self._run_analyzer()
 
+        # Web research pass
+        if t == 2 or t % 500 == 0:
+            try:
+                empirical_data = {
+                    "bandit": self.store.bandit,
+                    "trends": self.store.trends,
+                    "followers": self.store.snapshots[-1]["followers"] if self.store.snapshots else 0
+                }
+                web_research.run_daily_research(lambda prompt: self._generate(prompt, dedup=False), empirical_data)
+            except Exception as e:
+                logger.warning(f"   [WEB RESEARCH] run raised: {e}")
+
         sector, post_hook, reply_hook = self._decide()
         self._act(sector, post_hook, reply_hook)
 
@@ -561,6 +594,16 @@ class FollowerEngine:
             
         if t % 15 == 0:
             self._run_evolution()
+            
+        if t % 150 == 0:
+            try:
+                import meta_critic
+                if meta_critic.evaluate_strategy(lambda prompt: self._generate(prompt, dedup=False), self.store.bandit):
+                    import config
+                    config.reload_dynamic_strategy()
+                    self.persona = config.PERSONA
+            except Exception as e:
+                logger.warning(f"   [META-CRITIC] run raised: {e}")
 
         # Autonomous list curation every 10 ticks (LLM-driven)
         if t % 10 == 0:
@@ -660,6 +703,19 @@ class FollowerEngine:
                     continue
                 self.sector_posts[sector] = posts
                 self.sector_activity[sector] = {"keyword": keyword, "total": len(posts)}
+                
+                # Check for swipe file
+                try:
+                    import memory
+                    for p in posts:
+                        eng = float(getattr(p, "like_count", 0) + getattr(p, "repost_count", 0))
+                        if eng > 50:  # threshold for "high engagement"
+                            text = getattr(p.record, "text", "")
+                            if text:
+                                memory.save_to_swipe_file(text, eng)
+                except Exception as e:
+                    logger.warning(f"   [MEMORY] Swipe file check failed: {e}")
+                    
                 label = "hot" if len(posts) >= 7 else "warm" if len(posts) >= 3 else "quiet"
                 logger.info(f"   {sector}: {len(posts)} posts for '{keyword}' [{label}]")
         return True
@@ -1364,9 +1420,19 @@ class FollowerEngine:
         on three drafts that read as if written by three different people."""
         slots = []
         for i, arch in enumerate(archetypes):
+            guidance = config.POST_HOOK_GUIDANCE.get(arch, '').strip()
+            # Inject curated link if chosen
+            try:
+                web_insights = web_research.load_insights()
+                if arch == "curated_link" and web_insights and web_insights.get("curated_links"):
+                    link_obj = random.choice(web_insights["curated_links"])
+                    guidance += f" YOU MUST SHARE THIS EXACT LINK IN YOUR POST: {link_obj['url']} (Title: {link_obj['title']}). Write a sharp take on it."
+            except Exception:
+                pass
+
             slots.append(
                 f"[{i+1}] archetype = \"{arch}\"\n"
-                f"    Archetype rule: {POST_HOOK_GUIDANCE.get(arch, '').strip()}\n"
+                f"    Archetype rule: {guidance}\n"
                 f"    Length slot: {length_slots[i]}.\n"
                 f"    Opening move slot: {opening_slots[i]}.\n"
                 f"    If the archetype rule conflicts with the slot, follow the archetype."
@@ -1407,8 +1473,41 @@ class FollowerEngine:
         random.shuffle(opening_slots)
         trends_info = ""
         if sector in self.store.trends and self.store.trends[sector]:
-            trends_info = (f"Weave in these trends if they fit: "
-                           f"{', '.join(self.store.trends[sector])}.\n\n")
+            trends_info += (f"Weave in these trends if they fit: "
+                           f"{', '.join(self.store.trends[sector])}\n")
+                           
+        # Inject Web Strategic Guidance
+        try:
+            web_insights = web_research.load_insights()
+            if web_insights:
+                sg = web_insights.get("strategic_guidance", [])
+                tt = web_insights.get("trending_topics", [])
+                if sg or tt:
+                    trends_info += "\nRecent Strategic Guidelines from Credible Sources to adhere to:\n"
+                    if sg:
+                        trends_info += "- " + "\n- ".join(sg) + "\n"
+                    if tt:
+                        trends_info += "Trending Topics to consider: " + ", ".join(tt) + "\n"
+                    trends_info += "\n"
+        except Exception:
+            pass
+            
+        # Inject Phase 3.5 Long-Term Brain Memory
+        try:
+            import memory
+            self_hist = memory.recall_self_threads(sector, limit=1)
+            swipe_hist = memory.recall_swipe_file(limit=1)
+            kb_hist = memory.recall_knowledge(sector, limit=1)
+            
+            if self_hist:
+                trends_info += f"\n<SELF_MEMORY>\nYou previously wrote this about {sector}:\n{self_hist}\nDO NOT repeat this. Build on it and advance the narrative.\n</SELF_MEMORY>\n"
+            if swipe_hist:
+                trends_info += f"\n<SWIPE_FILE>\nHere is a highly successful viral format. You may mimic its pacing and structure, but use entirely original content:\n{swipe_hist}\n</SWIPE_FILE>\n"
+            if kb_hist:
+                trends_info += f"\n<KNOWLEDGE_BASE>\nHere is a factual data point to organically weave into your post to build authority:\n{kb_hist}\n</KNOWLEDGE_BASE>\n"
+        except Exception as e:
+            logger.warning(f"   [MEMORY] Failed to inject Long-Term Brain: {e}")
+
         # Rotating topic angles from the niche analyzer. Picked at random
         # per call so different generation cycles see different angles;
         # this INCREASES variety. The instruction is permissive ("consider
@@ -1604,6 +1703,10 @@ class FollowerEngine:
             logger.warning(f"   [FAULT] post failed: {e}")
             self.breaker.record_failure()
             return
+            
+        import memory
+        memory.remember_self_thread(sector, text)
+        
         cid = self.net.get_post_cid(uri)
         self.breaker.record_success()
         self.store.anchor_posts += 1
@@ -1625,11 +1728,36 @@ class FollowerEngine:
 
     # ---- reply ----
     def _helpful_reply(self, sector, hook, candidates, keyword=None):
-        limit = min(5, len(candidates))
+        import warden
+        import memory
         batch = ""
-        for i, c in enumerate(candidates[:limit]):
-            preview = (c.record.text or "")[:200] if getattr(c.record, "text", None) else "(empty)"
-            batch += f"[{i}] @{c.author.handle}: {preview}\n\n"
+        safe_candidates = []
+        for c in candidates:
+            if len(safe_candidates) >= 5:
+                break
+                
+            raw_text = getattr(c.record, "text", "")
+            if not raw_text:
+                continue
+                
+            # Screen the text using the Warden
+            sanitized_text = warden.sanitize_input(lambda prompt: self._generate(prompt, dedup=False), raw_text)
+            if not sanitized_text:
+                logger.warning(f"   [WARDEN] Skipped malicious or invalid candidate from @{c.author.handle}")
+                continue
+                
+            safe_candidates.append(c)
+            # Query vector DB for past interactions
+            hist = memory.recall_history(c.author.handle, sanitized_text)
+            hist_context = f"\n[PAST MEMORY WITH USER: {hist}]" if hist else ""
+            
+            batch += f"[{len(safe_candidates)-1}] @{c.author.handle}: {sanitized_text}{hist_context}\n\n"
+            
+        if not safe_candidates:
+            logger.info("   [REPLY] No safe candidates found after sanitization.")
+            return
+            
+        candidates = safe_candidates
 
         # Whale constraint: if the target account is large, force yes_and_expansion
         whale_constraint = (
@@ -1692,6 +1820,11 @@ class FollowerEngine:
             logger.warning(f"   [FAULT] reply failed: {e}")
             self.breaker.record_failure()
             return
+            
+        import memory
+        target_text = getattr(target.record, "text", "")
+        memory.remember_interaction(target.author.handle, target_text, text)
+        
         self.breaker.record_success()
         self.store.mark_seen(target.author.did)
         self.store.mark_seen(content_hash(text))
