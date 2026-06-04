@@ -1528,23 +1528,32 @@ class FollowerEngine:
         parsed = []
         try:
             import re
-            # Extract JSON block even if the LLM includes markdown or conversational fluff
             match = re.search(r'\{.*\}', raw, re.DOTALL)
-            if match:
-                clean_json = match.group(0)
-            else:
-                clean_json = raw
-                
+            clean_json = match.group(0) if match else raw
+            
             data = json.loads(clean_json)
             if "variants" in data:
                 parsed = data["variants"]
             elif "content" in data:
                 parsed = [data]
         except Exception as e:
-            logger.warning(f"   [GATE] post JSON malformed: {e}. Falling back to text-only.")
-            # If fallback is too long, we slice it so it doesn't fail the 300 char gate instantly
-            fallback_text = raw[:280]
-            parsed = [{"content": fallback_text, "media_query": ""}]
+            logger.warning(f"   [GATE] post JSON malformed: {e}. Attempting recovery.")
+            try:
+                # Handle the case where the LLM outputs multiple un-wrapped JSON objects
+                fixed_raw = "[" + re.sub(r'\}\s*\{', '}, {', clean_json) + "]"
+                data = json.loads(fixed_raw)
+                if isinstance(data, list):
+                    parsed = [v for v in data if "content" in v]
+                else:
+                    raise ValueError("Still not a list")
+            except Exception as e2:
+                logger.warning(f"   [GATE] JSON recovery failed: {e2}. Falling back to text.")
+                import re
+                # Strip raw JSON formatting so it posts cleanly as text
+                fallback_text = re.sub(r'["{}\[\]]', '', clean_json)[:280].strip()
+                if fallback_text.startswith('content: '):
+                    fallback_text = fallback_text[9:]
+                parsed = [{"content": fallback_text, "media_query": ""}]
             
         cleaned = []
         for i, v in enumerate(parsed):
