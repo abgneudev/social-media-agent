@@ -1527,14 +1527,24 @@ class FollowerEngine:
             
         parsed = []
         try:
-            data = json.loads(raw)
+            import re
+            # Extract JSON block even if the LLM includes markdown or conversational fluff
+            match = re.search(r'\{.*\}', raw, re.DOTALL)
+            if match:
+                clean_json = match.group(0)
+            else:
+                clean_json = raw
+                
+            data = json.loads(clean_json)
             if "variants" in data:
                 parsed = data["variants"]
             elif "content" in data:
                 parsed = [data]
         except Exception as e:
             logger.warning(f"   [GATE] post JSON malformed: {e}. Falling back to text-only.")
-            parsed = [{"content": raw, "media_query": ""}]
+            # If fallback is too long, we slice it so it doesn't fail the 300 char gate instantly
+            fallback_text = raw[:280]
+            parsed = [{"content": fallback_text, "media_query": ""}]
             
         cleaned = []
         for i, v in enumerate(parsed):
