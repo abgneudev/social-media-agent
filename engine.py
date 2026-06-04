@@ -1637,11 +1637,12 @@ class FollowerEngine:
                 kwargs = {
                     "model": model,
                     "messages": messages,
-                    "response_format": {"type": "json_object"}
                 }
                 if tools:
                     kwargs["tools"] = tools
                     kwargs["tool_choice"] = "auto"
+                else:
+                    kwargs["response_format"] = {"type": "json_object"}
 
                 resp = self.ai.chat.completions.create(**kwargs)
                 msg = resp.choices[0].message
@@ -1669,7 +1670,14 @@ class FollowerEngine:
                             "content": res
                         })
                 else:
-                    return msg.content.strip()
+                    ans = msg.content.strip()
+                    if ans.startswith("```json"):
+                        ans = ans[7:].strip()
+                    elif ans.startswith("```"):
+                        ans = ans[3:].strip()
+                    if ans.endswith("```"):
+                        ans = ans[:-3].strip()
+                    return ans
             except Exception as e:
                 logger.warning(f"   [FAULT] generation failed ({model}) turn {turn}: {e}")
                 return "{}"
