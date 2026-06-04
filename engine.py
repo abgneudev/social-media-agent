@@ -578,7 +578,7 @@ class FollowerEngine:
             self._run_analyzer()
 
         # Web research pass
-        if t == 2 or t % 500 == 0:
+        if t == 2 or t % 100 == 0 or not self.store.trends:
             try:
                 empirical_data = {
                     "bandit": self.store.bandit,
@@ -1269,8 +1269,11 @@ class FollowerEngine:
             f"Does each profile represent a highly credible, intellectual, or relevant practitioner "
             f"(e.g., engineer, researcher, scientist, designer) that aligns with our persona? "
             f"Reject generic tech influencers, crypto farmers, and random personal accounts.\n"
-            f"Respond strictly as a JSON object mapping the handle (exact string) to a boolean value indicating if they are high quality.\n"
-            f'{{"handle1": true, "handle2": false}}'
+            f"Respond strictly as a JSON object mapping the handle (exact string) to a string action: 'follow', 'ignore', or 'mute'.\n"
+            f"- 'follow': if they are highly credible and aligned.\n"
+            f"- 'ignore': if they are irrelevant, generic, or off-topic.\n"
+            f"- 'mute': if they are obvious spam, engagement farmers, crypto scammers, NSFW, or highly misaligned.\n"
+            f'{{"handle1": "follow", "handle2": "ignore", "handle3": "mute"}}'
         )
         raw = self._generate(prompt, dedup=False)
         return self.llm.parse_json(raw, fallback_dict={})
@@ -1302,10 +1305,13 @@ class FollowerEngine:
         verification_results = self._verify_profiles_batch(profiles_to_verify)
         
         for score, cand, cand_handle in scored:
-            if verification_results.get(cand_handle, False):
+            decision = verification_results.get(cand_handle, "ignore")
+            if decision == "mute":
+                logger.info(f"   [FOLLOW] LLM flagged @{cand_handle} for muting.")
+                self.net.mute_actor(cand.author.did)
+            elif (decision == "follow" or decision is True) and target is None:
                 best_score, target, handle = score, cand, cand_handle
-                break
-            else:
+            elif target is None:
                 logger.info(f"   [FOLLOW] LLM rejected @{cand_handle} as low quality. Trying next...")
                 
         if not target:
@@ -1522,15 +1528,13 @@ class FollowerEngine:
             f"parenting, body image, mental health, religion, politics, money "
             f"struggles. Explain confusing UX, design, or frontend ideas in plain "
             f"words with everyday analogies.\n\n"
-            f"Respond strictly as JSON with exactly three keys per variant. "
-            f"The 'content' key must contain the raw text for the post. "
-            f"The 'media_type' key MUST be either 'gif' or 'image'. "
-            f"The 'media_query' key MUST contain a search query for that media.\n"
+            f"Respond strictly as JSON with exactly three keys per variant: 'content', 'media_type', 'media_query', and an optional 'thread_parts' array.\n"
+            f"CRITICAL RULES FOR THREADS: If the archetype is 'mini_thread', you MUST provide a list of strings in 'thread_parts' (e.g. [\"part 2...\", \"part 3...\"]). The 'content' key will be the anchor post.\n"
             f"CRITICAL RULES FOR MEDIA:\n"
             f"- MAXIMIZE MEDIA USAGE: You MUST attach media to almost every post.\n"
             f"- IF media_type='gif': media_query should be a 1-3 word human emotion (e.g., 'frustrated', 'mind blown').\n"
             f"- IF media_type='image': Make an educated guess on the best visual to complement the post. The media_query MUST be highly concrete (e.g. a diagram, mockup, or code structure) and you should append a relevant industry modifier (e.g., 'dribbble', 'architecture diagram', 'figma', 'github layout') to ensure high-quality search results. If discussing an abstract theory, search for a concrete UI application of it.\n"
-            f'{{"variants": [{{"content": "...", "media_type": "...", "media_query": "..."}}]}}'
+            f'{{"variants": [{{"content": "...", "media_type": "...", "media_query": "...", "thread_parts": []}}]}}'
         )
 
     def _generate_variants(self, sector):
@@ -1598,10 +1602,18 @@ class FollowerEngine:
             
         fallback_text = raw[:280].strip()
         parsed = self.llm.parse_json(raw, fallback_dict=[{"content": fallback_text, "media_query": ""}])
-        if isinstance(parsed, dict) and "variants" in parsed:
-            parsed = parsed["variants"]
-        elif isinstance(parsed, dict) and "content" in parsed:
-            parsed = [parsed]
+        if isinstance(parsed, dict):
+            if "variants" in parsed:
+                parsed = parsed["variants"]
+            elif "content" in parsed:
+                parsed = [parsed]
+            else:
+                # Extract nested dictionaries (e.g. {"variant1": {"content": "..."}})
+                extracted = [v for v in parsed.values() if isinstance(v, dict) and "content" in v]
+                if extracted:
+                    parsed = extracted
+                else:
+                    parsed = [{"content": fallback_text, "media_query": ""}]
         elif not isinstance(parsed, list):
             parsed = [{"content": fallback_text, "media_query": ""}]
             
@@ -1845,8 +1857,9 @@ class FollowerEngine:
             f"'{hook}' angle. {REPLY_HOOK_GUIDANCE.get(hook,'')} Explain any technical "
             f"idea in plain words with an everyday analogy. If the post is sensitive "
             f"(parenting, body image, mental health, religion, politics, money "
-            f"struggles, sexual content, NSFW, fetish, bdsm), set index to -1 and reply to an empty string. Do not pitch "
-            f"anything. Do not say 'great post'. Max 280 chars. No emoji, hashtag, em dash. "
+            f"struggles, sexual content, NSFW), set index to -1 to skip. "
+            f"If the post is exceptionally spammy, generic engagement farming, crypto scams, or completely opposed to our persona, set index to -2 to mute the author. "
+            f"Do not pitch anything. Do not say 'great post'. Max 280 chars. No emoji, hashtag, em dash. "
             f"CRITICAL DIVERSITY: Never repeat standard tech advice. Provide a unique, highly specific synthesis that the author hasn't heard before.\n"
             f"{whale_constraint}"
             f"{vision_hint}\n"
@@ -1860,6 +1873,13 @@ class FollowerEngine:
             idx, text = int(data["index"]), data["reply"]
         except Exception as e:
             logger.warning(f"   [GATE] reply JSON malformed: {e}. Skipping.")
+            return
+        if idx == -2:
+            logger.info("   [GATE] reply prompt requested MUTE. Muting author.")
+            try:
+                self.net.mute_actor(candidates[0].author.did)
+            except Exception as e:
+                pass
             return
         if idx < 0 or idx >= len(candidates) or not self._passes_gates(text):
             logger.warning("   [GATE] reply skipped (sensitive/range/quality).")

@@ -128,6 +128,13 @@ class BlueskyAdapter:
     def follow(self, did):
         self.client.follow(did)
 
+    def mute_actor(self, did):
+        try:
+            self.client.mute(did)
+            logger.info(f"   [MUTE] Muted actor: {did}")
+        except Exception as e:
+            logger.warning(f"   [MUTE] Failed to mute {did}: {e}")
+
     def reply(self, target, text) -> str:
         root = (target.record.reply.root
                 if getattr(target.record, "reply", None)
