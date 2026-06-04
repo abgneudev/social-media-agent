@@ -210,7 +210,7 @@ SENSITIVE_WORDS_FLOOR = [
     "democrat", "republican", "liberal", "conservative", "woke", "prayer",
     "bible", "quran", "church", "mosque", "atheist", "diagnosis", "medication",
     "antidepressant", "anorexia", "obesity", "bmi", "idiot", "moron", "loser",
-    "stfu", "wtf",
+    "stfu", "wtf", "fetish", "bdsm", "sexual", "porn", "kink", "nsfw", "sex",
 ]
 SPAM_PHRASES_FLOOR = [
     "http://", "https://", "buy ", "dm me", "check out my", "great post",

@@ -677,9 +677,15 @@ class FollowerEngine:
             return
         batch = "\n---\n".join(texts)
         prompt = (
+            f"You are a Product Design Engineer (UX/UI, Frontend, OOUX, System Architecture).\n"
             f"These are recent posts in the '{hottest}' space:\n{batch}\n\n"
-            f"Extract exactly 3 specific, trending keywords or concepts people are "
-            f"actively discussing. Respond strictly as JSON: "
+            f"Extract exactly 3 highly specific, trending keywords or concepts people are "
+            f"actively discussing that are RELEVANT TO UX AND PRODUCT DESIGN.\n"
+            f"CRITICAL RULES FOR KEYWORDS:\n"
+            f"1. Must be exactly 1-3 words.\n"
+            f"2. Must be highly specific tech/UX terms (e.g. 'cognitive load', 'design system', 'state management').\n"
+            f"3. Must NOT be formatted as snake_case.\n"
+            f"Respond strictly as JSON: "
             f'{{"keywords": ["kw1","kw2","kw3"]}}'
         )
         raw = self._generate(prompt, dedup=False)
@@ -1652,7 +1658,7 @@ class FollowerEngine:
             f"'{hook}' angle. {REPLY_HOOK_GUIDANCE.get(hook,'')} Explain any technical "
             f"idea in plain words with an everyday analogy. If the post is sensitive "
             f"(parenting, body image, mental health, religion, politics, money "
-            f"struggles), set index to -1 and reply to an empty string. Do not pitch "
+            f"struggles, sexual content, NSFW, fetish, bdsm), set index to -1 and reply to an empty string. Do not pitch "
             f"anything. Do not say 'great post'. Max 280 chars. No emoji, hashtag, em dash. "
             f"CRITICAL DIVERSITY: Never repeat standard tech advice. Provide a unique, highly specific synthesis that the author hasn't heard before.\n"
             f"{whale_constraint}"
