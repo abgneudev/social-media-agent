@@ -99,6 +99,7 @@ def main():
             our_did=engine.net.did,
             telemetry_file=config.NETWORK_TELEMETRY_FILE,
             atomic_write_fn=atomic_write_json,
+            is_relevant_fn=engine.store.is_relevant_text,
         )
     except ImportError:
         logger.warning("[SYSTEM] firehose_daemon not available (missing websockets?). "

@@ -23,7 +23,7 @@ from config import (
     NAME_TEXT, BIO_TEXT, PERSONA,
     SECTORS, POST_HOOKS, REPLY_HOOKS,
     POST_HOOK_GUIDANCE, REPLY_HOOK_GUIDANCE,
-    KEYWORD_MAP, RELEVANCE_RE,
+     
     SENSITIVE_PHRASES, SENSITIVE_WORDS, SPAM_PHRASES,
     RATE_BUDGETS, GROWTH_PHASES,
     FOLLOWER_TARGET, MAX_LIKES_PER_TICK,
@@ -158,21 +158,21 @@ class FollowerEngine:
         self._bootstrap_taxonomy()
 
     def _rebuild_telemetry(self):
-        """Restore config.KEYWORD_MAP and config.RELEVANCE_SIGNALS from telemetry
+        """Restore self.store.keyword_map and config.RELEVANCE_SIGNALS from telemetry
         so the agent doesn't forget its dynamically learned vocabulary on reboot."""
         rebuilt_count = 0
         for kw, stats in self.store.keyword_telemetry.items():
             if not stats.get("active", True):
                 continue
             sector = stats["sector"]
-            if sector in config.KEYWORD_MAP and kw not in config.KEYWORD_MAP[sector]:
-                config.KEYWORD_MAP[sector].append(kw)
+            if sector in self.store.keyword_map and kw not in self.store.keyword_map[sector]:
+                self.store.keyword_map[sector].append(kw)
                 rebuilt_count += 1
             if kw not in config.RELEVANCE_SIGNALS:
                 config.RELEVANCE_SIGNALS.append(kw)
         
         if rebuilt_count > 0:
-            config.RELEVANCE_RE = re.compile(
+            self.store.relevance_re = re.compile(
                 r"\b(" + "|".join(re.escape(s) for s in config.RELEVANCE_SIGNALS) + r")s?\b",
                 re.IGNORECASE,
             )
@@ -183,7 +183,7 @@ class FollowerEngine:
         to build a 10-keyword starting vocabulary using the Persona."""
         bootstrapped = False
         for sector in config.SECTORS:
-            if not config.KEYWORD_MAP[sector]:
+            if not self.store.keyword_map[sector]:
                 logger.info(f"      [BOOTSTRAP] sector '{sector}' is empty. Generating taxonomy autonomously...")
                 prompt = (
                     f"You are an autonomous taxonomy generator for a social media agent.\n"
@@ -205,8 +205,8 @@ class FollowerEngine:
                         added = 0
                         for kw in kws:
                             kw = kw.strip().lower()
-                            if kw and kw not in config.KEYWORD_MAP[sector]:
-                                config.KEYWORD_MAP[sector].append(kw)
+                            if kw and kw not in self.store.keyword_map[sector]:
+                                self.store.keyword_map[sector].append(kw)
                                 config.RELEVANCE_SIGNALS.append(kw)
                                 self.store.keyword_telemetry[kw] = {
                                     "sector": sector, "trials": 0, "successes": 0,
@@ -220,7 +220,7 @@ class FollowerEngine:
                         logger.warning(f"      [FAULT] failed to parse bootstrap taxonomy for '{sector}': {e}")
         
         if bootstrapped:
-            config.RELEVANCE_RE = re.compile(
+            self.store.relevance_re = re.compile(
                 r"\b(" + "|".join(re.escape(s) for s in config.RELEVANCE_SIGNALS) + r")s?\b",
                 re.IGNORECASE,
             )
@@ -688,10 +688,10 @@ class FollowerEngine:
             logger.info("[SENSE] scanning network activity across sectors")
             self.sector_activity, self.sector_posts = {}, {}
             for sector in SECTORS:
-                if not KEYWORD_MAP.get(sector):
+                if not self.store.keyword_map.get(sector):
                     logger.warning(f"   {sector}: no keywords available (bootstrapper failed or empty). Skipping.")
                     continue
-                keyword = random.choice(KEYWORD_MAP[sector])
+                keyword = random.choice(self.store.keyword_map[sector])
                 try:
                     posts = self.net.search_posts(keyword, limit=12)
                     self.breaker.record_success()
@@ -708,7 +708,7 @@ class FollowerEngine:
                 try:
                     import memory
                     for p in posts:
-                        eng = float(getattr(p, "like_count", 0) + getattr(p, "repost_count", 0))
+                        eng = float(get_total_engagement(p))
                         if eng > 50:  # threshold for "high engagement"
                             text = getattr(p.record, "text", "")
                             if text:
@@ -825,7 +825,78 @@ class FollowerEngine:
         if not best_sector:
             return
         logger.info(f"[OPT] sector {best_sector} has enough trials ({trials}). Profiling bio...")
-        # ... logic for opt (if any) ...
+        
+        # 1. Competitor Analysis: Find top bios in the winning sector
+        top_bios = []
+        try:
+            posts = self.net.search_posts(best_sector, limit=30)
+            authors = []
+            for p in posts:
+                author = getattr(p, "author", None)
+                if author:
+                    eng = get_total_engagement(p)
+                    if eng > 2: # Filter for mild engagement to find credible accounts
+                        authors.append((eng, author))
+                        
+            authors.sort(key=lambda x: x[0], reverse=True)
+            seen_handles = set()
+            for eng, author in authors:
+                handle = getattr(author, "handle", "")
+                if handle not in seen_handles and handle != self.net.handle:
+                    seen_handles.add(handle)
+                    desc = getattr(author, "description", "")
+                    if desc and len(desc) > 10:
+                        top_bios.append(desc.replace('\n', ' '))
+                if len(top_bios) >= 5:
+                    break
+        except Exception as e:
+            logger.warning(f"   [OPT] failed to fetch competitor bios: {e}")
+
+        # 2. LLM Credibility Generation
+        if top_bios:
+            try:
+                bio_context = "\n".join([f"- {b}" for b in top_bios])
+                prompt = (
+                    f"You are an elite Brand Strategist optimizing the profile of an autonomous AI agent.\n"
+                    f"The agent's core identity (which you must retain) is:\n{config.PERSONA}\n\n"
+                    f"CRITICAL: If the core identity contains any Call To Actions (CTAs), website links, contact emails, or secondary account handles, YOU MUST INCLUDE THEM IN THE BIO.\n\n"
+                    f"The agent's most successful topic is: '{best_sector}'.\n"
+                    f"Here are the bios of 5 highly credible creators in this exact space:\n{bio_context}\n\n"
+                    f"Analyze why these bios project authority (e.g., concise, lists achievements, clear niche). "
+                    f"Based on this, generate a new Display Name (max 30 chars) and Bio (max 200 chars) for the agent. "
+                    f"The identity should authentically reflect the core persona but strategically adopt the structural authority markers of the top creators.\n\n"
+                    f"Respond STRICTLY as JSON:\n"
+                    f"{{\n  \"display_name\": \"...\",\n  \"bio\": \"...\"\n}}"
+                )
+                raw = self._generate(prompt, dedup=False, enable_tools=False)
+                data = self.llm.parse_json(raw)
+                new_name = data.get("display_name")
+                new_bio = data.get("bio")
+                if new_name and new_bio:
+                    self.net.set_profile(name=new_name, description=new_bio)
+                    logger.info(f"   [OPT] Updated profile: Name='{new_name}', Bio='{new_bio[:30]}...'")
+            except Exception as e:
+                logger.warning(f"   [OPT] LLM bio generation failed: {e}")
+
+        # 3. Dynamic Pinning
+        try:
+            feed = self.net.client.get_author_feed(actor=self.net.did, limit=50)
+            best_post = None
+            max_eng = -1
+            for item in getattr(feed, "feed", []):
+                p = getattr(item, "post", None)
+                if not p: continue
+                eng = get_total_engagement(p)
+                if eng > max_eng:
+                    max_eng = eng
+                    best_post = p
+            
+            if best_post:
+                self.net.pin_post(best_post.uri, best_post.cid)
+                logger.info(f"   [OPT] Pinned best performing post (engagement={max_eng})")
+        except Exception as e:
+            logger.warning(f"   [OPT] failed to pin post: {e}")
+
         self.store.last_profile_opt_tick = self.store.tick
 
     # ---- evolution ----
@@ -888,7 +959,7 @@ class FollowerEngine:
                 logger.info(f"   [EVOLUTION] keyword '{kw}' rejected by safety gates")
                 continue
             
-            if kw in config.KEYWORD_MAP[best_sector] or kw in self.store.keyword_telemetry:
+            if kw in self.store.keyword_map[best_sector] or kw in self.store.keyword_telemetry:
                 continue
             
             logger.info(f"   [EVOLUTION] discovered and accepted new keyword: '{kw}' for sector '{best_sector}'")
@@ -896,12 +967,12 @@ class FollowerEngine:
                 "sector": best_sector, "trials": 0, "successes": 0,
                 "total_engagement": 0.0, "active": True
             }
-            config.KEYWORD_MAP[best_sector].append(kw)
+            self.store.keyword_map[best_sector].append(kw)
             config.RELEVANCE_SIGNALS.append(kw)
             added = True
             
         if added:
-            config.RELEVANCE_RE = re.compile(
+            self.store.relevance_re = re.compile(
                 r"\\b(" + "|".join(re.escape(s) for s in config.RELEVANCE_SIGNALS) + r")s?\\b",
                 re.IGNORECASE,
             )
@@ -925,8 +996,8 @@ class FollowerEngine:
                 if kw_wlb < core_wlb * 0.5: # Clearly below baseline
                     logger.info(f"   [EVOLUTION] retiring keyword '{kw}' (trials={trials}, wlb={kw_wlb:.3f} < baseline={core_wlb:.3f})")
                     stats["active"] = False
-                    if kw in config.KEYWORD_MAP.get(sector, []):
-                        config.KEYWORD_MAP[sector].remove(kw)
+                    if kw in self.store.keyword_map.get(sector, []):
+                        self.store.keyword_map[sector].remove(kw)
                     self.store.save_keyword_telemetry()
         logger.info(f"[OPTIMIZE] rewriting bio around best sector '{best_sector}'")
         trends_info = ""
@@ -1062,14 +1133,14 @@ class FollowerEngine:
                 continue
             
             # High-Volume Filter: Only operate in areas with existing traction
-            eng = (getattr(c, "like_count", 0) or 0) + (getattr(c, "repost_count", 0) or 0) + (getattr(c, "reply_count", 0) or 0)
+            eng = get_total_engagement(c)
             if eng < 3:
                 continue
                 
             cands.append(c)
             
-        # Sort so the absolute highest volume posts are acted on first
-        cands.sort(key=lambda c: (getattr(c, "like_count", 0) or 0) + (getattr(c, "repost_count", 0) or 0) + (getattr(c, "reply_count", 0) or 0), reverse=True)
+        import heapq
+        cands = heapq.nlargest(10, cands, key=get_total_engagement)
         return cands, keyword
 
     def _is_relevant_content(self, post) -> bool:
@@ -1089,16 +1160,11 @@ class FollowerEngine:
             uri, cid = getattr(c, "uri", None), getattr(c, "cid", None)
             if not uri or not cid or self.store.already_acted_on(f"like:{uri}"):
                 continue
-            try:
+            with self.breaker.guard("like"):
                 self.net.like(uri, cid)
                 self.store.mark_seen(f"like:{uri}")
-                self.breaker.record_success()
                 liked += 1
                 self._mark_action("like", uri=uri)
-            except exceptions.AtProtocolError as e:
-                logger.warning(f"   [FAULT] like failed: {e}")
-                self.breaker.record_failure()
-                break
         if liked:
             logger.info(f"   [LIKE] liked {liked} relevant post(s)")
 
@@ -1109,8 +1175,7 @@ class FollowerEngine:
             uri, cid = getattr(c, "uri", None), getattr(c, "cid", None)
             if not uri or not cid or self.store.already_acted_on(f"quote:{uri}"):
                 continue
-            eng = ((getattr(c, "like_count", 0) or 0) + (getattr(c, "repost_count", 0) or 0)
-                   + (getattr(c, "reply_count", 0) or 0))
+            eng = get_total_engagement(c)
             if eng > best_eng:
                 best_eng, best = eng, c
         if not best:
@@ -1149,17 +1214,15 @@ class FollowerEngine:
                 quote_text = None
         handle = getattr(best.author, "handle", "unknown")
         if quote_text and self._passes_gates(quote_text):
-            try:
+            with self.breaker.guard():
+
                 intent_id, uri = self._publish_with_reconcile(
                     kind="quote", text=quote_text, sector=sector, hook=hook,
                     write_fn=lambda t: self.net.quote_post(t, best.uri, best.cid),
                     target_handle=handle, keyword=keyword
                 )
-            except exceptions.AtProtocolError as e:
-                logger.warning(f"   [FAULT] quote failed: {e}")
-                self.breaker.record_failure()
+
                 return
-            self.breaker.record_success()
             self.store.mark_seen(f"quote:{best.uri}")
             self.store.mark_seen(content_hash(quote_text))
             self.store.log_action("quote", sector, hook, uri=uri,
@@ -1182,31 +1245,29 @@ class FollowerEngine:
             self.breaker.record_failure()
 
     # ---- follow ----
-    def _verify_profile_quality(self, profile):
-        bio = getattr(profile, "description", "") or ""
-        handle = getattr(profile, "handle", "") or ""
-        display = getattr(profile, "display_name", "") or ""
+    def _verify_profiles_batch(self, profiles):
+        if not profiles:
+            return {}
         
+        profiles_context = ""
+        for p in profiles:
+            bio = getattr(p, "description", "") or ""
+            handle = getattr(p, "handle", "") or ""
+            display = getattr(p, "display_name", "") or ""
+            profiles_context += f"- Handle: {handle}\n  Name: {display}\n  Bio: {bio}\n\n"
+            
         prompt = (
-            f"You are an autonomous network analyst evaluating a user profile for a strategic follow.\n"
+            f"You are an autonomous network analyst evaluating user profiles for strategic follows.\n"
             f"Our persona is:\n{config.PERSONA}\n\n"
-            f"Target Profile Bio: {bio}\n"
-            f"Target Name: {display} (@{handle})\n\n"
-            f"Does this profile represent a highly credible, intellectual, or relevant practitioner "
+            f"Evaluate the following profiles:\n{profiles_context}\n"
+            f"Does each profile represent a highly credible, intellectual, or relevant practitioner "
             f"(e.g., engineer, researcher, scientist, designer) that aligns with our persona? "
             f"Reject generic tech influencers, crypto farmers, and random personal accounts.\n"
-            f"Respond strictly as JSON:\n"
-            f'{{"is_high_quality": true, "reason": "brief explanation"}}'
+            f"Respond strictly as a JSON object mapping the handle (exact string) to a boolean value indicating if they are high quality.\n"
+            f'{{"handle1": true, "handle2": false}}'
         )
         raw = self._generate(prompt, dedup=False)
-        if raw:
-            try:
-                result = json.loads(raw)
-                logger.info(f"      [VERIFY] @{handle} - {result.get('is_high_quality')}: {result.get('reason')}")
-                return result.get("is_high_quality", False)
-            except Exception as e:
-                logger.warning(f"      [FAULT] verification failed: {e}")
-        return False
+        return self.llm.parse_json(raw, fallback_dict={})
 
     def _strategic_follow(self, sector, hook, candidates, keyword=None):
         logger.info("   [FOLLOW] scoring candidates for follow-back likelihood")
@@ -1229,9 +1290,13 @@ class FollowerEngine:
         scored.sort(key=lambda x: x[0], reverse=True)
         
         best_score, target, handle = None, None, None
+        
+        profiles_to_verify = [self.net.get_profile(cand.author.did) for _, cand, _ in scored]
+        profiles_to_verify = [p for p in profiles_to_verify if p is not None]
+        verification_results = self._verify_profiles_batch(profiles_to_verify)
+        
         for score, cand, cand_handle in scored:
-            profile = self.net.get_profile(cand.author.did)
-            if self._verify_profile_quality(profile):
+            if verification_results.get(cand_handle, False):
                 best_score, target, handle = score, cand, cand_handle
                 break
             else:
@@ -1310,7 +1375,7 @@ class FollowerEngine:
             return (-1.0, "automated feed/bot or farmer")
 
         profile_text = f"{bio} {display} {handle}"
-        hits = RELEVANCE_RE.findall(profile_text)
+        hits = self.store.relevance_re.findall(profile_text)
         
         score, reasons = 0.0, []
         if not hits:
@@ -1521,39 +1586,18 @@ class FollowerEngine:
             )
         prompt = self._build_variant_prompt(sector, archetypes, length_slots,
                                             opening_slots, trends_info)
-        raw = self._generate(prompt, dedup=True, enable_tools=True)
+        raw = self._generate(prompt, dedup=True, enable_tools=False)
         if not raw:
             return archetypes, []
             
-        parsed = []
-        try:
-            import re
-            match = re.search(r'\{.*\}', raw, re.DOTALL)
-            clean_json = match.group(0) if match else raw
-            
-            data = json.loads(clean_json)
-            if "variants" in data:
-                parsed = data["variants"]
-            elif "content" in data:
-                parsed = [data]
-        except Exception as e:
-            logger.warning(f"   [GATE] post JSON malformed: {e}. Attempting recovery.")
-            try:
-                # Handle the case where the LLM outputs multiple un-wrapped JSON objects
-                fixed_raw = "[" + re.sub(r'\}\s*\{', '}, {', clean_json) + "]"
-                data = json.loads(fixed_raw)
-                if isinstance(data, list):
-                    parsed = [v for v in data if "content" in v]
-                else:
-                    raise ValueError("Still not a list")
-            except Exception as e2:
-                logger.warning(f"   [GATE] JSON recovery failed: {e2}. Falling back to text.")
-                import re
-                # Strip raw JSON formatting so it posts cleanly as text
-                fallback_text = re.sub(r'["{}\[\]]', '', clean_json)[:280].strip()
-                if fallback_text.startswith('content: '):
-                    fallback_text = fallback_text[9:]
-                parsed = [{"content": fallback_text, "media_query": ""}]
+        fallback_text = raw[:280].strip()
+        parsed = self.llm.parse_json(raw, fallback_dict=[{"content": fallback_text, "media_query": ""}])
+        if isinstance(parsed, dict) and "variants" in parsed:
+            parsed = parsed["variants"]
+        elif isinstance(parsed, dict) and "content" in parsed:
+            parsed = [parsed]
+        elif not isinstance(parsed, list):
+            parsed = [{"content": fallback_text, "media_query": ""}]
             
         cleaned = []
         for i, v in enumerate(parsed):
@@ -1590,14 +1634,11 @@ class FollowerEngine:
             return
         parent_uri, parent_cid = root_uri, root_cid
         for i, part_text in enumerate(parts, start=1):
-            try:
+            with self.breaker.guard("thread part"):
                 child_uri = self.net.post_in_thread(
                     part_text, root_uri, root_cid, parent_uri, parent_cid,
                 )
-                self.breaker.record_success()
-            except exceptions.AtProtocolError as e:
-                logger.warning(f"   [FAULT] thread continuation #{i} failed: {e}")
-                self.breaker.record_failure()
+            if not child_uri:
                 return
             child_cid = self.net.get_post_cid(child_uri)
             logger.info(f"   [THREAD] +part {i}: {part_text[:60]}...")
@@ -1856,114 +1897,8 @@ class FollowerEngine:
 
     # ---- generation + gates ----
     def _generate(self, prompt, dedup=False, image_b64=None, enable_tools=False):
-        if dedup:
-            recent = self.store.recent_content_texts(5)
-            if recent:
-                prompt += ("\n\nDo NOT repeat the concepts, phrases, or angles of "
-                           "these recent posts:\n" + "\n".join(f"- {t}" for t in recent))
-
-        if image_b64:
-            model = "llama-3.1-8b-instant"
-            user_content = [
-                {"type": "text", "text": prompt},
-                {"type": "image_url", "image_url": {
-                    "url": f"data:image/jpeg;base64,{image_b64}"
-                }},
-            ]
-        else:
-            model = "llama-3.1-8b-instant"
-            user_content = prompt
-
-        messages = [
-            {"role": "system", "content": self.persona},
-            {"role": "user", "content": user_content}
-        ]
-
-        tools = []
-        if enable_tools:
-            tools = [
-                {
-                    "type": "function",
-                    "function": {
-                        "name": "search_news",
-                        "description": "Searches Google News for the latest headlines and snippets on a technical topic. Use to find real-world updates before writing.",
-                        "parameters": {
-                            "type": "object",
-                            "properties": {
-                                "query": {"type": "string", "description": "The topic to search for (e.g. 'React 19 updates')"}
-                            },
-                            "required": ["query"]
-                        }
-                    }
-                },
-                {
-                    "type": "function",
-                    "function": {
-                        "name": "search_images",
-                        "description": "Searches Google Images for diagrams, mockups, or technical visuals.",
-                        "parameters": {
-                            "type": "object",
-                            "properties": {
-                                "query": {"type": "string", "description": "The image to search for"}
-                            },
-                            "required": ["query"]
-                        }
-                    }
-                }
-            ]
-
-        import serper
-        
-        for turn in range(3):
-            try:
-                kwargs = {
-                    "model": model,
-                    "messages": messages,
-                }
-                if tools:
-                    kwargs["tools"] = tools
-                    kwargs["tool_choice"] = "auto"
-                else:
-                    kwargs["response_format"] = {"type": "json_object"}
-
-                resp = self.ai.chat.completions.create(**kwargs)
-                msg = resp.choices[0].message
-                
-                if getattr(msg, "tool_calls", None):
-                    messages.append(msg)
-                    for tc in msg.tool_calls:
-                        func_name = tc.function.name
-                        try:
-                            args = json.loads(tc.function.arguments)
-                        except:
-                            args = {}
-                            
-                        logger.info(f"   [TOOL] LLM autonomously called {func_name}({args})")
-                        res = "No results."
-                        if func_name == "search_news":
-                            res = serper.search_news(args.get("query", "")) or "No results."
-                        elif func_name == "search_images":
-                            res = serper.search_images(args.get("query", "")) or "No results."
-                            
-                        messages.append({
-                            "role": "tool",
-                            "tool_call_id": tc.id,
-                            "name": func_name,
-                            "content": res
-                        })
-                else:
-                    ans = msg.content.strip()
-                    if ans.startswith("```json"):
-                        ans = ans[7:].strip()
-                    elif ans.startswith("```"):
-                        ans = ans[3:].strip()
-                    if ans.endswith("```"):
-                        ans = ans[:-3].strip()
-                    return ans
-            except Exception as e:
-                logger.warning(f"   [FAULT] generation failed ({model}) turn {turn}: {e}")
-                return "{}"
-        return "{}"
+        dedup_texts = self.store.recent_content_texts(5) if dedup else None
+        return self.llm.generate(prompt, dedup_texts=dedup_texts, image_b64=image_b64, enable_tools=enable_tools)
 
     def _passes_gates(self, text) -> bool:
         if not text or not text.strip() or len(text) > 300:

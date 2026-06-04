@@ -59,10 +59,11 @@ JETSTREAM_URI = (
 class FirehoseDaemon:
     """In-memory state accumulator flushed periodically to disk."""
 
-    def __init__(self, our_did, telemetry_file, atomic_write_fn):
+    def __init__(self, our_did, telemetry_file, atomic_write_fn, is_relevant_fn):
         self.our_did = our_did
         self.telemetry_file = telemetry_file
         self.atomic_write = atomic_write_fn
+        self.is_relevant_fn = is_relevant_fn
         # post_uri -> {text, author_did, created_at, like_count}
         self._post_tracker = {}
         # list of {did, handle, ts} for users who engaged with our posts
@@ -100,10 +101,7 @@ class FirehoseDaemon:
         if not text or len(text) < 20:
             return
             
-        # VERY IMPORTANT: Only track posts that contain keywords relevant to our niche.
-        # Otherwise the LLM will be fed trending pop culture, sports, or politics.
-        from config import is_relevant_text
-        if not is_relevant_text(text):
+        if not self.is_relevant_fn(text):
             return
             
         # Build the AT URI from repo DID + rkey
@@ -230,9 +228,9 @@ async def _run_websocket(daemon):
             backoff = min(backoff * 2, MAX_BACKOFF)
 
 
-def _thread_main(our_did, telemetry_file, atomic_write_fn):
+def _thread_main(our_did, telemetry_file, atomic_write_fn, is_relevant_fn):
     """Entry point for the daemon thread. Creates its own event loop."""
-    daemon = FirehoseDaemon(our_did, telemetry_file, atomic_write_fn)
+    daemon = FirehoseDaemon(our_did, telemetry_file, atomic_write_fn, is_relevant_fn)
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     try:
@@ -243,7 +241,7 @@ def _thread_main(our_did, telemetry_file, atomic_write_fn):
         loop.close()
 
 
-def start(our_did, telemetry_file, atomic_write_fn):
+def start(our_did, telemetry_file, atomic_write_fn, is_relevant_fn):
     """Launch the firehose daemon as a background thread. Returns the
     thread object (caller does not need to join; it is a daemon thread).
 
@@ -251,10 +249,11 @@ def start(our_did, telemetry_file, atomic_write_fn):
         our_did: the agent's DID, so we can detect engagement on our posts.
         telemetry_file: Path to the network_telemetry.json file.
         atomic_write_fn: callable(path, data) for crash-safe JSON writes.
+        is_relevant_fn: callable(text) to detect if text matches the niche.
     """
     t = threading.Thread(
         target=_thread_main,
-        args=(our_did, telemetry_file, atomic_write_fn),
+        args=(our_did, telemetry_file, atomic_write_fn, is_relevant_fn),
         name="firehose-daemon",
         daemon=True,
     )

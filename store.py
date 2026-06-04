@@ -14,8 +14,9 @@ import config
 from config import (
     POST_DECAY, SECTORS, POST_HOOKS, REPLY_HOOKS,
     FOLLOW_ATTRIBUTION_SECONDS, CONTENT_ATTRIBUTION_SECONDS,
-    logger,
+    logger, SOUL
 )
+import re
 
 
 # ==========================================
@@ -67,6 +68,11 @@ class Store:
         self.pinned = es.get("pinned", False)
         self.last_profile_opt_tick = es.get("last_profile_opt_tick", -999)
         self.consecutive_empty_ticks = es.get("consecutive_empty_ticks", 0)
+        
+        self.keyword_map = es.get("keyword_map", SOUL.keyword_map)
+        self.relevance_signals = es.get("relevance_signals", SOUL.relevance_signals)
+        self._compile_relevance_re()
+        
         logger.info(f"      [STATE] bandit={json.dumps(self.bandit)}")
         logger.info(f"      [STATE] ledger={len(self.ledger)} actions, "
                     f"snapshots={len(self.snapshots)}, seen={len(self.seen)}, "
@@ -140,10 +146,20 @@ class Store:
             "trends": self.trends, "pinned": self.pinned,
             "last_profile_opt_tick": self.last_profile_opt_tick,
             "consecutive_empty_ticks": self.consecutive_empty_ticks,
-            "bandit": self.bandit,
-            "ledger": self.ledger,
+            "bandit": self.bandit, "ledger": self.ledger,
             "keyword_telemetry": self.keyword_telemetry,
+            "keyword_map": self.keyword_map,
+            "relevance_signals": self.relevance_signals
         })
+
+    def _compile_relevance_re(self):
+        self.relevance_re = re.compile(
+            r"\b(" + "|".join(re.escape(s) for s in self.relevance_signals) + r")s?\b",
+            re.IGNORECASE,
+        )
+
+    def is_relevant_text(self, text: str) -> bool:
+        return bool(text) and self.relevance_re.search(text) is not None
 
     def update(self, dim, value, reward):
         """Bandit posterior update. reward is clamped into [0, 1]; alpha gets

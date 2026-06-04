@@ -35,6 +35,9 @@ class RateBudget:
         return False
 
 
+import contextlib
+from atproto import exceptions
+
 class CircuitBreaker:
     """CLOSED normal, OPEN blocks network and cools down, then auto-resets."""
     def __init__(self):
@@ -59,6 +62,15 @@ class CircuitBreaker:
             self.consecutive_failures = 0
             self.state = "CLOSED"
             self._persist()
+
+    @contextlib.contextmanager
+    def guard(self, action_name="Action"):
+        try:
+            yield
+            self.record_success()
+        except exceptions.AtProtocolError as e:
+            logger.warning(f"   [FAULT] {action_name} failed: {e}")
+            self.record_failure()
 
     def record_failure(self):
         self.consecutive_failures += 1
