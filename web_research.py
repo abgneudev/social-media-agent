@@ -21,16 +21,15 @@ def _generate_queries(ai_generate, empirical_data):
     prompt = (
         f"You are the Lead Strategist for an autonomous social media agent with the following persona:\n"
         f"{config.PERSONA}\n\n"
-        f"Based on the agent's current empirical platform data, you must formulate TWO Google Search queries to improve its performance.\n\n"
+        f"Based on the agent's current empirical platform data, you must determine your research direction for this cycle and formulate 2-3 Google Search queries to execute your strategy.\n\n"
         f"AGENT'S EMPIRICAL DATA:\n"
         f"{json.dumps(empirical_data, indent=2)}\n\n"
         f"CRITICAL RULE ON CREDIBILITY: You MUST append `site:` operators to your queries to restrict the search ONLY to highly credible known organizations, companies, or institutions relevant to the agent's persona. Use your knowledge to select the most authoritative domains for the specific topic you are querying. Do NOT perform generic open web searches.\n\n"
-        f"QUERY 1 (Platform Tactics): A search query to find recent guides or case studies on audience growth, algorithm tactics, or engagement strategies that address the agent's current situation.\n"
-        f"QUERY 2 (Content Inspiration): A search query to find high-quality articles, concepts, or case studies to share or use as inspiration for content generation, strictly aligned with the agent's persona. Target high-authority concepts.\n\n"
+        f"DIRECTION AUTONOMY: You have full autonomy to decide what the agent needs to learn right now. Do you need to read platform API docs? Do you need to study algorithm mechanics? Do you need to find specific content inspiration for a failing sector? Decide the most critical knowledge gap, state your direction, and formulate queries to fill it.\n\n"
         f"Respond STRICTLY as JSON with exactly two keys:\n"
         f"{{\n"
-        f'  "tactics_query": "...",\n'
-        f'  "inspiration_query": "..."\n'
+        f'  "research_direction": "Brief explanation of your strategy for this research cycle",\n'
+        f'  "queries": ["query 1", "query 2"]\n'
         f"}}"
     )
     raw = ai_generate(prompt)
@@ -79,7 +78,10 @@ def run_daily_research(ai_generate, empirical_data):
         logger.warning("[WEB RESEARCH] Failed to generate queries.")
         return None
         
-    queries = [queries_obj.get("tactics_query"), queries_obj.get("inspiration_query")]
+    direction = queries_obj.get("research_direction", "unknown")
+    logger.info(f"   [WEB RESEARCH] Direction set: {direction}")
+    
+    queries = queries_obj.get("queries", [])
     results = []
     
     for q in queries:

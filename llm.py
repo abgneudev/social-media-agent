@@ -4,8 +4,8 @@ import groq
 import config
 from config import logger
 import serper
-
 import os
+
 class LLMClient:
     def __init__(self, persona):
         self.ai = groq.Groq(api_key=os.environ.get("GROQ_API_KEY"))
@@ -122,6 +122,33 @@ class LLMClient:
                 logger.warning(f"   [FAULT] generation failed ({model}) turn {turn}: {e}")
                 return "{}"
         return "{}"
+
+    def moderate_content(self, text, policy=None):
+        """
+        Dedicated method utilizing Groq's safety models for Trust & Safety workflows.
+        Routes to GPT-OSS-Safeguard-20B for custom policy enforcement.
+        """
+        model = "openai/gpt-oss-safeguard-20b"
+        
+        messages = []
+        if policy:
+            messages.append({"role": "system", "content": policy})
+        
+        messages.append({"role": "user", "content": text})
+
+        try:
+            resp = self.ai.chat.completions.create(
+                model=model,
+                messages=messages,
+                response_format={"type": "json_object"}
+            )
+            msg = resp.choices[0].message
+            ans = msg.content.strip() if msg.content else "{}"
+            return self.parse_json(ans, fallback_dict={"is_safe": False})
+        except Exception as e:
+            logger.warning(f"   [FAULT] Safeguard moderation failed: {e}")
+            # Fail closed for security
+            return {"is_safe": False}
 
     def parse_json(self, raw_text, extract_key=None, fallback_dict=None):
         """

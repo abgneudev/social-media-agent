@@ -20,7 +20,7 @@ from groq import Groq
 import config
 from config import (
     logger, content_hash, is_relevant_text,
-    NAME_TEXT, BIO_TEXT, PERSONA,
+    NAME_TEXT, BIO_TEXT,
     SECTORS, POST_HOOKS, REPLY_HOOKS,
     POST_HOOK_GUIDANCE, REPLY_HOOK_GUIDANCE,
      
@@ -40,6 +40,8 @@ import klipy
 import serper
 import web_research
 import utils
+import warden
+import memory
 
 
 # ==========================================
@@ -134,13 +136,13 @@ class FollowerEngine:
         self.net = BlueskyAdapter(handle, password)
 
         import llm
-        self.llm = llm.LLMClient(PERSONA)
+        self.llm = llm.LLMClient(config.PERSONA)
         self.breaker = CircuitBreaker()
         self.rate = {k: RateBudget(v["capacity"], v["refill_per_sec"])
                      for k, v in RATE_BUDGETS.items()}
         self.sector_activity = {}
         self.sector_posts = {}      # cache of fetched posts per sector, reused in _act
-        self.persona = PERSONA
+        self.persona = config.PERSONA
         # niche_insights blob is re-read at tick boundaries (cheap, atomic
         # read). Cached here so the variant prompt and sampler do not race
         # with an in-flight analyzer write.
@@ -577,8 +579,9 @@ class FollowerEngine:
         if t == 1 or t % ANALYZER_CADENCE_TICKS == 0:
             self._run_analyzer()
 
-        # Web research pass
-        if t - self.store.last_research_tick >= 500:
+        # Web research pass: Exponential backoff
+        # Runs frequently early on (e.g., 8, 64 ticks) and scales up to 500 max.
+        if t - self.store.last_research_tick >= self.store.research_interval:
             try:
                 empirical_data = {
                     "bandit": self.store.bandit,
@@ -587,6 +590,7 @@ class FollowerEngine:
                 }
                 web_research.run_daily_research(lambda prompt: self._generate(prompt, dedup=False), empirical_data)
                 self.store.last_research_tick = t
+                self.store.research_interval = min(500, int(self.store.research_interval * 1.5))
             except Exception as e:
                 logger.warning(f"   [WEB RESEARCH] run raised: {e}")
 
@@ -605,6 +609,7 @@ class FollowerEngine:
                 if meta_critic.evaluate_strategy(lambda prompt: self._generate(prompt, dedup=False), self.store.bandit):
                     config.reload_dynamic_strategy()
                     self.persona = config.PERSONA
+                    self.llm.persona = config.PERSONA
             except Exception as e:
                 logger.warning(f"   [META-CRITIC] run raised: {e}")
 
@@ -1155,16 +1160,18 @@ class FollowerEngine:
             filtered_cands = []
             for c in cands:
                 cid = getattr(c, "cid", "")
-                action = results.get(cid, "ignore")
+                action = results.get(cid, "drop")
                 if action == "mute":
                     self.net.mute_actor(c.author.did)
                     self.store.log_action("mute", "n/a", "n/a", target_did=c.author.did, learnable=False)
                 elif action == "less":
                     self.net.send_interaction(c.uri, "app.bsky.feed.defs#requestLess")
+                elif action == "drop":
+                    pass
                 elif action == "more":
                     self.net.send_interaction(c.uri, "app.bsky.feed.defs#requestMore")
                     filtered_cands.append(c)
-                else:
+                elif action == "keep":
                     filtered_cands.append(c)
             cands = filtered_cands
             
@@ -1275,32 +1282,55 @@ class FollowerEngine:
         if not posts:
             return {}
             
-        posts_context = ""
+        # 1. Pre-filter feed candidates using Groq Safeguard to instantly drop unsafe content
+        safe_posts = []
+        pre_filtered_results = {}
         for p in posts:
-            text = (getattr(p.record, "text", "") or "")[:200]
-            handle = getattr(p.author, "handle", "") or ""
+            text = getattr(p.record, "text", "") or ""
             cid = getattr(p, "cid", "")
             if not text or not cid:
                 continue
+                
+            eval_res = self.llm.moderate_content(text, policy=warden.CUSTOM_POLICY)
+            if not eval_res or not eval_res.get("is_safe", False):
+                logger.info(f"   [CURATION-SAFEGUARD] Post {cid} flagged unsafe by policy. Dropping instantly.")
+                pre_filtered_results[cid] = "drop"
+            else:
+                safe_posts.append(p)
+                
+        if not safe_posts:
+            return pre_filtered_results
+            
+        posts_context = ""
+        for p in safe_posts:
+            text = (getattr(p.record, "text", "") or "")[:200]
+            handle = getattr(p.author, "handle", "") or ""
+            cid = getattr(p, "cid", "")
             posts_context += f"- CID: {cid}\n  Author: @{handle}\n  Text: {text}\n\n"
             
         if not posts_context:
-            return {}
+            return pre_filtered_results
             
+        # 2. Nuanced Persona-alignment grading on safe candidates
         prompt = (
             f"You are an autonomous network analyst filtering feed content for quality.\n"
             f"Our persona is:\n{config.PERSONA}\n\n"
             f"Evaluate the following posts:\n{posts_context}\n"
-            f"Does the post align with our technical rigor, or is it garbage/spam/engagement-farming?\n"
-            f"Respond strictly as a JSON object mapping the CID (exact string) to an action: 'more', 'less', 'mute', or 'ignore'.\n"
-            f"- 'more': high quality, deeply intellectual, highly aligned.\n"
-            f"- 'ignore': average, neutral, or slightly off-topic. No algorithmic feedback needed.\n"
-            f"- 'less': generic tech-bro advice, bloat, highly annoying formatting, or irrelevant.\n"
+            f"Does the post align with our technical rigor, or is it garbage/spam/engagement-farming/sales?\n"
+            f"Respond strictly as a JSON object mapping the CID (exact string) to an action: 'more', 'keep', 'drop', 'less', or 'mute'.\n"
+            f"- 'more': high quality, deeply intellectual, highly aligned to our specific persona.\n"
+            f"- 'keep': relevant and acceptable, but not algorithmic-feedback worthy.\n"
+            f"- 'drop': random keyword match, off-topic, sales ad, or totally irrelevant. Do not interact with it.\n"
+            f"- 'less': generic tech-bro advice, bloat, highly annoying formatting.\n"
             f"- 'mute': obvious spam, engagement farmers, crypto scammers, NSFW.\n"
-            f'{{"cid1": "more", "cid2": "less", "cid3": "mute", "cid4": "ignore"}}'
+            f'{{"cid1": "more", "cid2": "keep", "cid3": "drop", "cid4": "less"}}'
         )
         raw = self._generate(prompt, dedup=False, model_purpose="fast")
-        return self.llm.parse_json(raw, fallback_dict={})
+        nuanced_results = self.llm.parse_json(raw, fallback_dict={})
+        
+        # Merge pre-filtered drop decisions with the granular pass
+        pre_filtered_results.update(nuanced_results)
+        return pre_filtered_results
 
     def _verify_profiles_batch(self, profiles):
         if not profiles:
@@ -1857,8 +1887,6 @@ class FollowerEngine:
 
     # ---- reply ----
     def _helpful_reply(self, sector, hook, candidates, keyword=None):
-        import warden
-        import memory
         batch = ""
         safe_candidates = []
         for c in candidates:
@@ -1870,7 +1898,7 @@ class FollowerEngine:
                 continue
                 
             # Screen the text using the Warden
-            sanitized_text = warden.sanitize_input(lambda prompt: self._generate(prompt, dedup=False), raw_text)
+            sanitized_text = warden.sanitize_input(self.llm, raw_text)
             if not sanitized_text:
                 logger.warning(f"   [WARDEN] Skipped malicious or invalid candidate from @{c.author.handle}")
                 continue
