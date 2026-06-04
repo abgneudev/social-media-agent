@@ -102,6 +102,13 @@ STATUS_FILE = STATE_DIR / "status.json"
 # bandit run exactly as without it.
 NICHE_INSIGHTS_FILE = STATE_DIR / "niche_insights.json"
 KEYWORD_TELEMETRY_FILE = STATE_DIR / "keyword_telemetry.json"
+# Written by the firehose daemon (background thread). The main engine reads
+# this file to learn which of our posts are gaining traction in real-time and
+# who is engaging. Graceful absence: when missing, the engine runs without
+# network-level signals, exactly as before.
+NETWORK_TELEMETRY_FILE = STATE_DIR / "network_telemetry.json"
+# Tracks the at:// URI of the curated list the engine creates and populates.
+CURATED_LIST_FILE = STATE_DIR / "curated_list.json"
 
 
 # ==========================================

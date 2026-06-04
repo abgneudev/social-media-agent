@@ -32,7 +32,7 @@ from config import (
     TRACTION_REWARD_CAP,
     ANALYZER_CADENCE_TICKS, EXPLORATION_NUDGE_MAX, TOPIC_ANGLES_PER_PROMPT,
 )
-from store import Store, atomic_write_json
+from store import Store, atomic_write_json, load_json
 from governance import RateBudget, CircuitBreaker
 from adapter import BlueskyAdapter
 import analyzer
@@ -140,8 +140,17 @@ class FollowerEngine:
         # read). Cached here so the variant prompt and sampler do not race
         # with an in-flight analyzer write.
         self._insights = None
+        # Network telemetry from the firehose daemon (background thread).
+        # Read once per tick; None if the daemon has not flushed yet.
+        self._network_telemetry = None
+        # Registry of all lists the agent has created, loaded from disk.
+        # Each entry: {name, description, uri, created_ts, member_count}
+        self._list_registry = self._load_list_registry()
+        self._list_members = set()  # DIDs already added to any list this session
         self.known_follows = self.net.get_all_follows()
         logger.info(f"      [NET] loaded {len(self.known_follows)} known follow(s) for deduplication.")
+        if self._list_registry:
+            logger.info(f"      [LIST] loaded {len(self._list_registry)} existing list(s) from registry.")
 
     # ---- kill switch ----
     def _halted(self) -> bool:
@@ -149,6 +158,196 @@ class FollowerEngine:
             return config.KILL_SWITCH_FILE.read_text(encoding="utf-8").strip().upper() == "HALTED"
         except FileNotFoundError:
             return False
+
+    # ---- autonomous list management ----
+    def _load_list_registry(self):
+        """Load the list registry from disk. Returns a list of dicts, each
+        describing a list the agent previously created."""
+        data = load_json(config.CURATED_LIST_FILE, None)
+        if isinstance(data, list):
+            return data
+        # Migrate from the old single-list format
+        if isinstance(data, dict) and data.get("uri"):
+            registry = [{
+                "name": "Curated List",
+                "description": "",
+                "uri": data["uri"],
+                "created_ts": data.get("created_ts", time.time()),
+                "member_count": 0,
+            }]
+            self._save_list_registry(registry)
+            return registry
+        return []
+
+    def _save_list_registry(self, registry=None):
+        """Persist the list registry to disk."""
+        atomic_write_json(config.CURATED_LIST_FILE, registry or self._list_registry)
+
+    def _create_list(self, name, description):
+        """Create a new list and register it. Returns the URI or None."""
+        uri = self.net.create_list(name, description)
+        if uri:
+            entry = {
+                "name": name,
+                "description": description,
+                "uri": uri,
+                "created_ts": time.time(),
+                "member_count": 0,
+            }
+            self._list_registry.append(entry)
+            self._save_list_registry()
+            logger.info(f"   [LIST] agent created new list: '{name}'")
+        return uri
+
+    def _add_to_list(self, list_uri, target_did):
+        """Add a user to a list. Deduplicates in-session."""
+        if target_did in self._list_members or target_did == self.net.did:
+            return False
+        if self.net.add_to_list(list_uri, target_did):
+            self._list_members.add(target_did)
+            # Update member count in registry
+            for entry in self._list_registry:
+                if entry["uri"] == list_uri:
+                    entry["member_count"] = entry.get("member_count", 0) + 1
+                    self._save_list_registry()
+                    break
+            return True
+        return False
+
+    # ---- network telemetry reader ----
+    def _read_network_telemetry(self):
+        """Read the firehose daemon's telemetry file. Graceful absence:
+        returns None if the file does not exist or is malformed."""
+        blob = load_json(config.NETWORK_TELEMETRY_FILE, None)
+        if isinstance(blob, dict):
+            return blob
+        return None
+
+    def _autonomous_curation(self):
+        """LLM-driven list curation. The agent analyzes firehose telemetry
+        and its own engagement data, then decides what lists to create or
+        populate. This is the agent's full authority over its list strategy."""
+        if not self._network_telemetry:
+            return
+
+        engagers = self._network_telemetry.get("our_engagers", [])
+        velocity_posts = self._network_telemetry.get("velocity_posts", [])
+        if not engagers and not velocity_posts:
+            return
+
+        # Build profiles for engagers (cap API calls)
+        engager_profiles = []
+        for eng in engagers[:8]:
+            did = eng.get("did")
+            if not did or did in self._list_members or did == self.net.did:
+                continue
+            try:
+                profile = self.net.get_profile(did)
+                if not profile:
+                    continue
+                followers = int(getattr(profile, "followers_count", 0) or 0)
+                posts = int(getattr(profile, "posts_count", 0) or 0)
+                if followers < 10 or posts < 5:
+                    continue  # Skip bots/empty accounts
+                bio = (getattr(profile, "description", "") or "")[:120]
+                handle = getattr(profile, "handle", "unknown")
+                engager_profiles.append({
+                    "did": did, "handle": handle,
+                    "followers": followers, "posts": posts, "bio": bio,
+                })
+            except Exception:
+                continue
+
+        if not engager_profiles:
+            return
+
+        # Build context for the LLM
+        existing_lists_desc = "None yet." if not self._list_registry else "\n".join(
+            f"- \"{entry['name']}\" ({entry.get('member_count', 0)} members): {entry.get('description', '')[:80]}"
+            for entry in self._list_registry
+        )
+        velocity_desc = ""
+        if velocity_posts:
+            samples = velocity_posts[:5]
+            velocity_desc = "Recent high-velocity posts on the network:\n" + "\n".join(
+                f"- ({v.get('likes_in_window', 0)} likes in {v.get('window_seconds', 0)}s): {v.get('text', '')[:100]}"
+                for v in samples
+            )
+
+        engager_desc = "\n".join(
+            f"- @{p['handle']} ({p['followers']} followers, {p['posts']} posts): {p['bio']}"
+            for p in engager_profiles
+        )
+
+        prompt = (
+            f"You are the curation strategist for an autonomous social media agent focused on "
+            f"UX/UI design, frontend engineering, and adjacent disciplines.\n\n"
+            f"YOUR EXISTING LISTS:\n{existing_lists_desc}\n\n"
+            f"PEOPLE WHO RECENTLY ENGAGED WITH OUR CONTENT:\n{engager_desc}\n\n"
+            f"{velocity_desc}\n\n"
+            f"AVAILABLE ACTIONS:\n"
+            f"1. create_list: Create a brand new curated list with a name and description\n"
+            f"2. add_to_list: Add a user (by handle) to an existing list\n"
+            f"3. skip: Do nothing this cycle\n\n"
+            f"RULES:\n"
+            f"- Only create a new list if no existing list fits the users' profiles\n"
+            f"- List names should be specific and discoverable (e.g., 'Motion Design Pioneers', "
+            f"'Accessibility Advocates', 'Systems Thinkers in Design')\n"
+            f"- Only add users who genuinely fit a list's theme\n"
+            f"- You may issue multiple actions in one response\n"
+            f"- Max 3 actions per cycle\n\n"
+            f'Respond strictly as JSON: {{"actions": ['
+            f'{{"type": "create_list", "name": "...", "description": "..."}}, '
+            f'{{"type": "add_to_list", "list_name": "...", "handle": "..."}}, '
+            f'{{"type": "skip"}}]}}'
+        )
+
+        raw = self._generate(prompt, dedup=False)
+        if not raw:
+            return
+
+        try:
+            actions = json.loads(raw).get("actions", [])
+        except Exception as e:
+            logger.warning(f"   [CURATE] LLM response malformed: {e}")
+            return
+
+        for action in actions[:3]:
+            action_type = action.get("type")
+
+            if action_type == "create_list":
+                name = action.get("name", "").strip()
+                desc = action.get("description", "").strip()
+                if name and len(name) <= 64:
+                    self._create_list(name, desc[:300])
+
+            elif action_type == "add_to_list":
+                list_name = action.get("list_name", "").strip()
+                handle = action.get("handle", "").strip().lstrip("@")
+                if not list_name or not handle:
+                    continue
+                # Find the list by name
+                target_list = None
+                for entry in self._list_registry:
+                    if entry["name"].lower() == list_name.lower():
+                        target_list = entry
+                        break
+                if not target_list:
+                    logger.info(f"   [CURATE] list '{list_name}' not found, skipping add")
+                    continue
+                # Find the DID from our profiled engagers
+                target_did = None
+                for p in engager_profiles:
+                    if p["handle"].lower() == handle.lower():
+                        target_did = p["did"]
+                        break
+                if target_did:
+                    if self._add_to_list(target_list["uri"], target_did):
+                        logger.info(f"   [CURATE] added @{handle} to '{list_name}'")
+
+            elif action_type == "skip":
+                logger.info("   [CURATE] agent decided to skip curation this cycle")
+                break
 
     # ---- bootstrap ----
     def bootstrap(self):
@@ -263,6 +462,8 @@ class FollowerEngine:
         # any in-flight analyzer write is picked up by the next pass without
         # racing the read.
         self._insights = analyzer.load_insights()
+        # Network telemetry from the firehose daemon (background thread).
+        self._network_telemetry = self._read_network_telemetry()
 
         if not self._sense():
             return
@@ -287,6 +488,13 @@ class FollowerEngine:
             
         if t % 15 == 0:
             self._run_evolution()
+
+        # Autonomous list curation every 10 ticks (LLM-driven)
+        if t % 10 == 0:
+            try:
+                self._autonomous_curation()
+            except Exception as e:
+                logger.warning(f"   [CURATE] autonomous curation failed: {e}")
             
         self.store.save_engine()
 

@@ -88,6 +88,25 @@ def main():
     engine = FollowerEngine(handle, password)
     engine.bootstrap()
 
+    # Launch the firehose daemon as a background thread. It writes
+    # network_telemetry.json which the engine reads at tick boundaries.
+    # If the websockets package is missing or the connection fails, the
+    # daemon thread logs and retries; the main loop is never affected.
+    try:
+        import firehose_daemon
+        from store import atomic_write_json
+        firehose_daemon.start(
+            our_did=engine.net.did,
+            telemetry_file=config.NETWORK_TELEMETRY_FILE,
+            atomic_write_fn=atomic_write_json,
+        )
+    except ImportError:
+        logger.warning("[SYSTEM] firehose_daemon not available (missing websockets?). "
+                       "Engine will run without network telemetry.")
+    except Exception as e:
+        logger.warning(f"[SYSTEM] firehose daemon failed to start: {e}. "
+                       f"Engine will run without network telemetry.")
+
     # --- INJECT THIS TRAP ---
     def handle_sigterm(signum, frame):
         logger.info("[SYSTEM] SIGTERM received from systemd. Saving state and shutting down.")

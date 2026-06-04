@@ -262,3 +262,72 @@ class BlueskyAdapter:
             logger.info("      [PROFILE] pinned anchor post.")
         except Exception as e:
             logger.warning(f"      [PROFILE] pin skipped (version/permission): {e}")
+
+    # ---- list management ----
+    def create_list(self, name, description="") -> str | None:
+        """Create a curated list (app.bsky.graph.list). Returns the at:// URI
+        of the new list, or None on failure. Lists are public and notify users
+        when they are added, making them a powerful inbound-traffic tool."""
+        try:
+            from datetime import datetime, timezone
+            record = {
+                "name": name,
+                "purpose": "app.bsky.graph.defs#curatelist",
+                "description": description,
+                "createdAt": datetime.now(timezone.utc).isoformat(),
+            }
+            resp = self.client.com.atproto.repo.create_record({
+                "repo": self.did,
+                "collection": "app.bsky.graph.list",
+                "record": record,
+            })
+            uri = getattr(resp, "uri", None)
+            logger.info(f"      [LIST] created list '{name}': {uri}")
+            return uri
+        except Exception as e:
+            logger.warning(f"      [LIST] create_list failed: {e}")
+            return None
+
+    def add_to_list(self, list_uri, target_did) -> bool:
+        """Add a user to a curated list (app.bsky.graph.listitem).
+        Returns True on success, False on failure. Idempotent: Bluesky
+        silently ignores duplicates."""
+        try:
+            from datetime import datetime, timezone
+            record = {
+                "subject": target_did,
+                "list": list_uri,
+                "createdAt": datetime.now(timezone.utc).isoformat(),
+            }
+            self.client.com.atproto.repo.create_record({
+                "repo": self.did,
+                "collection": "app.bsky.graph.listitem",
+                "record": record,
+            })
+            logger.info(f"      [LIST] added {target_did[:30]} to list")
+            return True
+        except Exception as e:
+            logger.warning(f"      [LIST] add_to_list failed: {e}")
+            return False
+
+    # ---- engagement lists ----
+    def get_likers(self, uri, limit=50) -> list:
+        """Fetch the list of users who liked a post. Returns a list of
+        profile-like objects with .did, .handle, .followers_count, etc."""
+        try:
+            resp = self.client.app.bsky.feed.get_likes({"uri": uri, "limit": limit})
+            return [item.actor for item in getattr(resp, "likes", []) if hasattr(item, "actor")]
+        except Exception as e:
+            logger.warning(f"      [TELEMETRY] get_likers failed: {e}")
+            return []
+
+    def get_reposters(self, uri, limit=50) -> list:
+        """Fetch the list of users who reposted a post. Returns a list of
+        profile-like objects."""
+        try:
+            resp = self.client.app.bsky.feed.get_reposted_by({"uri": uri, "limit": limit})
+            return list(getattr(resp, "reposted_by", []) or [])
+        except Exception as e:
+            logger.warning(f"      [TELEMETRY] get_reposters failed: {e}")
+            return []
+
