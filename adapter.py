@@ -135,6 +135,19 @@ class BlueskyAdapter:
         except Exception as e:
             logger.warning(f"   [MUTE] Failed to mute {did}: {e}")
 
+    def send_interaction(self, item_uri, interaction_type, feed_uri=None):
+        try:
+            feed = feed_uri or "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot"
+            self.client.app.bsky.feed.send_interactions(
+                data={
+                    "feed": feed,
+                    "interactions": [{"item": item_uri, "event": interaction_type}]
+                }
+            )
+            logger.info(f"   [FEEDBACK] Sent {interaction_type.split('#')[-1]} for {item_uri}")
+        except Exception as e:
+            logger.warning(f"   [FEEDBACK] Failed to send interaction: {e}")
+
     def reply(self, target, text) -> str:
         root = (target.record.reply.root
                 if getattr(target.record, "reply", None)

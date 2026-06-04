@@ -578,7 +578,7 @@ class FollowerEngine:
             self._run_analyzer()
 
         # Web research pass
-        if t == 2 or t % 100 == 0 or not self.store.trends:
+        if t - self.store.last_research_tick >= 500:
             try:
                 empirical_data = {
                     "bandit": self.store.bandit,
@@ -586,6 +586,7 @@ class FollowerEngine:
                     "followers": self.store.snapshots[-1]["followers"] if self.store.snapshots else 0
                 }
                 web_research.run_daily_research(lambda prompt: self._generate(prompt, dedup=False), empirical_data)
+                self.store.last_research_tick = t
             except Exception as e:
                 logger.warning(f"   [WEB RESEARCH] run raised: {e}")
 
@@ -1147,6 +1148,27 @@ class FollowerEngine:
             
         import heapq
         cands = heapq.nlargest(10, cands, key=utils.get_total_engagement)
+        
+        # Live Algorithmic Curation
+        if cands and self.net:
+            logger.info("   [CURATION] analyzing candidate batch for feed feedback...")
+            results = self._verify_posts_batch(cands)
+            filtered_cands = []
+            for c in cands:
+                cid = getattr(c, "cid", "")
+                action = results.get(cid, "ignore")
+                if action == "mute":
+                    self.net.mute_actor(c.author.did)
+                    self.store.log_action("mute", target_did=c.author.did, learnable=False)
+                elif action == "less":
+                    self.net.send_interaction(c.uri, "app.bsky.feed.defs#requestLess")
+                elif action == "more":
+                    self.net.send_interaction(c.uri, "app.bsky.feed.defs#requestMore")
+                    filtered_cands.append(c)
+                else:
+                    filtered_cands.append(c)
+            cands = filtered_cands
+            
         return cands, keyword
 
     def _is_relevant_content(self, post) -> bool:
@@ -1250,7 +1272,37 @@ class FollowerEngine:
             logger.warning(f"   [FAULT] repost failed: {e}")
             self.breaker.record_failure()
 
-    # ---- follow ----
+    def _verify_posts_batch(self, posts):
+        if not posts:
+            return {}
+            
+        posts_context = ""
+        for p in posts:
+            text = (getattr(p.record, "text", "") or "")[:200]
+            handle = getattr(p.author, "handle", "") or ""
+            cid = getattr(p, "cid", "")
+            if not text or not cid:
+                continue
+            posts_context += f"- CID: {cid}\n  Author: @{handle}\n  Text: {text}\n\n"
+            
+        if not posts_context:
+            return {}
+            
+        prompt = (
+            f"You are an autonomous network analyst filtering feed content for quality.\n"
+            f"Our persona is:\n{config.PERSONA}\n\n"
+            f"Evaluate the following posts:\n{posts_context}\n"
+            f"Does the post align with our technical rigor, or is it garbage/spam/engagement-farming?\n"
+            f"Respond strictly as a JSON object mapping the CID (exact string) to an action: 'more', 'less', 'mute', or 'ignore'.\n"
+            f"- 'more': high quality, deeply intellectual, highly aligned.\n"
+            f"- 'ignore': average, neutral, or slightly off-topic. No algorithmic feedback needed.\n"
+            f"- 'less': generic tech-bro advice, bloat, highly annoying formatting, or irrelevant.\n"
+            f"- 'mute': obvious spam, engagement farmers, crypto scammers, NSFW.\n"
+            f'{{"cid1": "more", "cid2": "less", "cid3": "mute", "cid4": "ignore"}}'
+        )
+        raw = self._generate(prompt, dedup=False, model_purpose="fast")
+        return self.llm.parse_json(raw, fallback_dict={})
+
     def _verify_profiles_batch(self, profiles):
         if not profiles:
             return {}

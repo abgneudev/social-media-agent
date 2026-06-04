@@ -67,6 +67,7 @@ class Store:
         self.trends = es.get("trends", {})
         self.pinned = es.get("pinned", False)
         self.last_profile_opt_tick = es.get("last_profile_opt_tick", -999)
+        self.last_research_tick = es.get("last_research_tick", -999)
         self.consecutive_empty_ticks = es.get("consecutive_empty_ticks", 0)
         
         self.keyword_map = es.get("keyword_map", SOUL.keyword_map)
@@ -145,6 +146,7 @@ class Store:
             "phase": self.phase, "ewma_growth": self.ewma_growth,
             "trends": self.trends, "pinned": self.pinned,
             "last_profile_opt_tick": self.last_profile_opt_tick,
+            "last_research_tick": self.last_research_tick,
             "consecutive_empty_ticks": self.consecutive_empty_ticks,
             "bandit": self.bandit, "ledger": self.ledger,
             "keyword_telemetry": self.keyword_telemetry,
