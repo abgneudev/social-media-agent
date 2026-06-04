@@ -140,6 +140,8 @@ class FollowerEngine:
         # read). Cached here so the variant prompt and sampler do not race
         # with an in-flight analyzer write.
         self._insights = None
+        self.known_follows = self.net.get_all_follows()
+        logger.info(f"      [NET] loaded {len(self.known_follows)} known follow(s) for deduplication.")
 
     # ---- kill switch ----
     def _halted(self) -> bool:
@@ -285,6 +287,8 @@ class FollowerEngine:
             
         if t % 15 == 0:
             self._run_evolution()
+            
+        self.store.save_engine()
 
     def _run_analyzer(self):
         """One analyzer pass guarded by the same kill switch and breaker
@@ -685,6 +689,7 @@ class FollowerEngine:
             posts = self.sector_posts.get(sector, [])
         cands = [c for c in posts
                  if getattr(c.author, "did", None) != self.net.did
+                 and getattr(c.author, "did", None) not in self.known_follows
                  and not self.store.already_acted_on(c.author.did)
                  and self._is_relevant_content(c)]
         return cands, keyword
@@ -806,8 +811,9 @@ class FollowerEngine:
             self.net.follow(target.author.did)
             self.breaker.record_success()
             self.store.mark_seen(target.author.did)
+            self.known_follows.add(target.author.did)
             self.store.log_action("follow", sector, hook,
-                                  target_did=target.author.did, target_handle=handle)
+                                  target_did=target.author.did, target_handle=handle, keyword=keyword)
             self._mark_action("follow", target_handle=handle,
                               target_did=target.author.did)
             logger.info(f"   [FOLLOW] @{handle} (score={best_score:.2f}, awaiting follow-back)")
@@ -899,6 +905,7 @@ class FollowerEngine:
             try:
                 self.net.follow(did)
                 self.store.mark_seen(f"fb:{did}")
+                self.known_follows.add(did)
                 self.breaker.record_success()
                 done += 1
                 self._mark_action("follow_back", target_did=did)

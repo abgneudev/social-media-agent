@@ -60,6 +60,23 @@ class BlueskyAdapter:
             logger.warning(f"      [FAULT] recent_followers: {e}")
             return []
 
+    def get_all_follows(self) -> set:
+        """Fetch all DIDs the agent is currently following."""
+        follows = set()
+        cursor = None
+        try:
+            while True:
+                resp = self.client.get_follows(actor=self.did, limit=100, cursor=cursor)
+                for f in getattr(resp, "follows", []) or []:
+                    if hasattr(f, "did"):
+                        follows.add(f.did)
+                cursor = getattr(resp, "cursor", None)
+                if not cursor:
+                    break
+        except Exception as e:
+            logger.warning(f"      [FAULT] get_all_follows failed: {e}")
+        return follows
+
     # writes
     # Idempotency notes:
     # - like() and follow() are naturally idempotent on Bluesky. Re-liking a

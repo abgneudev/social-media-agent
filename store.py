@@ -51,13 +51,14 @@ def load_json(filepath, default):
 # ==========================================
 class Store:
     def __init__(self):
-        self.bandit = self._load_bandit()
-        self.ledger = load_json(config.ACTION_LEDGER_FILE, [])
+        es = load_json(config.ENGINE_STATE_FILE, {})
+        self.bandit = self._load_bandit(es.get("bandit", None))
+        self.ledger = es.get("ledger", [])
+        self.keyword_telemetry = es.get("keyword_telemetry", {})
+        
         self.snapshots = load_json(config.SNAPSHOT_FILE, [])
         self.seen = set(load_json(config.SEEN_FILE, []))
         self.pending = load_json(config.PENDING_WRITES_FILE, [])
-        self.keyword_telemetry = load_json(config.KEYWORD_TELEMETRY_FILE, {})
-        es = load_json(config.ENGINE_STATE_FILE, {})
         self.tick = es.get("tick", 0)
         self.anchor_posts = es.get("anchor_posts", 0)
         self.phase = es.get("phase", "bootstrap")
@@ -71,7 +72,7 @@ class Store:
                     f"snapshots={len(self.snapshots)}, seen={len(self.seen)}, "
                     f"pending={len(self.pending)}")
 
-    def _load_bandit(self):
+    def _load_bandit(self, loaded):
         """Load bandit state and migrate to the current arm vocabulary.
 
         Arms in both old and new POST_HOOKS / SECTORS / REPLY_HOOKS keep
@@ -82,13 +83,11 @@ class Store:
         cleanup, deprecated hooks would persist in the JSON forever even
         though _decide never samples them.
         """
-        loaded = load_json(config.BANDIT_STATE_FILE, None)
         fresh = {dim: {v: {"alpha": 1.0, "beta": 1.0} for v in vals}
                  for dim, vals in (("sector", SECTORS),
                                    ("post_hook", POST_HOOKS),
                                    ("reply_hook", REPLY_HOOKS))}
         if loaded is None:
-            atomic_write_json(config.BANDIT_STATE_FILE, fresh)
             return fresh
         for dim, vals in fresh.items():
             loaded.setdefault(dim, {})
@@ -99,15 +98,15 @@ class Store:
                 del loaded[dim][a]
         for stale in [k for k in loaded if k not in fresh]:
             del loaded[stale]
-        atomic_write_json(config.BANDIT_STATE_FILE, loaded)
         return loaded
 
-    def save_bandit(self):  atomic_write_json(config.BANDIT_STATE_FILE, self.bandit)
-    def save_ledger(self):  atomic_write_json(config.ACTION_LEDGER_FILE, self.ledger)
+    def save_bandit(self):  self.save_engine()
+    def save_ledger(self):  self.save_engine()
+    def save_keyword_telemetry(self): self.save_engine()
+    
     def save_snapshots(self): atomic_write_json(config.SNAPSHOT_FILE, self.snapshots)
     def save_seen(self):    atomic_write_json(config.SEEN_FILE, sorted(self.seen))
     def save_pending(self): atomic_write_json(config.PENDING_WRITES_FILE, self.pending)
-    def save_keyword_telemetry(self): atomic_write_json(config.KEYWORD_TELEMETRY_FILE, self.keyword_telemetry)
 
     def add_pending(self, entry):
         """Persist a write intent BEFORE the network call. Survives a crash
@@ -133,6 +132,9 @@ class Store:
             "trends": self.trends, "pinned": self.pinned,
             "last_profile_opt_tick": self.last_profile_opt_tick,
             "consecutive_empty_ticks": self.consecutive_empty_ticks,
+            "bandit": self.bandit,
+            "ledger": self.ledger,
+            "keyword_telemetry": self.keyword_telemetry,
         })
 
     def update(self, dim, value, reward):
