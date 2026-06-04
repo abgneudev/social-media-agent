@@ -22,7 +22,7 @@ else:
     print("[FAIL] Klipy returned None")
 
 print("\n=== SERPER IMAGES TEST ===")
-img_url = serper.search_images("dashboard UI design dribbble")
+img_url = serper.search_images("nature photography")
 if img_url:
     print(f"[SUCCESS] Serper Images returned: {img_url}")
 else:

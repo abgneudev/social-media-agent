@@ -152,6 +152,76 @@ class FollowerEngine:
         logger.info(f"      [NET] loaded {len(self.known_follows)} known follow(s) for deduplication.")
         if self._list_registry:
             logger.info(f"      [LIST] loaded {len(self._list_registry)} existing list(s) from registry.")
+            
+        self._rebuild_telemetry()
+        self._bootstrap_taxonomy()
+
+    def _rebuild_telemetry(self):
+        """Restore config.KEYWORD_MAP and config.RELEVANCE_SIGNALS from telemetry
+        so the agent doesn't forget its dynamically learned vocabulary on reboot."""
+        rebuilt_count = 0
+        for kw, stats in self.store.keyword_telemetry.items():
+            if not stats.get("active", True):
+                continue
+            sector = stats["sector"]
+            if sector in config.KEYWORD_MAP and kw not in config.KEYWORD_MAP[sector]:
+                config.KEYWORD_MAP[sector].append(kw)
+                rebuilt_count += 1
+            if kw not in config.RELEVANCE_SIGNALS:
+                config.RELEVANCE_SIGNALS.append(kw)
+        
+        if rebuilt_count > 0:
+            config.RELEVANCE_RE = re.compile(
+                r"\b(" + "|".join(re.escape(s) for s in config.RELEVANCE_SIGNALS) + r")s?\b",
+                re.IGNORECASE,
+            )
+            logger.info(f"      [BOOTSTRAP] rebuilt {rebuilt_count} active keywords from local telemetry.")
+
+    def _bootstrap_taxonomy(self):
+        """If any sector has zero keywords in memory, autonomously ping the LLM
+        to build a 10-keyword starting vocabulary using the Persona."""
+        bootstrapped = False
+        for sector in config.SECTORS:
+            if not config.KEYWORD_MAP[sector]:
+                logger.info(f"      [BOOTSTRAP] sector '{sector}' is empty. Generating taxonomy autonomously...")
+                prompt = (
+                    f"You are an autonomous taxonomy generator for a social media agent.\n"
+                    f"Our persona is:\n{config.PERSONA}\n\n"
+                    f"Generate exactly 10 highly specific, modern, and discoverable search keywords "
+                    f"that intersect our persona with the topic of '{sector}'. "
+                    f"At least 3 of these keywords MUST explicitly target top organizations, authoritative brands, or high-tier institutional pages. "
+                    f"CRITICAL DIVERSITY: Do not anchor on obvious examples like Google or Figma. You must continuously explore the entire tech ecosystem (e.g., Stripe, Linear, Anthropic, NN/g, specialized research labs, etc). "
+                    f"Do not return generic terms. Ensure they are phrases people actually use.\n"
+                    f"Respond strictly as JSON:\n"
+                    f'{{"keywords": ["kw1", "kw2", "kw3", "kw4", "kw5", "kw6", "kw7", "kw8", "kw9", "kw10"]}}'
+                )
+                raw = self._generate(prompt, dedup=False)
+                if raw:
+                    try:
+                        kws = json.loads(raw).get("keywords", [])
+                        added = 0
+                        for kw in kws:
+                            kw = kw.strip().lower()
+                            if kw and kw not in config.KEYWORD_MAP[sector]:
+                                config.KEYWORD_MAP[sector].append(kw)
+                                config.RELEVANCE_SIGNALS.append(kw)
+                                self.store.keyword_telemetry[kw] = {
+                                    "sector": sector, "trials": 0, "successes": 0,
+                                    "total_engagement": 0.0, "active": True
+                                }
+                                added += 1
+                        if added > 0:
+                            bootstrapped = True
+                            logger.info(f"      [BOOTSTRAP] successfully injected {added} keywords for '{sector}'.")
+                    except Exception as e:
+                        logger.warning(f"      [FAULT] failed to parse bootstrap taxonomy for '{sector}': {e}")
+        
+        if bootstrapped:
+            config.RELEVANCE_RE = re.compile(
+                r"\b(" + "|".join(re.escape(s) for s in config.RELEVANCE_SIGNALS) + r")s?\b",
+                re.IGNORECASE,
+            )
+            self.store.save_keyword_telemetry()
 
     # ---- kill switch ----
     def _halted(self) -> bool:
@@ -713,22 +783,21 @@ class FollowerEngine:
             logger.info("   [EVOLUTION] timeline empty, skipping")
             return
             
-        # Define the core axiom and available adjacent disciplines
-        core_axiom = "functional minimalism and invisible UI/UX design"
-        adjacent_disciplines = ["behavioral psychology", "kinematics and physics", "algorithmic geometry", "neuroscience", "cognitive load theory"]
-        selected_discipline = random.choice(adjacent_disciplines)
-
         batch = "\n---\n".join([t for t in texts if t][:20])
         prompt = (
-            f"You are an interdisciplinary network analyst. These are recent posts from our timeline:\n{batch}\n\n"
-            f"Your objective is to find 3 highly specific, novel search queries that bridge our core focus "
-            f"('{core_axiom}') with principles from '{selected_discipline}'.\n"
+            f"You are an autonomous network analyst optimizing an agent's search engine.\n"
+            f"The agent's persona is:\n{config.PERSONA}\n\n"
+            f"These are recent posts from our timeline:\n{batch}\n\n"
+            f"Your objective is to find 3 highly specific, novel search queries that expand our current niche. "
+            f"Look for intersections between the persona's core focus and structural patterns in the timeline. "
+            f"At least one keyword MUST explicitly target a top organization, authoritative brand, or high-tier institutional page. "
+            f"CRITICAL DIVERSITY: Constantly rotate and discover new institutions. Do not anchor on the same major companies. Target specialized startups, diverse research labs, and different tech brands. "
             f"Do not return generic terms. Return specific intersections (e.g., 'Fitts law touch targets', "
-            f"'Perlin noise data visualization'). These terms must be discoverable on a social media network.\n"
+            f"'latency in generative UI'). These terms must be discoverable on a social media network.\n"
             f"Respond strictly as JSON: "
             f'{{"keywords": ["kw1", "kw2", "kw3"]}}'
         )
-        logger.info(f"   [EVOLUTION] bridging '{core_axiom}' x '{selected_discipline}'")
+        logger.info(f"   [EVOLUTION] expanding search taxonomy based on persona")
         raw = self._generate(prompt, dedup=False)
         if not raw:
             return
@@ -798,8 +867,9 @@ class FollowerEngine:
         prompt = (
             f"Write a bio (max 160 chars) for {NAME_TEXT}. Our strongest content is "
             f"in '{best_sector}'. {trends_info}Use clear keywords for that area, "
-            f"explain complex things simply, warm and approachable. Must end with "
-            f"' Automated account.' No hashtags. "
+            f"explain complex things simply, warm and approachable. "
+            f"CRITICAL DIVERSITY: Find a completely fresh angle. Do not reuse the exact same phrasing as your previous bios. "
+            f"Must end with 'Boston based. https://abgneudev.github.io/Portfolio/ Automated account.' No hashtags. "
             f'Respond strictly as JSON: {{"bio": "..."}}'
         )
         raw = self._generate(prompt, dedup=False)
@@ -924,7 +994,16 @@ class FollowerEngine:
                 continue
             if not self._is_relevant_content(c):
                 continue
+            
+            # High-Volume Filter: Only operate in areas with existing traction
+            eng = (getattr(c, "like_count", 0) or 0) + (getattr(c, "repost_count", 0) or 0) + (getattr(c, "reply_count", 0) or 0)
+            if eng < 3:
+                continue
+                
             cands.append(c)
+            
+        # Sort so the absolute highest volume posts are acted on first
+        cands.sort(key=lambda c: (getattr(c, "like_count", 0) or 0) + (getattr(c, "repost_count", 0) or 0) + (getattr(c, "reply_count", 0) or 0), reverse=True)
         return cands, keyword
 
     def _is_relevant_content(self, post) -> bool:
@@ -1037,6 +1116,32 @@ class FollowerEngine:
             self.breaker.record_failure()
 
     # ---- follow ----
+    def _verify_profile_quality(self, profile):
+        bio = getattr(profile, "description", "") or ""
+        handle = getattr(profile, "handle", "") or ""
+        display = getattr(profile, "display_name", "") or ""
+        
+        prompt = (
+            f"You are an autonomous network analyst evaluating a user profile for a strategic follow.\n"
+            f"Our persona is:\n{config.PERSONA}\n\n"
+            f"Target Profile Bio: {bio}\n"
+            f"Target Name: {display} (@{handle})\n\n"
+            f"Does this profile represent a highly credible, intellectual, or relevant practitioner "
+            f"(e.g., engineer, researcher, scientist, designer) that aligns with our persona? "
+            f"Reject generic tech influencers, crypto farmers, and random personal accounts.\n"
+            f"Respond strictly as JSON:\n"
+            f'{{"is_high_quality": true, "reason": "brief explanation"}}'
+        )
+        raw = self._generate(prompt, dedup=False)
+        if raw:
+            try:
+                result = json.loads(raw)
+                logger.info(f"      [VERIFY] @{handle} - {result.get('is_high_quality')}: {result.get('reason')}")
+                return result.get("is_high_quality", False)
+            except Exception as e:
+                logger.warning(f"      [FAULT] verification failed: {e}")
+        return False
+
     def _strategic_follow(self, sector, hook, candidates, keyword=None):
         logger.info("   [FOLLOW] scoring candidates for follow-back likelihood")
         scored = []
@@ -1056,7 +1161,20 @@ class FollowerEngine:
             logger.info("   [FOLLOW] nothing scored above threshold.")
             return
         scored.sort(key=lambda x: x[0], reverse=True)
-        best_score, target, handle = scored[0]
+        
+        best_score, target, handle = None, None, None
+        for score, cand, cand_handle in scored:
+            profile = self.net.get_profile(cand.author.did)
+            if self._verify_profile_quality(profile):
+                best_score, target, handle = score, cand, cand_handle
+                break
+            else:
+                logger.info(f"   [FOLLOW] LLM rejected @{cand_handle} as low quality. Trying next...")
+                
+        if not target:
+            logger.info("   [FOLLOW] all candidates rejected by LLM.")
+            return
+            
         try:
             self.net.follow(target.author.did)
             self.breaker.record_success()
@@ -1251,6 +1369,7 @@ class FollowerEngine:
             f"Follow each slot's archetype STRICTLY.\n\n"
             f"{slots_block}\n\n"
             f"{trends_info}"
+            f"CRITICAL DIVERSITY: Constantly invent entirely new angles, distinct phrasing, and unexplored ideas. Do not recycle the same vocabulary or structures from typical tech posts.\n"
             f"Constraints that apply to ALL drafts: plain language, no jargon left "
             f"unexplained, no pitch, no link, no emoji, no hashtag, no em dash. Skip "
             f"parenting, body image, mental health, religion, politics, money "
@@ -1531,6 +1650,7 @@ class FollowerEngine:
             f"(parenting, body image, mental health, religion, politics, money "
             f"struggles), set index to -1 and reply to an empty string. Do not pitch "
             f"anything. Do not say 'great post'. Max 280 chars. No emoji, hashtag, em dash. "
+            f"CRITICAL DIVERSITY: Never repeat standard tech advice. Provide a unique, highly specific synthesis that the author hasn't heard before.\n"
             f"{whale_constraint}"
             f"{vision_hint}\n"
             f'Respond strictly as JSON: {{"index": int, "reply": "..."}}'
@@ -1589,7 +1709,7 @@ class FollowerEngine:
                 }},
             ]
         else:
-            model = "llama-3.3-70b-versatile"
+            model = "llama-4-scout-17b-16e-instruct"
             user_content = prompt
 
         messages = [

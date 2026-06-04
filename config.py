@@ -229,12 +229,14 @@ class Soul:
     bio: str
     persona: str
     post_hooks: list
-    reply_hooks: list
-    post_hook_guidance: dict
-    reply_hook_guidance: dict
-    keyword_map: dict
-    relevance_signals: list
-    extra_sensitive_phrases: list = field(default_factory=list)
+    reply_hooks: list[str]
+    post_hook_guidance: dict[str, str]
+    reply_hook_guidance: dict[str, str]
+    keyword_map: dict[str, list[str]]
+    relevance_signals: list[str]
+    topic_angle_examples: list[str]
+    sectors: list[str]
+    extra_sensitive_phrases: list[str] = field(default_factory=list)
     extra_sensitive_words: list = field(default_factory=list)
     extra_spam_phrases: list = field(default_factory=list)
 
@@ -250,7 +252,7 @@ _REQUIRED_KEYS = {
     "name", "bio", "persona",
     "post_hooks", "reply_hooks",
     "post_hook_guidance", "reply_hook_guidance",
-    "keyword_map", "relevance_signals",
+    "sectors", "core_relevance_signals",
 }
 
 
@@ -263,8 +265,8 @@ def load_soul(path=None):
     - Top level must be a mapping.
     - All _REQUIRED_KEYS must be present and non-empty.
     - Hook-guidance dicts must cover every declared hook.
-    - keyword_map values must be non-empty lists of strings.
-    - relevance_signals must be a non-empty list of strings.
+    - sectors must be a non-empty list of strings.
+    - core_relevance_signals must be a non-empty list of strings.
     """
     p = Path(path) if path is not None else SOUL_FILE
     if not p.exists():
@@ -282,10 +284,11 @@ def load_soul(path=None):
     for k in ("name", "bio", "persona"):
         if not (isinstance(data[k], str) and data[k].strip()):
             raise SoulLoadError(f"soul field {k!r} must be a non-empty string")
-    for k in ("post_hooks", "reply_hooks", "relevance_signals"):
-        v = data[k]
-        if not (isinstance(v, list) and v and all(isinstance(x, str) and x.strip() for x in v)):
-            raise SoulLoadError(f"soul field {k!r} must be a non-empty list of non-empty strings")
+    for k in ("post_hooks", "reply_hooks", "sectors", "core_relevance_signals", "topic_angle_examples"):
+        if k in data:
+            v = data[k]
+            if not (isinstance(v, list) and v and all(isinstance(x, str) and x.strip() for x in v)):
+                raise SoulLoadError(f"soul field {k!r} must be a non-empty list of non-empty strings")
     for k in ("post_hook_guidance", "reply_hook_guidance"):
         if not (isinstance(data[k], dict) and data[k]):
             raise SoulLoadError(f"soul field {k!r} must be a non-empty mapping")
@@ -295,14 +298,7 @@ def load_soul(path=None):
     for hook in data["reply_hooks"]:
         if hook not in data["reply_hook_guidance"]:
             raise SoulLoadError(f"reply_hook_guidance missing entry for {hook!r}")
-    km = data["keyword_map"]
-    if not (isinstance(km, dict) and km):
-        raise SoulLoadError("soul field 'keyword_map' must be a non-empty mapping")
-    for sector, kws in km.items():
-        if not (isinstance(sector, str) and sector.strip()):
-            raise SoulLoadError(f"keyword_map keys must be non-empty strings (got {sector!r})")
-        if not (isinstance(kws, list) and kws and all(isinstance(x, str) and x.strip() for x in kws)):
-            raise SoulLoadError(f"keyword_map[{sector!r}] must be a non-empty list of non-empty strings")
+
     extras = {}
     for k in ("extra_sensitive_phrases", "extra_sensitive_words", "extra_spam_phrases"):
         v = data.get(k, [])
@@ -311,6 +307,9 @@ def load_soul(path=None):
         if not (isinstance(v, list) and all(isinstance(x, str) for x in v)):
             raise SoulLoadError(f"soul field {k!r} must be a list of strings if present")
         extras[k] = v
+        
+    topic_examples = data.get("topic_angle_examples", ["dark mode contrast", "design tokens vs css vars", "usability test sample sizes"])
+    
     return Soul(
         name=data["name"].strip(),
         bio=data["bio"].strip(),
@@ -319,8 +318,10 @@ def load_soul(path=None):
         reply_hooks=list(data["reply_hooks"]),
         post_hook_guidance=dict(data["post_hook_guidance"]),
         reply_hook_guidance=dict(data["reply_hook_guidance"]),
-        keyword_map={k: list(v) for k, v in km.items()},
-        relevance_signals=list(data["relevance_signals"]),
+        keyword_map={k: [] for k in data["sectors"]},
+        relevance_signals=list(data["core_relevance_signals"]),
+        topic_angle_examples=list(topic_examples),
+        sectors=list(data["sectors"]),
         **extras,
     )
 
@@ -342,11 +343,13 @@ POST_HOOK_GUIDANCE = SOUL.post_hook_guidance
 REPLY_HOOK_GUIDANCE = SOUL.reply_hook_guidance
 KEYWORD_MAP = SOUL.keyword_map
 RELEVANCE_SIGNALS = SOUL.relevance_signals
+TOPIC_ANGLE_EXAMPLES = SOUL.topic_angle_examples
 
-# Sector identifiers come from keyword_map keys: one source of truth.
-SECTORS = list(KEYWORD_MAP.keys())
+# Sector identifiers come from sectors list.
+SECTORS = SOUL.sectors
 
 # Word-boundary matcher built from the merged relevance signals.
+# This might be recompiled by engine.py as it learns new signals.
 RELEVANCE_RE = re.compile(
     r"\b(" + "|".join(re.escape(s) for s in RELEVANCE_SIGNALS) + r")s?\b",
     re.IGNORECASE,
