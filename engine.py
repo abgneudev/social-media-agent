@@ -37,6 +37,7 @@ from governance import RateBudget, CircuitBreaker
 from adapter import BlueskyAdapter
 import analyzer
 import klipy
+import serpapi
 
 
 # ==========================================
@@ -1227,14 +1228,15 @@ class FollowerEngine:
             f"parenting, body image, mental health, religion, politics, money "
             f"struggles. Explain confusing UX, design, or frontend ideas in plain "
             f"words with everyday analogies.\n\n"
-            f"Respond strictly as JSON with exactly two keys per variant. "
+            f"Respond strictly as JSON with exactly three keys per variant. "
             f"The 'content' key must contain the raw text for the post. "
-            f"The 'media_query' key must contain a 1-3 word phrase representing the underlying "
-            f"human emotion or reaction of the generated text (e.g., 'frustrated', 'mind blown', "
-            f"'celebration'). Do NOT use the sector name for the media_query:\n"
-            f'{{"variants": [{{"content": "...", "media_query": "..."}}, '
-            f'{{"content": "...", "media_query": "..."}}, '
-            f'{{"content": "...", "media_query": "..."}}]}}'
+            f"The 'media_type' key MUST be either 'gif' or 'image'. "
+            f"The 'media_query' key MUST contain a search query for that media.\n"
+            f"CRITICAL RULES FOR MEDIA:\n"
+            f"- MAXIMIZE MEDIA USAGE: You MUST attach media to almost every post.\n"
+            f"- IF media_type='gif': media_query should be a 1-3 word human emotion (e.g., 'frustrated', 'mind blown').\n"
+            f"- IF media_type='image': Make an educated guess on the best visual to complement the post. The media_query MUST be highly concrete (e.g. a diagram, mockup, or code structure) and you should append a relevant industry modifier (e.g., 'dribbble', 'architecture diagram', 'figma', 'github layout') to ensure high-quality search results. If discussing an abstract theory, search for a concrete UI application of it.\n"
+            f'{{"variants": [{{"content": "...", "media_type": "...", "media_query": "..."}}]}}'
         )
 
     def _generate_variants(self, sector):
@@ -1284,10 +1286,12 @@ class FollowerEngine:
                 continue
             arch = v.get("archetype") or (archetypes[i] if i < len(archetypes) else None)
             text = v.get("content") or v.get("text") or ""
-            gif_query = v.get("media_query") or v.get("gifQuery") or ""
+            media_type = v.get("media_type", "gif")
+            media_query = v.get("media_query") or v.get("gifQuery") or ""
             cleaned.append({
                 "archetype": arch, "text": text, "thread_parts": [],
-                "gif_query": gif_query,
+                "media_type": media_type,
+                "media_query": media_query,
             })
         return archetypes, cleaned
 
@@ -1343,14 +1347,22 @@ class FollowerEngine:
         # run should not consume bandwidth previewing an embed.
         variant_rows = []
         for score, v in ranked:
-            gif_query = v.get("gif_query") or ""
-            resolved_url = klipy.resolve(gif_query) if gif_query else None
+            media_type = v.get("media_type") or "gif"
+            media_query = v.get("media_query") or ""
+            resolved_url = None
+            if media_query:
+                if media_type == "image":
+                    resolved_url = serpapi.search_image(media_query)
+                else:
+                    resolved_url = klipy.resolve(media_query)
+                    
             variant_rows.append({
                 "archetype": v.get("archetype"),
                 "text": v.get("text"),
                 "thread_parts": v.get("thread_parts") or [],
-                "gif_query": gif_query,
-                "resolved_gif_url": resolved_url,
+                "media_type": media_type,
+                "media_query": media_query,
+                "resolved_media_url": resolved_url,
                 "hook_strength": round(score, 2),
                 "passes_gates": self._variant_passes_gates(v),
             })
@@ -1360,34 +1372,39 @@ class FollowerEngine:
             "variants": variant_rows,
         }
 
-    def _build_write_fn_with_optional_gif(self, gif_query, text_for_log):
+    def _build_write_fn_with_optional_media(self, media_type, media_query, text_for_log):
         """Return a write_fn closure suitable for _publish_with_reconcile.
 
-        If gif_query is non-empty and Klipy resolves + fetches a GIF,
-        post via post_with_image. Any failure in resolve / fetch / upload
-        wraps and degrades silently to net.post(text). The post itself is
-        never blocked by GIF issues; that is the posture the spec calls
-        out: GIF is a bonus, doubt resolves to text-only.
+        Routes 'image' to SerpAPI and 'gif' to Klipy. Any failure silently degrades
+        to a text-only post so publishing is never blocked by media errors.
         """
         def write_fn(text):
-            if not gif_query:
+            if not media_query:
                 return self.net.post(text)
             try:
-                gif_url = klipy.resolve(gif_query)
-                if not gif_url:
-                    return self.net.post(text)
-                fetched = klipy.fetch_bytes(gif_url)
+                if media_type == "image":
+                    media_url = serpapi.search_image(media_query)
+                    if not media_url:
+                        return self.net.post(text)
+                    fetched = serpapi.fetch_image_bytes(media_url)
+                else:
+                    media_url = klipy.resolve(media_query)
+                    if not media_url:
+                        return self.net.post(text)
+                    fetched = klipy.fetch_bytes(media_url)
+                    
                 if not fetched:
                     return self.net.post(text)
+                    
                 image_bytes, _mime = fetched
                 uri = self.net.post_with_image(
-                    text, image_bytes, alt_text=gif_query,
+                    text, image_bytes, alt_text=media_query,
                 )
-                logger.info(f"   [GIF] attached '{gif_query}' to: "
+                logger.info(f"   [MEDIA] attached {media_type} '{media_query}' to: "
                             f"{text_for_log[:50]}...")
                 return uri
             except Exception as e:
-                logger.warning(f"   [GIF] attachment failed ({e}); "
+                logger.warning(f"   [MEDIA] {media_type} attachment failed ({e}); "
                                f"publishing text-only.")
                 return self.net.post(text)
         return write_fn
@@ -1408,13 +1425,13 @@ class FollowerEngine:
                      key=lambda v: hook_strength(v["text"], v.get("archetype")))
         text = winner["text"]
         hook = winner.get("archetype") or archetypes[0]
-        # Optional GIF attachment. Always a bonus, never required: any
+        # Optional media attachment. Always a bonus, never required: any
         # failure in the resolve / fetch / upload path degrades silently to
         # a text-only post. Original posts only; replies stay text-only by
-        # design (handled at call sites). For mini_thread, the GIF rides
+        # design (handled at call sites). For mini_thread, the media rides
         # on the anchor only, not on the continuations.
-        write_fn = self._build_write_fn_with_optional_gif(
-            winner.get("gif_query"), text,
+        write_fn = self._build_write_fn_with_optional_media(
+            winner.get("media_type", "gif"), winner.get("media_query"), text,
         )
         try:
             intent_id, uri = self._publish_with_reconcile(
