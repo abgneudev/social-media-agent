@@ -48,9 +48,12 @@ def wilson_lower_bound(successes, trials, z=1.96):
     return (center - margin) / denom
 
 
-def hook_strength(text: str) -> float:
+def hook_strength(text, archetype=None):
     """Cheap proxy for hook quality so we can pick among generated variants
-    without an extra API call. Rewards a short, curious, concrete first line."""
+    without an extra API call. Rewards a short, curious, concrete first line.
+    Archetype adjusts the length expectation: one_line_provocation should be
+    very short, single_question should end in '?', mini_thread judges only
+    the first part."""
     if not text:
         return -1.0
     first = re.split(r"(?<=[.!?])\s|\n", text.strip(), maxsplit=1)[0]
@@ -68,8 +71,25 @@ def hook_strength(text: str) -> float:
     if any(low.startswith(g) for g in ("in this", "today i", "let's talk", "i want to", "so i")):
         score -= 1.5
     total = len(text)
-    if 120 <= total <= 280:
-        score += 1.0
+    if archetype == "one_line_provocation":
+        if total <= 120:
+            score += 1.5
+        elif total > 160:
+            score -= 1.5
+    elif archetype == "single_question":
+        if text.strip().endswith("?"):
+            score += 1.5
+        else:
+            score -= 1.0
+    elif archetype == "mini_thread":
+        if total <= 200:
+            score += 1.0
+    elif archetype == "before_after":
+        if 80 <= total <= 240:
+            score += 1.0
+    else:
+        if 120 <= total <= 280:
+            score += 1.0
     return score
 
 
@@ -457,7 +477,9 @@ class FollowerEngine:
         should_post = (self.store.anchor_posts < ANCHOR_POST_TARGET
                        or phase_name in ("compound", "community", "scaling"))
         if should_post and self.rate["post"].try_consume():
-            self._original_post(sector, post_hook)
+            # _original_post samples its own distinct archetypes per variant;
+            # the _decide-level post_hook is only used by _quote_best below.
+            self._original_post(sector)
 
         # 2. Candidates: reuse the sense-stage cache when possible; only search when
         #    a trend keyword overrides the cached sector keyword.
@@ -714,36 +736,181 @@ class FollowerEngine:
         if done:
             logger.info(f"   [RETAIN] followed back {done} new follower(s)")
 
-    # ---- original post (multi-variant hooks) ----
-    def _original_post(self, sector, hook):
+    # ---- original post (multi-archetype divergent variants) ----
+    def _sample_distinct_post_hooks(self, n=3):
+        """Thompson-sample up to n DISTINCT post archetypes. Each draw is an
+        independent Beta sample; we sort and take the top n distinct arms.
+        Returns at most len(POST_HOOKS) archetypes. Used by _original_post
+        to force structural diversity: each variant in a single generation
+        call gets a different archetype, so the three drafts read as if
+        written by three different people about the same idea."""
+        samples = []
+        for v in POST_HOOKS:
+            arm = self.store.bandit["post_hook"][v]
+            samples.append((random.betavariate(arm["alpha"], arm["beta"]), v))
+        samples.sort(reverse=True)
+        return [v for _, v in samples[:min(n, len(POST_HOOKS))]]
+
+    # Per-slot length and opening-move shuffle. Layered on top of the
+    # archetype-specific constraints. The archetype wins when there is a
+    # conflict (one_line_provocation cannot also be "longer"), and the
+    # prompt says so explicitly.
+    _LENGTH_SLOTS = ("very short, well under ~120 chars",
+                     "medium, around 150 to 230 chars",
+                     "longer, up to ~280 chars")
+    _OPENING_SLOTS = ("open with a question",
+                      "open with a claim",
+                      "open mid-scene or with a concrete detail")
+
+    def _build_variant_prompt(self, sector, archetypes, length_slots, opening_slots,
+                              trends_info=""):
+        """Construct the divergent-variants prompt. Each slot pairs an
+        archetype with a length and an opening move, and the prompt insists
+        on three drafts that read as if written by three different people."""
+        slots = []
+        for i, arch in enumerate(archetypes):
+            slots.append(
+                f"[{i+1}] archetype = \"{arch}\"\n"
+                f"    Archetype rule: {POST_HOOK_GUIDANCE.get(arch, '').strip()}\n"
+                f"    Length slot: {length_slots[i]}.\n"
+                f"    Opening move slot: {opening_slots[i]}.\n"
+                f"    If the archetype rule conflicts with the slot, follow the archetype."
+            )
+        slots_block = "\n\n".join(slots)
+        return (
+            f"You are writing THREE short Bluesky posts about '{sector}', each in a "
+            f"DIFFERENT format. The three drafts must read as if written by THREE "
+            f"DIFFERENT PEOPLE about the same idea, NOT three rewordings of one draft. "
+            f"Follow each slot's archetype STRICTLY.\n\n"
+            f"{slots_block}\n\n"
+            f"If an archetype is \"mini_thread\", set text to its first post and put 1 "
+            f"to 2 follow-up parts (each under 200 chars, each its own short post) in "
+            f"thread_parts. For every other archetype, thread_parts must be an empty "
+            f"list.\n\n"
+            f"{trends_info}"
+            f"Constraints that apply to ALL drafts: plain language, no jargon left "
+            f"unexplained, no pitch, no link, no emoji, no hashtag, no em dash. Skip "
+            f"parenting, body image, mental health, religion, politics, money "
+            f"struggles. Explain confusing UX, design, or frontend ideas in plain "
+            f"words with everyday analogies.\n\n"
+            f"Respond strictly as JSON: "
+            f'{{"variants": [{{"archetype": "...", "text": "...", "thread_parts": []}}, '
+            f'{{"archetype": "...", "text": "...", "thread_parts": []}}, '
+            f'{{"archetype": "...", "text": "...", "thread_parts": []}}]}}'
+        )
+
+    def _generate_variants(self, sector):
+        """Sample distinct archetypes, ask the model for divergent drafts,
+        parse them. Returns the raw parsed variant dicts (no gating, no
+        ranking). Separated from publication so dry_run_post can reuse it."""
+        archetypes = self._sample_distinct_post_hooks(3)
+        length_slots = list(self._LENGTH_SLOTS)
+        opening_slots = list(self._OPENING_SLOTS)
+        random.shuffle(length_slots)
+        random.shuffle(opening_slots)
         trends_info = ""
         if sector in self.store.trends and self.store.trends[sector]:
-            trends_info = f"Weave in these trends if they fit: {', '.join(self.store.trends[sector])}. "
-        prompt = (
-            f"Write THREE distinct original Bluesky posts (each max 280 chars) about "
-            f"'{sector}' using a '{hook}' angle. {POST_HOOK_GUIDANCE.get(hook,'')} "
-            f"{trends_info}"
-            f"Each must take a confusing concept from UX, design, or frontend and "
-            f"explain it in plain words anyone could understand, using an everyday "
-            f"analogy, so a reader thinks 'oh, THAT is what that means.' The three must "
-            f"open with different first lines and cover different ideas. Warm and "
-            f"friendly, never talking down. No pitch, no link, no emoji, no hashtag, "
-            f"no em dash, no jargon left unexplained. Avoid sensitive topics. "
-            f'Respond strictly as JSON: {{"variants": ["...","...","..."]}}'
-        )
+            trends_info = (f"Weave in these trends if they fit: "
+                           f"{', '.join(self.store.trends[sector])}.\n\n")
+        prompt = self._build_variant_prompt(sector, archetypes, length_slots,
+                                            opening_slots, trends_info)
         raw = self._generate(prompt, dedup=True)
         if not raw:
-            return
+            return archetypes, []
         try:
-            variants = json.loads(raw).get("variants", [])
+            parsed = json.loads(raw).get("variants", [])
         except Exception as e:
             logger.warning(f"   [GATE] post JSON malformed: {e}. Skipping.")
+            return archetypes, []
+        cleaned = []
+        for i, v in enumerate(parsed):
+            if not isinstance(v, dict):
+                continue
+            arch = v.get("archetype") or (archetypes[i] if i < len(archetypes) else None)
+            text = v.get("text") or ""
+            parts = v.get("thread_parts") or []
+            if not isinstance(parts, list):
+                parts = []
+            parts = [str(p) for p in parts if isinstance(p, str) and p.strip()]
+            if arch != "mini_thread":
+                parts = []
+            cleaned.append({"archetype": arch, "text": text, "thread_parts": parts})
+        return archetypes, cleaned
+
+    def _variant_passes_gates(self, variant):
+        """A variant is good only if its main text passes the gates AND, for
+        a mini_thread, every continuation passes too. If any part fails the
+        whole variant is dropped, so we never publish a half-thread."""
+        if not self._passes_gates(variant.get("text", "")):
+            return False
+        for part in variant.get("thread_parts") or []:
+            if not self._passes_gates(part):
+                return False
+        return True
+
+    def _publish_thread_continuations(self, root_uri, root_cid, parts):
+        """Best-effort post the rest of a mini_thread. If a continuation
+        fails, log and stop. The first part stays published either way; the
+        bandit reward is attributed to the first post regardless of whether
+        the chain landed fully, so a half-posted thread is not a regression."""
+        if not (root_uri and root_cid and parts):
             return
-        candidates = [v for v in variants if self._passes_gates(v)]
+        parent_uri, parent_cid = root_uri, root_cid
+        for i, part_text in enumerate(parts, start=1):
+            try:
+                child_uri = self.net.post_in_thread(
+                    part_text, root_uri, root_cid, parent_uri, parent_cid,
+                )
+                self.breaker.record_success()
+            except exceptions.AtProtocolError as e:
+                logger.warning(f"   [FAULT] thread continuation #{i} failed: {e}")
+                self.breaker.record_failure()
+                return
+            child_cid = self.net.get_post_cid(child_uri)
+            logger.info(f"   [THREAD] +part {i}: {part_text[:60]}...")
+            if not child_cid:
+                # Without a cid we cannot chain further; stop early.
+                return
+            parent_uri, parent_cid = child_uri, child_cid
+
+    def dry_run_post(self, sector):
+        """Generate and rank variants for a slot WITHOUT publishing. Returns
+        the parsed variants list with archetypes intact so a CLI dry-run can
+        print three structurally different drafts side by side. Used by
+        run.py --dry-run; no network writes occur."""
+        archetypes, variants = self._generate_variants(sector)
+        ranked = sorted(
+            ((hook_strength(v["text"], v.get("archetype")), v) for v in variants),
+            key=lambda x: x[0], reverse=True,
+        )
+        return {
+            "sector": sector,
+            "sampled_archetypes": archetypes,
+            "variants": [
+                {"archetype": v.get("archetype"), "text": v.get("text"),
+                 "thread_parts": v.get("thread_parts") or [],
+                 "hook_strength": round(score, 2),
+                 "passes_gates": self._variant_passes_gates(v)}
+                for score, v in ranked
+            ],
+        }
+
+    def _original_post(self, sector):
+        """Generate three divergent variants (each a distinct archetype),
+        filter via gates, publish the best by hook_strength, and record the
+        WINNING archetype to the bandit so the bandit learns which shapes
+        earn traction for THIS account."""
+        archetypes, variants = self._generate_variants(sector)
+        if not variants:
+            return
+        candidates = [v for v in variants if self._variant_passes_gates(v)]
         if not candidates:
             logger.warning("   [GATE] all post variants rejected. Skipping slot.")
             return
-        text = max(candidates, key=hook_strength)  # pick the strongest hook
+        winner = max(candidates,
+                     key=lambda v: hook_strength(v["text"], v.get("archetype")))
+        text = winner["text"]
+        hook = winner.get("archetype") or archetypes[0]
         try:
             intent_id, uri = self._publish_with_reconcile(
                 kind="post", text=text, sector=sector, hook=hook,
@@ -753,20 +920,20 @@ class FollowerEngine:
             logger.warning(f"   [FAULT] post failed: {e}")
             self.breaker.record_failure()
             return
-        cid = None
-        try:
-            resp = self.net.client.app.bsky.feed.get_post_thread({"uri": uri, "depth": 0})
-            cid = getattr(getattr(resp.thread, "post", None), "cid", None)
-        except Exception:
-            pass
+        cid = self.net.get_post_cid(uri)
         self.breaker.record_success()
         self.store.anchor_posts += 1
         self.store.mark_seen(content_hash(text))
         self.store.log_action("post", sector, hook, uri=uri, text=text, learnable=True)
         self.store.remove_pending(intent_id)
         self._mark_action("post", uri=uri, sector=sector, hook=hook)
-        logger.info(f"   [POST] anchor #{self.store.anchor_posts} (hook_strength="
-                    f"{hook_strength(text):.1f}): {text[:70]}...")
+        logger.info(f"   [POST] anchor #{self.store.anchor_posts} "
+                    f"hook={hook} (hook_strength="
+                    f"{hook_strength(text, hook):.1f}): {text[:70]}...")
+        # mini_thread continuations land AFTER the anchor is recorded, so a
+        # failure mid-chain never blocks the bookkeeping for the first post.
+        if winner.get("thread_parts") and cid:
+            self._publish_thread_continuations(uri, cid, winner["thread_parts"])
         if not self.store.pinned and cid:
             self.net.pin_post(uri, cid)
             self.store.pinned = True

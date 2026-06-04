@@ -71,6 +71,16 @@ class Store:
                     f"pending={len(self.pending)}")
 
     def _load_bandit(self):
+        """Load bandit state and migrate to the current arm vocabulary.
+
+        Arms in both old and new POST_HOOKS / SECTORS / REPLY_HOOKS keep
+        their posterior. New arms are seeded at Beta(1,1). Old arms that no
+        longer appear in the current vocabulary are dropped, both at the
+        dimension level (e.g. removed bandit dimension) and at the arm level
+        within a dimension (e.g. removed post archetype). Without per-arm
+        cleanup, deprecated hooks would persist in the JSON forever even
+        though _decide never samples them.
+        """
         loaded = load_json(config.BANDIT_STATE_FILE, None)
         fresh = {dim: {v: {"alpha": 1.0, "beta": 1.0} for v in vals}
                  for dim, vals in (("sector", SECTORS),
@@ -83,6 +93,9 @@ class Store:
             loaded.setdefault(dim, {})
             for v, prior in vals.items():
                 loaded[dim].setdefault(v, prior)
+            stale_arms = [a for a in loaded[dim] if a not in vals]
+            for a in stale_arms:
+                del loaded[dim][a]
         for stale in [k for k in loaded if k not in fresh]:
             del loaded[stale]
         atomic_write_json(config.BANDIT_STATE_FILE, loaded)

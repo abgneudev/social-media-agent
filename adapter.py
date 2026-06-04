@@ -87,6 +87,25 @@ class BlueskyAdapter:
         ref = self.client.send_post(text=text)
         return ref.uri if hasattr(ref, "uri") else str(ref)
 
+    def post_in_thread(self, text, root_uri, root_cid, parent_uri, parent_cid) -> str:
+        """Post a continuation in a thread we already started. Used by
+        mini_thread to chain 2 to 3 short posts. root is always the first
+        part of the thread, parent is the immediately preceding part."""
+        root = {"uri": root_uri, "cid": root_cid}
+        parent = {"uri": parent_uri, "cid": parent_cid}
+        ref = self.client.send_post(text=text, reply_to={"root": root, "parent": parent})
+        return ref.uri if hasattr(ref, "uri") else str(ref)
+
+    def get_post_cid(self, uri):
+        """Resolve the cid for one of our own posts via a thread fetch.
+        Used after posting to grab the cid needed to pin or to thread off
+        of. Returns None on any failure (callers degrade gracefully)."""
+        try:
+            resp = self.client.app.bsky.feed.get_post_thread({"uri": uri, "depth": 0})
+            return getattr(getattr(resp.thread, "post", None), "cid", None)
+        except Exception:
+            return None
+
     def repost(self, uri, cid):
         self.client.repost(uri, cid)
 

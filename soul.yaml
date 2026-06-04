@@ -37,21 +37,48 @@ persona: >-
   Never touch parenting, body image, religion, politics, personal finances
   judgmentally, or mental health. If a post is sensitive, skip it.
 
+# Post archetypes. Each archetype is a structurally different shape, not
+# just a different label. The bandit treats each as an arm and learns which
+# shapes earn traction for this account. The variant generator deliberately
+# samples DISTINCT archetypes per draft so a single generation produces
+# divergent posts, not three rewordings of one draft.
 post_hooks:
-  - viral_listicle
-  - unpopular_opinion
-  - storytelling
+  - one_line_provocation
+  - mini_thread
+  - i_was_wrong
+  - before_after
+  - single_question
+  - teardown
+  - contrarian_take
+  - plain_definition
 
 post_hook_guidance:
-  viral_listicle: >-
-    Open with a punchy promise or a small number. Give 2 to 4 crisp, concrete
-    points. The first line must create a curiosity gap.
-  unpopular_opinion: >-
-    Open with a bold, slightly contrarian claim stated plainly, then earn it
-    in one or two clear sentences. Never inflammatory.
-  storytelling: >-
-    Open mid-scene with one tiny concrete moment, then land a single clear
-    lesson. Make it feel like a quick story told to a friend.
+  one_line_provocation: >-
+    A single sharp sentence under 120 characters that makes a reader stop.
+    No setup, no follow-up, no second sentence. The post is one line that
+    stands alone.
+  mini_thread: >-
+    A 2 to 3 post sequence. The first post must hook hard enough on its own
+    to earn the tap to expand. Each part is its own short post under 200
+    characters. Each part advances the idea, no padding.
+  i_was_wrong: >-
+    A short first-person confession of one specific mistake the writer made
+    and the one thing it taught them. Concrete, humble, never preachy.
+  before_after: >-
+    A tiny concrete contrast. One sentence shows the clumsy way, the next
+    sentence shows the clean way. Brief, no extra framing.
+  single_question: >-
+    One genuine, sharp question to the niche that invites replies. The whole
+    post is the question. No statement attached, no setup.
+  teardown: >-
+    A quick, kind critique of a real common pattern or anti-pattern. Name
+    what is wrong and the fix in one or two sentences. Never mean.
+  contrarian_take: >-
+    A defensible claim that cuts against common advice in the niche. Earn it
+    in one or two clear sentences. Confident, not inflammatory.
+  plain_definition: >-
+    Take one confusing term and define it in plain words using an everyday
+    analogy, so a beginner thinks 'oh, THAT is what that means.'
 
 reply_hooks:
   - yes_and_expansion
