@@ -133,11 +133,28 @@ class Store:
             "consecutive_empty_ticks": self.consecutive_empty_ticks,
         })
 
-    def update(self, dim, value, success):
+    def update(self, dim, value, reward):
+        """Bandit posterior update. reward is clamped into [0, 1]; alpha gets
+        +reward, beta gets +(1 - reward). For backward compatibility, a bool
+        True maps to reward=1.0 and False to reward=0.0, so existing call
+        sites that pass a binary success still work. The fractional path
+        lets content actions feed a real engagement count (normalized via
+        TRACTION_REWARD_CAP) instead of a 0/1 success."""
         if dim not in self.bandit or value not in self.bandit[dim]:
             return
+        if reward is True:
+            r = 1.0
+        elif reward is False:
+            r = 0.0
+        else:
+            r = float(reward)
+        if r < 0.0:
+            r = 0.0
+        elif r > 1.0:
+            r = 1.0
         arm = self.bandit[dim][value]
-        arm["alpha" if success else "beta"] += 1.0
+        arm["alpha"] += r
+        arm["beta"] += (1.0 - r)
         self.save_bandit()
 
     def decay(self):

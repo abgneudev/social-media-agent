@@ -87,6 +87,28 @@ class BlueskyAdapter:
         ref = self.client.send_post(text=text)
         return ref.uri if hasattr(ref, "uri") else str(ref)
 
+    def post_with_image(self, text, image_bytes, alt_text="") -> str:
+        """Post text plus a single image embed. Used for GIF attachment.
+
+        Why we upload the bytes rather than External-embed the Klipy URL:
+        Bluesky's official client only inline-animates External embeds
+        from a small whitelist of GIF hosts (tenor / giphy). A Klipy URL
+        in an External embed renders as a link card, which adds no
+        format variety. Uploading the bytes as an image blob renders the
+        GIF inline and animated regardless of the source host.
+
+        Failures here MUST bubble up: the caller catches and degrades to
+        text-only. Wrapping the failure here would hide it from the
+        engine's breaker accounting."""
+        blob_resp = self.client.upload_blob(image_bytes)
+        blob = getattr(blob_resp, "blob", None) or blob_resp
+        image = models.AppBskyEmbedImages.Image(
+            image=blob, alt=alt_text or "",
+        )
+        embed = models.AppBskyEmbedImages.Main(images=[image])
+        ref = self.client.send_post(text=text, embed=embed)
+        return ref.uri if hasattr(ref, "uri") else str(ref)
+
     def post_in_thread(self, text, root_uri, root_cid, parent_uri, parent_cid) -> str:
         """Post a continuation in a thread we already started. Used by
         mini_thread to chain 2 to 3 short posts. root is always the first

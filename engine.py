@@ -29,10 +29,14 @@ from config import (
     FOLLOWER_TARGET, MAX_LIKES_PER_TICK,
     ANCHOR_POST_TARGET, PROFILE_OPT_MIN_TRIALS, PROFILE_OPT_COOLDOWN_TICKS,
     PENDING_GRACE_SECONDS, STALL_THRESHOLD,
+    TRACTION_REWARD_CAP,
+    ANALYZER_CADENCE_TICKS, EXPLORATION_NUDGE_MAX, TOPIC_ANGLES_PER_PROMPT,
 )
 from store import Store, atomic_write_json
 from governance import RateBudget, CircuitBreaker
 from adapter import BlueskyAdapter
+import analyzer
+import klipy
 
 
 # ==========================================
@@ -132,6 +136,10 @@ class FollowerEngine:
         self.sector_activity = {}
         self.sector_posts = {}      # cache of fetched posts per sector, reused in _act
         self.persona = PERSONA
+        # niche_insights blob is re-read at tick boundaries (cheap, atomic
+        # read). Cached here so the variant prompt and sampler do not race
+        # with an in-flight analyzer write.
+        self._insights = None
 
     # ---- kill switch ----
     def _halted(self) -> bool:
@@ -248,6 +256,11 @@ class FollowerEngine:
         # start generating new content, so the dedup gates see the right state.
         self._reconcile_pending()
 
+        # Niche insights are a cheap atomic read; refresh once per tick so
+        # any in-flight analyzer write is picked up by the next pass without
+        # racing the read.
+        self._insights = analyzer.load_insights()
+
         if not self._sense():
             return
         if t % 5 == 1:
@@ -257,11 +270,30 @@ class FollowerEngine:
         self.store.decay()
         self._maybe_optimize_profile()
 
+        # Analyzer pass on cadence. Runs late in the tick (after sense and
+        # learn) so it has fresh search results to work with. First pass
+        # fires early so we are not flying blind for ANALYZER_CADENCE_TICKS.
+        if t == 1 or t % ANALYZER_CADENCE_TICKS == 0:
+            self._run_analyzer()
+
         sector, post_hook, reply_hook = self._decide()
         self._act(sector, post_hook, reply_hook)
 
         if t % 4 == 0:
             self._courtesy_follow_back()
+
+    def _run_analyzer(self):
+        """One analyzer pass guarded by the same kill switch and breaker
+        checks as the main tick. Failures are logged and swallowed: the
+        analyzer is a luxury, never load-bearing for posting."""
+        if self._halted() or self.breaker.is_open():
+            return
+        try:
+            blob = analyzer.run(self.net, lambda prompt: self._generate(prompt, dedup=False))
+            if blob is not None:
+                self._insights = blob
+        except Exception as e:
+            logger.warning(f"   [ANALYZER] run raised: {e}")
 
     def _mark_action(self, kind, **details):
         """Single touch-point for every successful network action: bumps the
@@ -380,21 +412,27 @@ class FollowerEngine:
         for a in due:
             try:
                 if a["kind"] == "follow":
-                    success = self.net.followed_back_by(a["target_did"])
-                    label = "FOLLOW-BACK" if success else "no follow-back"
-                else:  # post, reply, quote -> our own URI, engagement is attributable
-                    success = self.net.post_engagement(a["uri"]) > 0
-                    label = "engaged" if success else "no engagement"
+                    # Follow attribution stays binary: a follow-back either
+                    # happened or it did not.
+                    reward = 1.0 if self.net.followed_back_by(a["target_did"]) else 0.0
+                    label = "FOLLOW-BACK" if reward >= 1.0 else "no follow-back"
+                else:
+                    # Content actions earn fractional reward: a post with 1
+                    # like is not the same as a post with 6. min/cap keeps
+                    # one viral post from drowning the others.
+                    eng = self.net.post_engagement(a["uri"])
+                    reward = min(1.0, float(eng) / TRACTION_REWARD_CAP)
+                    label = f"engagement={eng} reward={reward:.2f}"
                 self.breaker.record_success()
             except exceptions.AtProtocolError as e:
                 logger.warning(f"   [FAULT] scoring failed, retry next tick: {e}")
                 self.breaker.record_failure()
                 continue
-            self.store.update("sector", a["sector"], success)
+            self.store.update("sector", a["sector"], reward)
             if a["kind"] in ("post", "quote"):
-                self.store.update("post_hook", a["hook"], success)
+                self.store.update("post_hook", a["hook"], reward)
             elif a["kind"] == "reply":
-                self.store.update("reply_hook", a["hook"], success)
+                self.store.update("reply_hook", a["hook"], reward)
             self.store.mark_matured(a["id"])
             logger.info(f"   -> {a['kind']} [{a['sector']}/{a['hook']}]: {label}")
 
@@ -743,11 +781,22 @@ class FollowerEngine:
         Returns at most len(POST_HOOKS) archetypes. Used by _original_post
         to force structural diversity: each variant in a single generation
         call gets a different archetype, so the three drafts read as if
-        written by three different people about the same idea."""
+        written by three different people about the same idea.
+
+        When niche_insights are available the hottest archetypes get a small
+        alpha bump (capped at EXPLORATION_NUDGE_MAX) at sampling time only;
+        the bandit state itself is not mutated. The cap is intentionally
+        small so the nudge biases exploration without zeroing other arms:
+        every archetype must still be sampled with non-trivial probability.
+        """
+        nudges = analyzer.archetype_nudges(self._insights, EXPLORATION_NUDGE_MAX)
         samples = []
         for v in POST_HOOKS:
             arm = self.store.bandit["post_hook"][v]
-            samples.append((random.betavariate(arm["alpha"], arm["beta"]), v))
+            samples.append(
+                (random.betavariate(arm["alpha"] + nudges.get(v, 0.0), arm["beta"]),
+                 v)
+            )
         samples.sort(reverse=True)
         return [v for _, v in samples[:min(n, len(POST_HOOKS))]]
 
@@ -787,6 +836,11 @@ class FollowerEngine:
             f"to 2 follow-up parts (each under 200 chars, each its own short post) in "
             f"thread_parts. For every other archetype, thread_parts must be an empty "
             f"list.\n\n"
+            f"OPTIONAL gifQuery: for each variant, you MAY include a 1 to 3 word "
+            f"search phrase that a GIF library could use to find an animation that "
+            f"would fit the post. Use ONLY when a GIF clearly adds to the post; when "
+            f"in doubt, OMIT (empty string). Never request a GIF for a sensitive or "
+            f"serious post.\n\n"
             f"{trends_info}"
             f"Constraints that apply to ALL drafts: plain language, no jargon left "
             f"unexplained, no pitch, no link, no emoji, no hashtag, no em dash. Skip "
@@ -794,9 +848,9 @@ class FollowerEngine:
             f"struggles. Explain confusing UX, design, or frontend ideas in plain "
             f"words with everyday analogies.\n\n"
             f"Respond strictly as JSON: "
-            f'{{"variants": [{{"archetype": "...", "text": "...", "thread_parts": []}}, '
-            f'{{"archetype": "...", "text": "...", "thread_parts": []}}, '
-            f'{{"archetype": "...", "text": "...", "thread_parts": []}}]}}'
+            f'{{"variants": [{{"archetype": "...", "text": "...", "thread_parts": [], "gifQuery": ""}}, '
+            f'{{"archetype": "...", "text": "...", "thread_parts": [], "gifQuery": ""}}, '
+            f'{{"archetype": "...", "text": "...", "thread_parts": [], "gifQuery": ""}}]}}'
         )
 
     def _generate_variants(self, sector):
@@ -812,6 +866,17 @@ class FollowerEngine:
         if sector in self.store.trends and self.store.trends[sector]:
             trends_info = (f"Weave in these trends if they fit: "
                            f"{', '.join(self.store.trends[sector])}.\n\n")
+        # Rotating topic angles from the niche analyzer. Picked at random
+        # per call so different generation cycles see different angles;
+        # this INCREASES variety. The instruction is permissive ("consider
+        # one of these") so a draft can still pick a fresh angle entirely.
+        angles = analyzer.topic_angles_for_prompt(self._insights, TOPIC_ANGLES_PER_PROMPT)
+        if angles:
+            trends_info += (
+                f"Topic angles currently earning traction in this niche "
+                f"(pick at most ONE if it fits, otherwise ignore and choose your "
+                f"own angle): {', '.join(angles)}.\n\n"
+            )
         prompt = self._build_variant_prompt(sector, archetypes, length_slots,
                                             opening_slots, trends_info)
         raw = self._generate(prompt, dedup=True)
@@ -834,7 +899,14 @@ class FollowerEngine:
             parts = [str(p) for p in parts if isinstance(p, str) and p.strip()]
             if arch != "mini_thread":
                 parts = []
-            cleaned.append({"archetype": arch, "text": text, "thread_parts": parts})
+            gif_query = v.get("gifQuery") or ""
+            if not isinstance(gif_query, str):
+                gif_query = ""
+            gif_query = gif_query.strip()
+            cleaned.append({
+                "archetype": arch, "text": text, "thread_parts": parts,
+                "gif_query": gif_query,
+            })
         return archetypes, cleaned
 
     def _variant_passes_gates(self, variant):
@@ -883,17 +955,60 @@ class FollowerEngine:
             ((hook_strength(v["text"], v.get("archetype")), v) for v in variants),
             key=lambda x: x[0], reverse=True,
         )
+        # Surface gif_query plus a resolved Klipy URL (when KLIPY_APP_KEY is
+        # set) so an operator can verify the GIF that WOULD attach. No
+        # bytes are fetched here; resolve is cheap and cached, and a dry
+        # run should not consume bandwidth previewing an embed.
+        variant_rows = []
+        for score, v in ranked:
+            gif_query = v.get("gif_query") or ""
+            resolved_url = klipy.resolve(gif_query) if gif_query else None
+            variant_rows.append({
+                "archetype": v.get("archetype"),
+                "text": v.get("text"),
+                "thread_parts": v.get("thread_parts") or [],
+                "gif_query": gif_query,
+                "resolved_gif_url": resolved_url,
+                "hook_strength": round(score, 2),
+                "passes_gates": self._variant_passes_gates(v),
+            })
         return {
             "sector": sector,
             "sampled_archetypes": archetypes,
-            "variants": [
-                {"archetype": v.get("archetype"), "text": v.get("text"),
-                 "thread_parts": v.get("thread_parts") or [],
-                 "hook_strength": round(score, 2),
-                 "passes_gates": self._variant_passes_gates(v)}
-                for score, v in ranked
-            ],
+            "variants": variant_rows,
         }
+
+    def _build_write_fn_with_optional_gif(self, gif_query, text_for_log):
+        """Return a write_fn closure suitable for _publish_with_reconcile.
+
+        If gif_query is non-empty and Klipy resolves + fetches a GIF,
+        post via post_with_image. Any failure in resolve / fetch / upload
+        wraps and degrades silently to net.post(text). The post itself is
+        never blocked by GIF issues; that is the posture the spec calls
+        out: GIF is a bonus, doubt resolves to text-only.
+        """
+        def write_fn(text):
+            if not gif_query:
+                return self.net.post(text)
+            try:
+                gif_url = klipy.resolve(gif_query)
+                if not gif_url:
+                    return self.net.post(text)
+                fetched = klipy.fetch_bytes(gif_url)
+                if not fetched:
+                    return self.net.post(text)
+                image_bytes, _mime = fetched
+                uri = self.net.post_with_image(
+                    text, image_bytes, alt_text=gif_query,
+                )
+                logger.info(f"   [GIF] attached '{gif_query}' to: "
+                            f"{text_for_log[:50]}...")
+                return uri
+            except Exception as e:
+                logger.warning(f"   [GIF] attachment failed ({e}); "
+                               f"publishing text-only.")
+                return self.net.post(text)
+        return write_fn
 
     def _original_post(self, sector):
         """Generate three divergent variants (each a distinct archetype),
@@ -911,10 +1026,18 @@ class FollowerEngine:
                      key=lambda v: hook_strength(v["text"], v.get("archetype")))
         text = winner["text"]
         hook = winner.get("archetype") or archetypes[0]
+        # Optional GIF attachment. Always a bonus, never required: any
+        # failure in the resolve / fetch / upload path degrades silently to
+        # a text-only post. Original posts only; replies stay text-only by
+        # design (handled at call sites). For mini_thread, the GIF rides
+        # on the anchor only, not on the continuations.
+        write_fn = self._build_write_fn_with_optional_gif(
+            winner.get("gif_query"), text,
+        )
         try:
             intent_id, uri = self._publish_with_reconcile(
                 kind="post", text=text, sector=sector, hook=hook,
-                write_fn=self.net.post,
+                write_fn=write_fn,
             )
         except exceptions.AtProtocolError as e:
             logger.warning(f"   [FAULT] post failed: {e}")

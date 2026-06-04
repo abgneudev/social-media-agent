@@ -44,3 +44,7 @@ services:
         sync: false
       - key: GROQ_API_KEY
         sync: false
+      # Optional. When unset, GIF attachment is silently skipped and posts
+      # go out text-only.
+      - key: KLIPY_APP_KEY
+        sync: false

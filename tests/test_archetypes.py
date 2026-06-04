@@ -83,6 +83,7 @@ def _bare_engine(tmpdir):
     e.persona = ""
     e._tick_actions = 0
     e._last_action = None
+    e._insights = None
     return e
 
 

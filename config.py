@@ -95,6 +95,12 @@ CIRCUIT_BREAKER_FILE = STATE_DIR / "circuit_breaker.json"
 KILL_SWITCH_FILE = STATE_DIR / "engine_status.txt"
 PENDING_WRITES_FILE = STATE_DIR / "pending_writes.json"
 STATUS_FILE = STATE_DIR / "status.json"
+# Niche analyzer output. Distributional only (which archetypes / topic angles
+# are trending in the niche). NEVER contains verbatim source text. Read by
+# the engine to bias bandit exploration and to seed topic ideas into the
+# variant generator. Graceful absence: when missing, generation and the
+# bandit run exactly as without it.
+NICHE_INSIGHTS_FILE = STATE_DIR / "niche_insights.json"
 
 
 # ==========================================
@@ -102,7 +108,12 @@ STATUS_FILE = STATE_DIR / "status.json"
 # ==========================================
 FOLLOWER_TARGET = 1
 TICK_INTERVAL = 150                  # 2.5 min/tick, ~24 ticks/hour, human-paced
-CONTENT_ATTRIBUTION_SECONDS = 540    # 9 min: posts/replies/quotes get scored
+# Content attribution: 24h is realistic for organic Bluesky reach on a small
+# account. The prior 9-minute window meant almost everything matured as a
+# failure, so the bandit could not tell good archetypes from bad. Maturation
+# is wall-clock based (mature_actions compares now - ts to the window) so it
+# survives restarts and ticks that arrive days after the action was logged.
+CONTENT_ATTRIBUTION_SECONDS = 24 * 60 * 60
 FOLLOW_ATTRIBUTION_SECONDS = 1500    # 25 min: follow-backs need real-human time
 MAX_LIKES_PER_TICK = 4               # stay human, avoid bot-like like-spray
 
@@ -114,7 +125,39 @@ STALL_THRESHOLD = 8                  # consecutive active-but-empty ticks before
 ANCHOR_POST_TARGET = 3
 PROFILE_OPT_MIN_TRIALS = 5           # data-sufficiency trigger for bio rewrite
 PROFILE_OPT_COOLDOWN_TICKS = 12
-POST_DECAY = 0.99                    # gentle, retains evidence across a short run
+# Per-tick decay applied to bandit alpha/beta. Recalibrated for the 24h
+# content window: at TICK_INTERVAL=150s, a 24h window spans ~576 ticks, so
+# 0.9999 retains ~94% of the evidence across maturation. The previous 0.99
+# would have collapsed signal to ~0.3% before a post matured, erasing every
+# reward.
+POST_DECAY = 0.9999
+
+# Engagement -> reward normalization for content actions. Reward is
+# min(1.0, engagement / TRACTION_REWARD_CAP). Posts with one like still earn
+# a fractional reward; posts with real traction earn the full reward. Below
+# the cap the relationship is linear so the bandit can still distinguish
+# "got 1 like" from "got 6 likes". A fixed cap (vs a recent-baseline) keeps
+# this cheap, with no extra API calls at maturation.
+TRACTION_REWARD_CAP = 10.0
+
+# Niche analyzer cadence. The analyzer is expensive (a search per sector
+# plus one classification AI call) so it runs infrequently. At 150s/tick
+# that is ~200 ticks ~= 8h. The first analyzer pass also runs once early
+# in the process so the engine is not flying blind for hours after start.
+ANALYZER_CADENCE_TICKS = 200
+ANALYZER_SAMPLE_PER_SECTOR = 8
+ANALYZER_TOTAL_SAMPLE_CAP = 24
+# Bandit exploration nudge derived from niche_insights. A hot archetype
+# gets up to EXPLORATION_NUDGE_MAX added to its alpha at sampling time
+# (NOT persisted to the bandit state). The cap is intentionally small so
+# the nudge biases exploration without zeroing other arms. Every archetype
+# must still be sampled regularly: the bandit remains the judge for THIS
+# account; the analyzer only nudges where to look first.
+EXPLORATION_NUDGE_MAX = 0.6
+# How many trending topic angles the variant prompt is shown per call.
+# Picked at random from the analyzer's pool so different calls see
+# different angles, increasing topic variety per generation cycle.
+TOPIC_ANGLES_PER_PROMPT = 2
 
 RATE_BUDGETS = {
     "follow": {"capacity": 5,  "refill_per_sec": 1 / 60.0},
