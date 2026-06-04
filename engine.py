@@ -567,7 +567,9 @@ class FollowerEngine:
         text = ""
         if hasattr(post, "record") and hasattr(post.record, "text"):
             text = post.record.text or ""
-        return is_relevant_text(text)
+        handle = getattr(post.author, "handle", "") if hasattr(post, "author") else ""
+        display = getattr(post.author, "display_name", "") if hasattr(post, "author") else ""
+        return is_relevant_text(f"{text} {handle} {display}")
 
     # ---- like ----
     def _spray_likes(self, candidates):
@@ -708,6 +710,12 @@ class FollowerEngine:
             return (-1.0, f"too large ({followers})")
         if posts < 3:
             return (-1.0, f"too few posts ({posts})")
+
+        bot_markers = ["brid.gy", ".ap.", "activitypub", "awakari", "job-alert", "-bot", "trending", "job-"]
+        handle_lower = handle.lower()
+        bio_lower = bio.lower()
+        if any(m in handle_lower for m in bot_markers) or any(m in bio_lower for m in ["aggregator", "feed", "automated", "bot"]):
+            return (-1.0, "automated feed/bot")
 
         profile_text = f"{bio} {display} {handle}"
         hits = RELEVANCE_RE.findall(profile_text)

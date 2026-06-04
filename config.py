@@ -336,7 +336,7 @@ SECTORS = list(KEYWORD_MAP.keys())
 
 # Word-boundary matcher built from the merged relevance signals.
 RELEVANCE_RE = re.compile(
-    r"\b(" + "|".join(re.escape(s) for s in RELEVANCE_SIGNALS) + r")\b",
+    r"\b(" + "|".join(re.escape(s) for s in RELEVANCE_SIGNALS) + r")s?\b",
     re.IGNORECASE,
 )
 
