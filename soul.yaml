@@ -215,3 +215,6 @@ relevance_signals:
 # extra_sensitive_phrases: []
 # extra_sensitive_words: []
 # extra_spam_phrases: []
+
+analogy_translation: "Explain a complex technical concept using a simple, relatable everyday analogy."
+amplify_and_praise: "Act as an enthusiastic curator. Highlight a specific strength of the quoted post (e.g., typography, layout). Do not add any unsolicited critiques or technical friction."
