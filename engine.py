@@ -755,10 +755,10 @@ class FollowerEngine:
             f'Respond strictly as JSON: {{"comment": "..."}}'
         )
         raw = self._generate(prompt, dedup=True)
-        text = None
+        quote_text = None
         if raw:
             try:
-                text = json.loads(raw)["comment"]
+                quote_text = json.loads(raw)["comment"]
             except Exception:
                 quote_text = None
         handle = getattr(best.author, "handle", "unknown")
