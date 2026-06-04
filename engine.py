@@ -998,8 +998,6 @@ class FollowerEngine:
                 continue
             if self._is_bot(c.author):
                 continue
-            if not self._is_relevant_content(c):
-                continue
             
             # High-Volume Filter: Only operate in areas with existing traction
             eng = (getattr(c, "like_count", 0) or 0) + (getattr(c, "repost_count", 0) or 0) + (getattr(c, "reply_count", 0) or 0)
