@@ -504,14 +504,22 @@ class FollowerEngine:
             logger.info("   [EVOLUTION] timeline empty, skipping")
             return
             
-        batch = "\\n---\\n".join([t for t in texts if t][:20])
+        # Define the core axiom and available adjacent disciplines
+        core_axiom = "functional minimalism and invisible UI/UX design"
+        adjacent_disciplines = ["behavioral psychology", "kinematics and physics", "algorithmic geometry", "neuroscience", "cognitive load theory"]
+        selected_discipline = random.choice(adjacent_disciplines)
+
+        batch = "\n---\n".join([t for t in texts if t][:20])
         prompt = (
-            f"You are a network analyst. These are recent posts from our timeline:\\n{batch}\\n\\n"
-            f"Extract up to 3 SPECIFIC emerging concepts or keywords in our niche that are NOT "
-            f"already in our core keywords. "
+            f"You are an interdisciplinary network analyst. These are recent posts from our timeline:\n{batch}\n\n"
+            f"Your objective is to find 3 highly specific, novel search queries that bridge our core focus "
+            f"('{core_axiom}') with principles from '{selected_discipline}'.\n"
+            f"Do not return generic terms. Return specific intersections (e.g., 'Fitts law touch targets', "
+            f"'Perlin noise data visualization'). These terms must be discoverable on a social media network.\n"
             f"Respond strictly as JSON: "
-            f'{{"keywords": ["kw1", "kw2"]}}'
+            f'{{"keywords": ["kw1", "kw2", "kw3"]}}'
         )
+        logger.info(f"   [EVOLUTION] bridging '{core_axiom}' x '{selected_discipline}'")
         raw = self._generate(prompt, dedup=False)
         if not raw:
             return
@@ -657,6 +665,10 @@ class FollowerEngine:
             return
         logger.info(f"[ACT] {len(candidates)} relevant candidate(s) for '{keyword}'.")
 
+        # 2b. Whale candidates: a wider pool that includes large creators
+        #     for high-visibility replies. Separate from follow targets.
+        whale_candidates, whale_kw = self._candidates_for(sector, allow_whales=True)
+
         # 3. Weighted action plan. Each action type fires with prob ~ its weight.
         plan = [a for a, w in weights.items() if random.random() < min(1.0, w * 2.5)]
         if post_hook == "amplify_and_praise":
@@ -668,13 +680,14 @@ class FollowerEngine:
             if action == "follow" and self.rate["follow"].try_consume():
                 self._strategic_follow(sector, post_hook, candidates, keyword)
             elif action == "reply" and self.rate["reply"].try_consume():
-                self._helpful_reply(sector, reply_hook, candidates, keyword)
+                reply_pool = whale_candidates if whale_candidates else candidates
+                self._helpful_reply(sector, reply_hook, reply_pool, whale_kw if whale_candidates else keyword)
             elif action == "quote" and self.rate["quote"].try_consume():
                 self._quote_best(sector, post_hook, candidates, keyword)
             elif action == "like":
                 self._spray_likes(candidates)
 
-    def _candidates_for(self, sector):
+    def _candidates_for(self, sector, allow_whales=False):
         trend_kw = (random.choice(self.store.trends[sector])
                     if sector in self.store.trends and self.store.trends[sector] else None)
         if trend_kw:
@@ -689,11 +702,18 @@ class FollowerEngine:
         else:
             keyword = self.sector_activity.get(sector, {}).get("keyword", sector)
             posts = self.sector_posts.get(sector, [])
-        cands = [c for c in posts
-                 if getattr(c.author, "did", None) != self.net.did
-                 and getattr(c.author, "did", None) not in self.known_follows
-                 and not self.store.already_acted_on(c.author.did)
-                 and self._is_relevant_content(c)]
+        cands = []
+        for c in posts:
+            did = getattr(c.author, "did", None)
+            if did == self.net.did:
+                continue
+            if not allow_whales and did in self.known_follows:
+                continue
+            if not allow_whales and self.store.already_acted_on(did):
+                continue
+            if not self._is_relevant_content(c):
+                continue
+            cands.append(c)
         return cands, keyword
 
     def _is_relevant_content(self, post) -> bool:
@@ -745,16 +765,26 @@ class FollowerEngine:
             "Highlight a specific strength of the quoted post (e.g., typography, layout). "
             "You are strictly forbidden from adding any unsolicited critiques or technical friction. "
         ) if hook == "amplify_and_praise" else ""
-        
+
+        # Vision pipeline: extract image from the target post
+        image_b64 = self.net.get_post_image_b64(best)
+        vision_hint = (
+            "An image is attached to this post. Analyze its structural design "
+            "(e.g., layout, typography, code architecture, algorithmic patterns) "
+            "and synthesize that into your response. Do not explicitly say "
+            "'In this image', just integrate the analysis naturally. "
+        ) if image_b64 else ""
+
         prompt = (
             f"This post is about '{sector}':\n\"{src}\"\n\n"
             f"Write one short comment (max 200 chars) to quote-post it, adding a "
             f"genuinely useful plain-language insight that builds on it. Use a "
             f"'{hook}' angle. {POST_HOOK_GUIDANCE.get(hook,'')} Never pitch anything. "
             f"{constraint}"
+            f"{vision_hint}"
             f'Respond strictly as JSON: {{"comment": "..."}}'
         )
-        raw = self._generate(prompt, dedup=True)
+        raw = self._generate(prompt, dedup=True, image_b64=image_b64)
         quote_text = None
         if raw:
             try:
@@ -1213,6 +1243,26 @@ class FollowerEngine:
         for i, c in enumerate(candidates[:limit]):
             preview = (c.record.text or "")[:200] if getattr(c.record, "text", None) else "(empty)"
             batch += f"[{i}] @{c.author.handle}: {preview}\n\n"
+
+        # Whale constraint: if the target account is large, force yes_and_expansion
+        whale_constraint = (
+            "If the target account is a large creator, your reply must act as a "
+            "'yes_and_expansion'. Add a highly intellectual, synthesized observation "
+            "to the top of their thread. You are strictly forbidden from acting "
+            "contrarian to the original author. "
+        )
+
+        # Vision pipeline: try to extract an image from the top candidate
+        top_image_b64 = None
+        if candidates:
+            top_image_b64 = self.net.get_post_image_b64(candidates[0])
+        vision_hint = (
+            "An image is attached to this post. Analyze its structural design "
+            "(e.g., layout, typography, code architecture, algorithmic patterns) "
+            "and synthesize that into your response. Do not explicitly say "
+            "'In this image', just integrate the analysis naturally. "
+        ) if top_image_b64 else ""
+
         prompt = (
             f"These are live posts about '{sector}':\n\n{batch}\n"
             f"Pick the SINGLE post where a short, kind, helpful reply would make the "
@@ -1222,10 +1272,12 @@ class FollowerEngine:
             f"idea in plain words with an everyday analogy. If the post is sensitive "
             f"(parenting, body image, mental health, religion, politics, money "
             f"struggles), set index to -1 and reply to an empty string. Do not pitch "
-            f"anything. Do not say 'great post'. Max 280 chars. No emoji, hashtag, em dash.\n"
+            f"anything. Do not say 'great post'. Max 280 chars. No emoji, hashtag, em dash. "
+            f"{whale_constraint}"
+            f"{vision_hint}\n"
             f'Respond strictly as JSON: {{"index": int, "reply": "..."}}'
         )
-        raw = self._generate(prompt, dedup=True)
+        raw = self._generate(prompt, dedup=True, image_b64=top_image_b64)
         if not raw:
             return
         try:
@@ -1263,22 +1315,36 @@ class FollowerEngine:
         logger.info(f"   [REPLY] @{target.author.handle}: {text[:70]}...")
 
     # ---- generation + gates ----
-    def _generate(self, prompt, dedup=False):
+    def _generate(self, prompt, dedup=False, image_b64=None):
         if dedup:
             recent = self.store.recent_content_texts(5)
             if recent:
                 prompt += ("\n\nDo NOT repeat the concepts, phrases, or angles of "
                            "these recent posts:\n" + "\n".join(f"- {t}" for t in recent))
+
+        # Model selection: use vision model when an image is provided
+        if image_b64:
+            model = "llama-3.2-11b-vision-preview"
+            user_content = [
+                {"type": "text", "text": prompt},
+                {"type": "image_url", "image_url": {
+                    "url": f"data:image/jpeg;base64,{image_b64}"
+                }},
+            ]
+        else:
+            model = "llama-3.3-70b-versatile"
+            user_content = prompt
+
         try:
             resp = self.ai.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model=model,
                 messages=[{"role": "system", "content": self.persona},
-                          {"role": "user", "content": prompt}],
+                          {"role": "user", "content": user_content}],
                 response_format={"type": "json_object"},
             )
             return resp.choices[0].message.content.strip()
         except Exception as e:
-            logger.warning(f"   [FAULT] generation failed: {e}")
+            logger.warning(f"   [FAULT] generation failed ({model}): {e}")
             return None
 
     def _passes_gates(self, text) -> bool:

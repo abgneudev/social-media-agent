@@ -5,6 +5,9 @@ Bluesky; a protocol-class layer here would be future-proofing for a domain
 we have not validated. If a second platform ever lands, add a second
 adapter alongside this one and let the engine pick.
 """
+import base64
+import urllib.request
+
 from atproto import Client, exceptions, models
 
 import config
@@ -84,6 +87,31 @@ class BlueskyAdapter:
         except Exception as e:
             logger.warning(f"      [FAULT] get_all_follows failed: {e}")
         return follows
+
+    def get_post_image_b64(self, post) -> str | None:
+        """Extract the first image from a post's embed and return as base64.
+
+        Walks embed.images (app.bsky.embed.images) and downloads the
+        fullsize URL. Returns None on any failure so callers degrade to
+        text-only generation."""
+        try:
+            embed = getattr(post, "embed", None)
+            if embed is None:
+                return None
+            images = getattr(embed, "images", None)
+            if not images:
+                return None
+            first = images[0]
+            img_url = getattr(first, "fullsize", None) or getattr(first, "thumb", None)
+            if not img_url:
+                return None
+            req = urllib.request.Request(img_url, headers={"User-Agent": "kiloforge/1"})
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                data = resp.read(4 * 1024 * 1024)
+            return base64.b64encode(data).decode("utf-8")
+        except Exception as e:
+            logger.warning(f"      [VISION] image extraction failed: {e}")
+            return None
 
     # writes
     # Idempotency notes:
