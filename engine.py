@@ -603,7 +603,6 @@ class FollowerEngine:
             try:
                 import meta_critic
                 if meta_critic.evaluate_strategy(lambda prompt: self._generate(prompt, dedup=False), self.store.bandit):
-                    import config
                     config.reload_dynamic_strategy()
                     self.persona = config.PERSONA
             except Exception as e:
@@ -1159,7 +1158,7 @@ class FollowerEngine:
                 action = results.get(cid, "ignore")
                 if action == "mute":
                     self.net.mute_actor(c.author.did)
-                    self.store.log_action("mute", target_did=c.author.did, learnable=False)
+                    self.store.log_action("mute", "n/a", "n/a", target_did=c.author.did, learnable=False)
                 elif action == "less":
                     self.net.send_interaction(c.uri, "app.bsky.feed.defs#requestLess")
                 elif action == "more":
