@@ -16,6 +16,7 @@ import sys
 import json
 import time
 import random
+import signal
 
 import config
 from config import (
@@ -86,6 +87,16 @@ def main():
 
     engine = FollowerEngine(handle, password)
     engine.bootstrap()
+
+    # --- INJECT THIS TRAP ---
+    def handle_sigterm(signum, frame):
+        logger.info("[SYSTEM] SIGTERM received from systemd. Saving state and shutting down.")
+        engine.store.save_engine()
+        sys.exit(0)
+    
+    signal.signal(signal.SIGTERM, handle_sigterm)
+    signal.signal(signal.SIGINT, handle_sigterm)
+    # ------------------------
 
     while True:
         try:

@@ -86,50 +86,36 @@ def _pick_url(item):
     return None
 
 
-def resolve(query):
-    """Return a URL string for the first matching Klipy GIF, or None.
-
-    Cached per-process by normalized query (including negative results).
-    Never raises: any error path returns None so the caller can degrade
-    to text-only."""
-    q = _normalize(query)
-    if not q:
-        return None
-    if q in _RESOLVE_CACHE:
-        return _RESOLVE_CACHE[q]
-
-    app_key = _key()
+def resolve(query: str):
+    app_key = os.getenv("KLIPY_APP_KEY")
     if not app_key:
-        logger.info("   [KLIPY] KLIPY_APP_KEY not set; skipping GIF.")
-        _RESOLVE_CACHE[q] = None
+        logger.critical("[KLIPY] KLIPY_APP_KEY is missing from environment!")
         return None
 
-    url = (
-        f"{KLIPY_API_BASE}/{urllib.parse.quote(app_key)}/gifs/search"
-        f"?q={urllib.parse.quote(q)}"
-        f"&page=1&per_page=1"
-        f"&content_filter={KLIPY_CONTENT_FILTER}"
-    )
+    # 1. Sanitize the LLM output (strip literal quotes and whitespace)
+    clean_query = query.replace('"', '').replace("'", "").strip()
+    
+    # 2. Safely URL-encode the string
+    encoded_query = urllib.parse.quote(clean_query)
+    
+    url = f"https://api.klipy.co/v1/gifs/search?q={encoded_query}"
+    req = urllib.request.Request(url, headers={"Authorization": f"Bearer {app_key}"})
+    
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": "kiloforge/1"})
-        with urllib.request.urlopen(req, timeout=KLIPY_TIMEOUT_SECS) as resp:
-            body = resp.read(2 * 1024 * 1024)  # cap response body
-        data = json.loads(body)
-    except Exception as e:
-        logger.warning(f"   [KLIPY] resolve failed for {q!r}: {e}")
-        _RESOLVE_CACHE[q] = None
+        with urllib.request.urlopen(req) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            items = data.get("items", [])
+            if not items:
+                logger.warning(f"[KLIPY] API returned 200 but empty items for: '{clean_query}'. Raw data: {data}")
+                return None
+            return items[0].get("url")
+    except urllib.error.HTTPError as e:
+        body = e.read().decode('utf-8')
+        logger.error(f"[KLIPY] HTTP {e.code} for query '{clean_query}': {body}")
         return None
-
-    items = ((data or {}).get("data") or {}).get("data") or []
-    # Klipy nests results under data.data; some endpoints return a flat
-    # list at data. Accept both shapes.
-    if not items and isinstance((data or {}).get("data"), list):
-        items = data["data"]
-    picked = _pick_url(items[0]) if items else None
-    _RESOLVE_CACHE[q] = picked
-    if not picked:
-        logger.info(f"   [KLIPY] no match for {q!r}.")
-    return picked
+    except Exception as e:
+        logger.error(f"[KLIPY] Unexpected error: {e}")
+        return None
 
 
 def fetch_bytes(url):

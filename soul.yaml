@@ -44,13 +44,15 @@ persona: >-
 # divergent posts, not three rewordings of one draft.
 post_hooks:
   - one_line_provocation
-  - mini_thread
-  - i_was_wrong
-  - before_after
   - single_question
+  - mini_thread
+  - analogy_translation
+  - before_after
   - teardown
   - contrarian_take
   - plain_definition
+  - i_was_wrong
+  - amplify_and_praise
 
 post_hook_guidance:
   one_line_provocation: >-
@@ -84,6 +86,7 @@ reply_hooks:
   - yes_and_expansion
   - respectful_counterpoint
   - clarifying_question
+  - amplify_and_praise
 
 reply_hook_guidance:
   yes_and_expansion: "Affirm what they got right, then add one genuinely useful extension."
@@ -105,7 +108,10 @@ keyword_map:
   frontend_engineering:
     - "frontend"
     - "CSS layout"
-    - "React component"
+    - "#reactjs"
+    - "react developer"
+    - "react component"
+    - "react ecosystem"
     - "web performance"
     - "accessibility"
     - "responsive design"
@@ -117,6 +123,12 @@ keyword_map:
     - "Figma to code"
     - "UI consistency"
     - "design handoff"
+  visual_showcase:
+    - "#wip"
+    - "ui concept"
+    - "figma mockup"
+    - "portfolio update"
+    - "just shipped"
 
 # Word-boundary matched to decide whether a post or profile is "on topic"
 # enough to engage with. Adding signals broadens what the agent considers
@@ -144,7 +156,7 @@ relevance_signals:
   - "html"
   - "javascript"
   - "typescript"
-  - "react"
+  - "#reactjs"
   - "vue"
   - "dev"
   - "web standards"

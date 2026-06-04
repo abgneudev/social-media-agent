@@ -28,6 +28,14 @@ class BlueskyAdapter:
         resp = self.client.app.bsky.feed.search_posts({"q": keyword, "limit": limit})
         return list(resp.posts) if getattr(resp, "posts", None) else []
 
+    def fetch_timeline(self, limit=30) -> list:
+        try:
+            resp = self.client.app.bsky.feed.get_timeline({"limit": limit})
+            return [item.post for item in getattr(resp, "feed", []) if hasattr(item, "post")]
+        except Exception as e:
+            logger.warning(f"      [FAULT] fetch_timeline failed: {e}")
+            return []
+
     def get_profile(self, actor):
         try:
             return self.client.get_profile(actor=actor)

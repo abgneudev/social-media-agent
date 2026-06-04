@@ -659,6 +659,8 @@ class FollowerEngine:
 
         # 3. Weighted action plan. Each action type fires with prob ~ its weight.
         plan = [a for a, w in weights.items() if random.random() < min(1.0, w * 2.5)]
+        if post_hook == "amplify_and_praise":
+            plan = ["quote"]
         if "like" not in plan:
             plan.append("like")
         random.shuffle(plan)
@@ -738,11 +740,18 @@ class FollowerEngine:
         if not best:
             return
         src = (best.record.text or "")[:200]
+        constraint = (
+            "If the hook is 'amplify_and_praise', you must act as an enthusiastic curator. "
+            "Highlight a specific strength of the quoted post (e.g., typography, layout). "
+            "You are strictly forbidden from adding any unsolicited critiques or technical friction. "
+        ) if hook == "amplify_and_praise" else ""
+        
         prompt = (
             f"This post is about '{sector}':\n\"{src}\"\n\n"
             f"Write one short comment (max 200 chars) to quote-post it, adding a "
             f"genuinely useful plain-language insight that builds on it. Use a "
             f"'{hook}' angle. {POST_HOOK_GUIDANCE.get(hook,'')} Never pitch anything. "
+            f"{constraint}"
             f'Respond strictly as JSON: {{"comment": "..."}}'
         )
         raw = self._generate(prompt, dedup=True)
