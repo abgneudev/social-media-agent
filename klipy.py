@@ -99,7 +99,13 @@ def resolve(query: str):
     encoded_query = urllib.parse.quote(clean_query)
     
     url = f"https://api.klipy.co/v1/gifs/search?q={encoded_query}"
-    req = urllib.request.Request(url, headers={"Authorization": f"Bearer {app_key}"})
+    req = urllib.request.Request(
+        url, 
+        headers={
+            "Authorization": f"Bearer {app_key}",
+            "User-Agent": "kiloforge/1"
+        }
+    )
     
     try:
         with urllib.request.urlopen(req) as resp:
