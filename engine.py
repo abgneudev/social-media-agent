@@ -1549,7 +1549,7 @@ class FollowerEngine:
 
         # Model selection: use vision model when an image is provided
         if image_b64:
-            model = "llama-3.2-11b-vision-preview"
+            model = "llama-4-scout-17b-16e-instruct"
             user_content = [
                 {"type": "text", "text": prompt},
                 {"type": "image_url", "image_url": {

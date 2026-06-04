@@ -98,23 +98,38 @@ def resolve(query: str):
     # 2. Safely URL-encode the string
     encoded_query = urllib.parse.quote(clean_query)
     
-    url = f"https://api.klipy.co/v1/gifs/search?q={encoded_query}"
+    url = f"https://api.klipy.com/api/v1/{app_key}/gifs/search?q={encoded_query}"
     req = urllib.request.Request(
         url, 
         headers={
-            "Authorization": f"Bearer {app_key}",
-            "User-Agent": "kiloforge/1"
+            "User-Agent": "kiloforge/1",
+            "Content-Type": "application/json"
         }
     )
     
     try:
         with urllib.request.urlopen(req) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            items = data.get("items", [])
+            if resp.status == 204:
+                logger.warning(f"[KLIPY] API returned 204 No Content for: '{clean_query}' (No GIFs found).")
+                return None
+                
+            raw_body = resp.read().decode("utf-8")
+            try:
+                data = json.loads(raw_body)
+            except json.JSONDecodeError:
+                logger.error(f"[KLIPY] Failed to parse JSON. Raw response: {raw_body[:500]}")
+                return None
+                
+            items = data.get("data", {}).get("data", [])
             if not items:
                 logger.warning(f"[KLIPY] API returned 200 but empty items for: '{clean_query}'. Raw data: {data}")
                 return None
-            return items[0].get("url")
+                
+            try:
+                return items[0]["file"]["md"]["gif"]["url"]
+            except (KeyError, IndexError, TypeError):
+                logger.error(f"[KLIPY] Failed to extract GIF URL from response. Raw data: {data}")
+                return None
     except urllib.error.HTTPError as e:
         body = e.read().decode('utf-8')
         logger.error(f"[KLIPY] HTTP {e.code} for query '{clean_query}': {body}")
