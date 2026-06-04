@@ -81,6 +81,10 @@ post_hook_guidance:
   plain_definition: >-
     Take one confusing term and define it in plain words using an everyday
     analogy, so a beginner thinks 'oh, THAT is what that means.'
+  analogy_translation: >-
+    Explain a complex technical concept using a simple, relatable everyday analogy.
+  amplify_and_praise: >-
+    Act as an enthusiastic curator. Highlight a specific strength of the quoted post (e.g., typography, layout). Do not add any unsolicited critiques or technical friction.
 
 reply_hooks:
   - yes_and_expansion
@@ -92,6 +96,7 @@ reply_hook_guidance:
   yes_and_expansion: "Affirm what they got right, then add one genuinely useful extension."
   respectful_counterpoint: "Gently offer a different angle without dismissing them."
   clarifying_question: "Ask one sharp, kind question that helps them see what they may be missing."
+  amplify_and_praise: "Act as an enthusiastic curator. Highlight a specific strength of the quoted post. Do not add any unsolicited critiques or technical friction."
 
 # Niche search keywords. The dict keys are the sector names used by the
 # bandit; sector identifiers come from these keys, so add a sector by
@@ -215,6 +220,3 @@ relevance_signals:
 # extra_sensitive_phrases: []
 # extra_sensitive_words: []
 # extra_spam_phrases: []
-
-analogy_translation: "Explain a complex technical concept using a simple, relatable everyday analogy."
-amplify_and_praise: "Act as an enthusiastic curator. Highlight a specific strength of the quoted post (e.g., typography, layout). Do not add any unsolicited critiques or technical friction."
