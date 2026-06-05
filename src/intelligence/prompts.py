@@ -159,6 +159,7 @@ def build_helpful_reply_prompt(soul, sector, batch, hook, whale_constraint, visi
         f"idea in plain words with an everyday analogy. If the post is sensitive "
         f"or heavily polarized, respond with action='skip'. {whale_constraint}"
         f"{vision_hint}"
+        f"CRITICAL: Keep your reply under 280 characters to pass API limits.\n"
         f'Respond strictly as JSON: {{"index": 0, "reply": "...", "action": "reply"}}'
     )
 

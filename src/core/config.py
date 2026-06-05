@@ -190,7 +190,7 @@ RATE_BUDGETS = {
     "post":   {"capacity": 2,  "refill_per_sec": 1 / 300.0},
     "quote":  {"capacity": 2,  "refill_per_sec": 1 / 300.0},
     "research": {"capacity": 1, "refill_per_sec": 1 / 14400.0}, # 4 hours
-    "curate": {"capacity": 1, "refill_per_sec": 1 / 7200.0}, # 2 hours
+    "curate": {"capacity": 3, "refill_per_sec": 1 / 1800.0}, # 30 mins
     "meta_critic": {"capacity": 1, "refill_per_sec": 1 / 43200.0}, # 12 hours
     "strategy_plan": {"capacity": 1, "refill_per_sec": 1 / 900.0}, # 15 min
     "llm_api": {"capacity": 20, "refill_per_sec": 1 / 60.0}, # 20 tokens, 1 per min
