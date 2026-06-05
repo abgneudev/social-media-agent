@@ -43,3 +43,4 @@ env/
 # part of the Kiloforge deploy. .renderignore enforces the same on Render
 # even if this folder is ever committed by accident.
 newagent/
+chroma_db/
