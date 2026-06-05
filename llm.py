@@ -154,8 +154,10 @@ class LLMClient:
                 messages=messages
             )
             msg = resp.choices[0].message
-            ans = msg.content.strip() if msg.content else "{}"
-            return self.parse_json(ans, fallback_dict={"is_safe": False})
+            ans = msg.content.strip().lower() if msg.content else ""
+            if "unsafe" in ans:
+                return {"is_safe": False}
+            return {"is_safe": True}
         except Exception as e:
             logger.warning(f"   [FAULT] Safeguard moderation failed: {e}")
             # Fail closed for security
@@ -175,7 +177,10 @@ class LLMClient:
             match = re.search(r'\{.*\}', raw_text, re.DOTALL)
             clean_json = match.group(0) if match else raw_text
             data = json.loads(clean_json)
-            parsed = data
+            if isinstance(data, dict):
+                parsed = data
+            else:
+                return fallback_dict
         except Exception:
             try:
                 # Attempt to recover multiple sequential objects
