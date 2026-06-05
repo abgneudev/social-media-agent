@@ -461,7 +461,7 @@ class FollowerEngine:
         if self.store.phase != "bootstrap":
             return
         logger.info("[BOOTSTRAP] setting profile conversion surface")
-        self.net.set_profile(NAME_TEXT, BIO_TEXT)
+        self.net.set_profile(self.soul.name, self.soul.bio)
         self.store.phase = "explore"
         self.store.save_engine()
 
@@ -1012,7 +1012,7 @@ class FollowerEngine:
             return
         try:
             bio = self.llm.parse_json(raw, fallback_dict={}).get("bio", "")[:256]
-            self.net.set_profile(NAME_TEXT, bio)
+            self.net.set_profile(self.soul.name, bio)
             self.store.last_profile_opt_tick = self.store.tick
             self.store.save_engine()
         except Exception as e:
