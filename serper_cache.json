@@ -118,9 +118,46 @@
       "https://www.researchgate.net/publication/324484333/figure/fig1/AS:962227209265188@1606424252890/Architecture-for-monitoring-and-control-of-smart-grid-system.gif",
       "https://media.nngroup.com/media/editor/2022/06/28/shrine-example-93.png",
       "https://docs.oracle.com/cd/E19118-01/n1.sprovsys50/819-1467/images/osp-arch-diagram.gif"
+    ],
+    "image:minimalist interface wireframe layout figma": [
+      "https://cdn.sanity.io/images/599r6htc/regionalized/4c8605ad998d69b03a6eefb850cce5e23a0a96dc-2880x1440.png?w=2880&h=1440&q=75&fit=max&auto=format",
+      "https://s3-figma-hubfile-images-production.figma.com/hub/file/carousel/img/eaf4a09f227bf12e81e05bdf728aee3e6b572385",
+      "https://s3-alpha.figma.com/hub/file/6945053429/62fbf0cd-d83f-4743-9f3e-37fd9df79532-cover.png",
+      "https://s3-alpha.figma.com/hub/file/458914308/77a4cb87-c67f-47df-a18a-1a69276982c4-cover.png",
+      "https://s3-alpha.figma.com/hub/file/2028701298/38c882f6-7e28-4772-9477-cbaabde3a695-cover.png",
+      "https://s3-alpha.figma.com/hub/file/5595910990/7d9c1384-8c96-4a37-b4aa-6b5e5eb26059-cover.png",
+      "https://s3-alpha.figma.com/hub/file/6683476070/40eb5f3e-4176-430c-8daa-effa6d32627d-cover.png",
+      "https://s3-figma-hubfile-images-production.figma.com/hub/file/carousel/img/ded2969f56cd1795e744ef8a0fcd3e6dc9bc16d0",
+      "https://cdn.sanity.io/images/599r6htc/regionalized/07fbf12d120cd2c7afac98cb98569445f74bfc74-1108x1108.png?w=540&h=540&q=75&fit=max&auto=format",
+      "https://figmafreebie.com/uploads/freebies/download-bloo-free-wireframe-ui-kit-freebie-by-vijay-verma.webp"
+    ],
+    "image:finite state machine diagram for ui navigation flow figma": [
+      "https://community.robotshop.com/forum/uploads/default/c05da04e6e5359f783a0c4ef4aa72080095a1db5",
+      "https://s3-alpha.figma.com/hub/file/4359324716/702a836d-3285-40df-89d2-0d1f8605aad3-cover.png",
+      "https://parallelagile.github.io/CodeBot/images/lba/navigation-state-machine-annotated.png",
+      "https://substackcdn.com/image/fetch/$s_!FwCJ!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fc857ef9a-2ae0-468a-9281-179377f8a447_861x381.png",
+      "https://xiaoyunyang.github.io/post/images/fsm/location-search-fsm.png",
+      "https://www.researchgate.net/publication/272491956/figure/fig1/AS:391968422154246@1470463962988/Flow-Chart-of-FSM-The-Finite-State-machine-consists-of-four-states-which-are-described.png",
+      "https://www.lloydatkinson.net/_astro/document-workflow-1-small.DqTwoS3w.png",
+      "https://www.researchgate.net/publication/313350254/figure/fig1/AS:669459995959314@1536623109175/Finite-State-Machine-flowchart.png",
+      "https://miro.medium.com/v2/resize:fit:1030/1*rRLRfC4WfxFPRMXeXGVaog.png",
+      "https://masterlysolutions.com/wp-content/uploads/2023/02/start-to-end-002.jpg"
+    ],
+    "image:modular grid system architecture diagram": [
+      "https://www.researchgate.net/publication/267338516/figure/fig10/AS:270622928404480@1441532942129/Modular-grid-of-the-architectural-system.png",
+      "https://uxmag.com/wp-content/uploads/files/uploads/ling-architecture-golden-ratio-ux/nine-square-grid.png",
+      "http://www.vanseodesign.com/blog/wp-content/uploads/2013/02/grid-anatomy.png",
+      "https://uxmag.com/wp-content/uploads/files/uploads/ling-architecture-golden-ratio-ux/perfect-ratio.png",
+      "https://habrastorage.org/getpro/habr/upload_files/5c7/261/092/5c7261092803c476266e7d32e9c4de41.png",
+      "https://miro.medium.com/v2/resize:fit:1400/1*eVr0X1GdXMD4f4ew5_ZeMw.jpeg",
+      "https://www.architecturecourses.org/sites/default/files/2025-06/grid-system-golden-ratio-architecture.png",
+      "https://www.researchgate.net/profile/Sheng-Fen-Chien/publication/267338516/figure/fig2/AS:270280589312000@1441451322556/Composition-of-system-components_Q320.jpg",
+      "https://www.datocms-assets.com/16499/1759236224-image10.jpg",
+      "https://www.researchgate.net/publication/325975068/figure/fig9/AS:641470344208385@1529949856354/Modular-grid-system-in-the-design-of-the-Catalca-Ferhat-Pasha-Complex-a-transferring.png"
     ]
   },
   "daily_usage": {
-    "2026-06-04": 16
+    "2026-06-04": 16,
+    "2026-06-05": 7
   }
 }

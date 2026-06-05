@@ -1,16 +1,7 @@
 {
-  "ts": 1780631012.2769008,
-  "ts_iso": "2026-06-04T23:43:32",
-  "velocity_posts": [
-    {
-      "uri": "at://did:plc:dy67e5bo7xbo4co4oivs5mne/app.bsky.feed.post/3mnj7a3upyd2x",
-      "text": "Jeremy Lauzon had 97 blocked shots in 68 regular season games. Was very slow to react to that pass going over to Jarvis and get in the shooting lane. John Tortorella will not love that.",
-      "author_did": "did:plc:dy67e5bo7xbo4co4oivs5mne",
-      "likes_in_window": 3,
-      "window_seconds": 393,
-      "ts": 1780630684.711689
-    }
-  ],
+  "ts": 1780646438.5790951,
+  "ts_iso": "2026-06-05T04:00:38",
+  "velocity_posts": [],
   "our_engagers": [],
-  "tracked_posts_count": 17
+  "tracked_posts_count": 9
 }

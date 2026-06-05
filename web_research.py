@@ -18,13 +18,12 @@ WEB_INSIGHTS_FILE = STATE_DIR / "web_insights.json"
 def _generate_queries(ai_generate, empirical_data):
     """Generates dynamic search queries based on the agent's current empirical state."""
     prompt = (
-        f"You are the Lead Strategist for an autonomous social media agent with the following persona:\n"
-        f"{config.PERSONA}\n\n"
+        f"You are the Lead Strategist for an autonomous social media engine operating in these sectors: {', '.join(config.SECTORS)}.\n\n"
         f"Based on the agent's current empirical platform data, you must determine your research direction for this cycle and formulate 2-3 Google Search queries to execute your strategy.\n\n"
         f"AGENT'S EMPIRICAL DATA:\n"
         f"{json.dumps(empirical_data, indent=2)}\n\n"
-        f"CRITICAL RULE ON CREDIBILITY: You MUST append `site:` operators to your queries to restrict the search ONLY to highly credible known organizations, companies, or institutions relevant to the agent's persona. Use your knowledge to select the most authoritative domains for the specific topic you are querying. Do NOT perform generic open web searches.\n\n"
-        f"DIRECTION AUTONOMY: You have full autonomy to decide what the agent needs to learn right now. Do you need to read platform API docs? Do you need to study algorithm mechanics? Do you need to find specific content inspiration for a failing sector? Decide the most critical knowledge gap, state your direction, and formulate queries to fill it.\n\n"
+        f"CRITICAL RULE ON CREDIBILITY: You MUST append `site:` operators to your queries to restrict the search ONLY to highly credible known organizations, companies, or institutions relevant to the agent's sectors. Use your knowledge to select the most authoritative domains for the specific topic you are querying. Do NOT perform generic open web searches.\n\n"
+        f"DIRECTION AUTONOMY & BOTTLENECK DIAGNOSIS: You have full autonomy to decide what the agent needs to learn right now. However, you MUST mathematically diagnose your growth bottlenecks first. Look at the ratio of followers to anchor_posts in the empirical data. If that ratio is low, your bottleneck is NOT content quality—it is Platform Distribution. In that case, you MUST prioritize researching the algorithmic mechanics, feed ranking rules, and network graph dynamics of the Bluesky platform. If growth is healthy, prioritize Content Inspiration to fuel future posts across your sectors. State your diagnostic reasoning in your direction, and formulate queries to attack the bottleneck.\n\n"
         f"Respond STRICTLY as JSON with exactly two keys:\n"
         f"{{\n"
         f'  "research_direction": "Brief explanation of your strategy for this research cycle",\n'
@@ -42,8 +41,7 @@ def _generate_queries(ai_generate, empirical_data):
 
 def _research_prompt(article_text, source_link, source_title):
     return (
-        f"You are a strict, high-standard Social Strategist and Researcher acting on behalf of an agent with the following persona:\n"
-        f"{config.PERSONA}\n\n"
+        f"You are a strict, high-standard Social Strategist and Researcher managing a portfolio in these sectors: {', '.join(config.SECTORS)}.\n\n"
         f"Analyze the following article.\n\n"
         f"ARTICLE: {source_title}\nURL: {source_link}\n\n"
         f"CONTENT:\n{article_text[:8000]}\n\n"
