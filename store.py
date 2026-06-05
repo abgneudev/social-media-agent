@@ -56,6 +56,7 @@ class Store:
         self.bandit = self._load_bandit(es.get("bandit", None))
         self.ledger = es.get("ledger", [])
         self.keyword_telemetry = es.get("keyword_telemetry", {})
+        self.authorities = es.get("authorities", {})
         
         self.snapshots = load_json(config.SNAPSHOT_FILE, [])
         self.seen = set(load_json(config.SEEN_FILE, []))
@@ -153,7 +154,8 @@ class Store:
             "bandit": self.bandit, "ledger": self.ledger,
             "keyword_telemetry": self.keyword_telemetry,
             "keyword_map": self.keyword_map,
-            "relevance_signals": self.relevance_signals
+            "relevance_signals": self.relevance_signals,
+            "authorities": self.authorities
         })
 
     def _compile_relevance_re(self):

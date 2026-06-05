@@ -1,8 +1,55 @@
 {
   "queries": {
-    "image:dashboard UI design dribbble": "https://cdn.dribbble.com/userupload/17730953/file/original-05a2f18aae02857f16dc660924a28639.png?format=webp&resize=400x300&vertical=center"
+    "image:dashboard UI design dribbble": "https://cdn.dribbble.com/userupload/17730953/file/original-05a2f18aae02857f16dc660924a28639.png?format=webp&resize=400x300&vertical=center",
+    "image:high fidelity wireframe showing form versus chat prompt figma": [
+      "https://bluezorro.com/wp-content/uploads/2023/05/13.-High-Fidelity-Wireframes_-Everything-You-Need-to-Know-About-This-Powerful-Design-Tool.png",
+      "https://s3-alpha.figma.com/hub/file/3905027142/24c18bc3-1846-42f4-b9de-b115fbd9beaa-cover.png",
+      "https://cdn.sanity.io/images/599r6htc/regionalized/4c8605ad998d69b03a6eefb850cce5e23a0a96dc-2880x1440.png",
+      "https://cdn.sanity.io/images/599r6htc/regionalized/07de088a8465abddb0c5e623755fb12eee4dbf76-1081x541.png?w=1200&q=70&fit=max&auto=format",
+      "https://i0.wp.com/www.lessonsindesign.com/wp-content/uploads/2023/01/SarHub-UX-Course-Panache-High-Fidelity-Prototype-Screens.png?resize=1200%2C1718&ssl=1",
+      "https://www.andacademy.com/resources/wp-content/uploads/2024/07/3-4.webp",
+      "https://cdn.prod.website-files.com/65c1ae21fb2191466dd6ce72/66027bfa58f8c5454f1172f9_65155afc727272a8361e272a_03_figma-high-fidelity-wireframe-screenshot.jpeg",
+      "https://cdn.prod.website-files.com/65c1ae21fb2191466dd6ce72/66027bfb58f8c5454f117320_65155d91ea507898a26daf7e_13_wireframe-to-final-design-transformation.jpeg",
+      "https://media.licdn.com/dms/image/v2/D5622AQE7hX6pvltndQ/feedshare-shrink_800/B56ZnYkP0_G0Ag-/0/1760275008402?e=2147483647&v=beta&t=eKty75Yg2zsbka3ukSjLAxCMMbsh1VVtH-BCskIgMbY",
+      "https://landing.moqups.com/img/blog/low-fidelity-vs-high-fidelity.png"
+    ],
+    "image:bento grid ui layout architecture diagram": [
+      "https://miro.medium.com/v2/resize:fit:2000/1*9VrNbGvuy_KYh1ZGuuj0-A.png",
+      "https://cdn.prod.website-files.com/5e9dc792e1210c5325f7ebbc/661f7acf01f79097568acb3c_O2xA1lsRaR5ppyA7WanXpaD54IJq3NzINLapfxbvqZk.webp",
+      "https://bentogrids.com/cdn-cgi/image/width=2048,metadata=none,fit=scale-down,format=auto/https://s.bentogrids.com/cmf19ear50000lau6ohb2z7xv.png",
+      "https://miro.medium.com/v2/resize:fit:1400/1*X9b4rlXrkzR-uM9HzxJF8w.jpeg",
+      "https://s3-alpha.figma.com/hub/file/2229051864122678604/1063632e-a437-410b-8175-ea1b13bedf72-cover.png",
+      "https://miro.medium.com/v2/resize:fit:1400/0*5aHX4SixtzyP4aCy.png",
+      "https://gapsystudio.com/storage/editor/4-best-practices-for-bento-ui-design.png",
+      "https://www.shutterstock.com/image-vector/cyber-bento-grid-templates-neon-260nw-2718313227.jpg",
+      "https://assets.mockuuups.com/mo/image/upload/hy81ajhubqkkpxco8jpr",
+      "https://miro.medium.com/v2/resize:fit:1400/0*_GdRCSdCdTzDwkMS.png"
+    ],
+    "image:minimalist dashboard wireframe architecture diagram": [
+      "https://cdn.prod.website-files.com/66d83c0ac3e7baf0176f2c82/68474119ee325b52d5b98577_B%20(17).png",
+      "https://mokkupai.s3.ap-south-1.amazonaws.com/files/assets/blogs/resources/660c9f40-2f0c-4253-9452-5c44ba43dd2e.png",
+      "https://assets.visme.co/templates/banners/thumbnails/i_CRMTool-Dashboard-Wireframe-full_1.jpg",
+      "https://media.licdn.com/dms/image/v2/D4E12AQFULY1yaEi0RA/article-cover_image-shrink_720_1280/B4EZkvQvBUIQAQ-/0/1757434541554?e=2147483647&v=beta&t=ZtGRhm3kxmoarIMqCozdVLO0ApTQ4fEbLBODmEDEw6I",
+      "https://www.researchgate.net/publication/373151547/figure/fig4/AS:11431281181821626@1692193296005/Lecturer-Dashboard-Wireframe-Heres-the-Homepage-of-each-class-in-the-Learning-Management.ppm",
+      "https://substackcdn.com/image/fetch/f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Ff6a6d037-135b-4e02-b4dc-7cd18ce1405b_915x477.png",
+      "https://assets.visme.co/templates/whiteboards/thumbnails/i_Sales-Dashboard-Wireframe_full.jpg",
+      "https://d1tzxux72fvryy.cloudfront.net/M18698e1e05b71363a714a6aa5176df961731387217910/preview/M18698e1e05b71363a714a6aa5176df961731387217910.png",
+      "https://landing.moqups.com/img/templates/wireframes/admin-dashboard-wireframe.png"
+    ],
+    "image:data dense dashboard interface before after wireframe": [
+      "https://cdn.prod.website-files.com/66d83c0ac3e7baf0176f2c82/68474119ee325b52d5b98577_B%20(17).png",
+      "https://builtin.com/sites/www.builtin.com/files/styles/ckeditor_optimize/public/inline-images/Image%203.png",
+      "https://cdn.prod.website-files.com/66d83c0ac3e7baf0176f2c82/68473ecaefb140dc57b50f47_7863e4bd71fb0d567a3b2d7eecfe65b4eefe7a954099ca5c317eedc4243bf243.png",
+      "https://deliveringdataanalytics.com/wp-content/uploads/2022/10/After-scaled.jpg",
+      "https://assets.justinmind.com/wp-content/uploads/2020/02/dashboard-layout-hierarchy.png",
+      "https://landing.moqups.com/img/_optimized/blog/Dashboard_Versions-w400.jpeg",
+      "https://lukasreese.com/wp-content/uploads/2025/08/Wireframe-Examples-and-dashboard-background-1200x675.png",
+      "https://media.licdn.com/dms/image/v2/D4E12AQFULY1yaEi0RA/article-cover_image-shrink_720_1280/B4EZkvQvBUIQAQ-/0/1757434541554?e=2147483647&v=beta&t=ZtGRhm3kxmoarIMqCozdVLO0ApTQ4fEbLBODmEDEw6I",
+      "https://miro.medium.com/v2/resize:fit:3200/1*e4_5ALdp9SdA0iuZzkdJSQ.png",
+      "https://www.researchgate.net/publication/351422187/figure/fig2/AS:1031155247767554@1622857977903/sualization-of-our-wireframe-dashboard-design-and-its-components.png"
+    ]
   },
   "daily_usage": {
-    "2026-06-04": 3
+    "2026-06-04": 7
   }
 }

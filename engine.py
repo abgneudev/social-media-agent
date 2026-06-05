@@ -1261,10 +1261,8 @@ class FollowerEngine:
         did = getattr(profile, "did", "")
         if not did: return False
         
-        if "authorities" not in self.store.engine_state:
-            self.store.engine_state["authorities"] = {}
-        if did in self.store.engine_state["authorities"]:
-            return self.store.engine_state["authorities"][did]
+        if did in self.store.authorities:
+            return self.store.authorities[did]
             
         handle = getattr(profile, "handle", "") or ""
         display = getattr(profile, "display_name", "") or ""
@@ -1287,13 +1285,13 @@ class FollowerEngine:
         res = self.llm.generate_json(prompt, fallback_dict={"is_authority": False}, model_purpose="fast")
         is_auth = res.get("is_authority", False)
         
-        self.store.engine_state["authorities"][did] = is_auth
+        self.store.authorities[did] = is_auth
         if is_auth:
             logger.info(f"   [AUTHORITY] Verified {handle} as a high-authority node.")
         self.store.save_engine()
         return is_auth
 
-    def _score_follow_candidate(self, profile):
+    def _score_follow_target(self, profile):
         # Future externalization candidate: these thresholds live in code
         # for now because a weak soul could otherwise dial the agent to
         # follow anyone, and that is the easiest way to get rate-limited
