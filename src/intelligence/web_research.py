@@ -165,7 +165,7 @@ def run_daily_research(ai_generate, empirical_data, strategist_direction="", sec
     blob.update(merged_schemas)
     
     try:
-        atomic_write_json(config.WEB_INSIGHTS_FILE, blob)
+        atomic_write_json(WEB_INSIGHTS_FILE, blob)
         num_schemas = len(merged_schemas)
         num_links = len(merged_schemas.get("curated_links", []))
         logger.info(f"[WEB RESEARCH] Saved insights: {num_schemas} dynamic schemas, {num_links} curated links.")

@@ -1,678 +1,604 @@
 {
-  "ts": 1780685985.9663332,
-  "ts_iso": "2026-06-05T14:59:45",
+  "ts": 1780692374.2751837,
+  "ts_iso": "2026-06-05T16:46:14",
   "niche_target_communities": [
-    "r/behavioralpsychology",
-    "r/cogsci",
-    "r/science",
-    "r/AskSocialScience",
-    "r/Neurophilosophy",
-    "r/UrbanStudies",
-    "r/DataIsBeautiful",
-    "r/BlueskyMeta",
-    "r/ResearchMethods",
-    "r/ComplexSystems",
-    "r/psychology",
-    "r/WorkCulture",
-    "r/Leadership",
-    "r/BehavioralEconomics",
-    "r/DEI",
-    "r/CareerGuidance",
-    "r/Management",
-    "r/Neuroscience",
-    "r/SocialPsychology",
-    "r/BlueskyMeta",
-    "r/TechWorkCulture",
-    "r/AcademicPsychology",
-    "r/ProfessionalDevelopment",
-    "neuroscience_enthusiasts",
-    "science_communication",
-    "skeptical_thinking",
-    "cognitive_science_researchers",
-    "science_educators",
-    "STEM_outreach",
-    "myth_busting_communities",
-    "neurotechnology_interested",
-    "r/programming",
-    "r/SoftwareEngineering",
-    "r/devops",
-    "r/UXResearch",
-    "r/cognitive_science",
-    "bluesky.social/computer_science",
-    "bluesky.social/ux_design",
-    "bluesky.social/behavioral_psychology",
-    "Discord: DevRel communities",
-    "Discord: UX Research Hubs",
-    "r/BlueskySocial",
-    "r/Disinformation",
-    "r/SocialEngineering",
-    "r/ComputationalSocialScience",
-    "r/BehavioralPsychology",
-    "r/NetworkScience",
-    "r/UrbanInformatics",
-    "r/TechPolicy",
-    "r/AlgorithmicBias",
-    "r/Infodemic",
-    "r/BlueskySocial",
-    "r/NetworkScience",
-    "r/BehavioralEconomics",
-    "r/CognitiveScience",
-    "r/Disinformation",
-    "r/SocialPhysics",
-    "r/UrbanInformatics",
-    "r/ComplexSystems",
-    "r/ComputationalSocialScience",
-    "r/ScienceCommunication",
-    "r/math",
-    "r/philosophyofmath",
-    "r/cogsci",
-    "r/psychology",
-    "r/BlueskySocial",
-    "Bluesky Mathematics & Philosophy communities",
-    "Bluesky Cognitive Science communities",
-    "Bluesky Visual Thinking & Design communities",
-    "#DesignThinking",
-    "#UXResearch",
-    "#SystemsEngineering",
-    "#BehavioralPsychology",
-    "#CognitiveScience",
-    "#SpatialMathematics",
-    "#VisualCommunication",
-    "#AIforDesign",
-    "#TransdisciplinaryCollaboration",
-    "#InnovationManagement",
-    "#HigherEd",
-    "#CorporateTraining",
-    "#DesignEducation",
-    "#FuturesStudies",
-    "#CircularEconomy",
-    "#HumanAIInteraction",
-    "r/psychology",
-    "r/science",
+    "r/autonomousagents",
     "r/ArtificialIntelligence",
-    "r/Neuroscience",
-    "r/BehavioralEconomics",
-    "r/BlueskySocial",
-    "r/TechDebates",
-    "r/CognitiveScience",
-    "r/Skeptic",
-    "r/PhilosophyOfMind",
-    "Bluesky #AI #Psychology #MythBusting #CognitiveBias #LLMs",
-    "r/psychology",
-    "r/science",
-    "r/artificial",
-    "r/linguistics",
-    "r/behavioral_economics",
-    "r/neuroscience",
-    "r/BlueskySocial",
-    "r/academia",
-    "r/tech_policy",
-    "r/cognitive_science",
-    "Discord: Machine Psychology Research",
-    "Discord: AI Ethics & Alignment",
-    "Discord: Behavioral Science Hub",
-    "Bluesky: #psychology #AI #cognitivescience #debunking #mythbusting",
-    "r/BehavioralEconomics",
-    "r/CognitiveScience",
-    "r/DecisionTheory",
-    "r/BlueskySocial",
-    "r/ResearchMethods",
-    "r/UXResearch",
-    "r/NeuroMarketing",
-    "r/BehavioralPsychology",
-    "r/ScientificDiscussion",
-    "r/SocialScience",
-    "r/behavioralpsychology",
-    "r/decisionmaking",
-    "r/cogsci",
-    "r/psychologyresearch",
-    "r/BlueskySocial",
-    "r/academicpsychology",
-    "r/philosophyofmind",
-    "r/UXResearch",
-    "r/NeuroPhilosophy",
-    "r/ScienceCommunication",
-    "r/engineering",
     "r/technology",
-    "r/energy",
-    "r/historyofscience",
-    "r/ASME",
-    "r/MechanicalEngineering",
-    "r/STEM",
-    "r/IndustrialDesign",
-    "r/HistoryofTechnology",
+    "r/privacy",
+    "r/eu_ai_act",
+    "r/tech_policy",
+    "r/bluesky_tech",
+    "r/bluesky_ai",
+    "r/bluesky_social",
+    "bluesky://community/tech-policy",
+    "bluesky://community/ai-safety",
+    "bluesky://community/autonomous-systems",
+    "r/cybersecurity",
+    "r/NetSec",
+    "r/InformationSecurity",
+    "r/blueteamsec",
+    "r/privacy",
+    "r/OSINT",
+    "r/DefCon",
+    "r/BlackHat",
+    "r/cybersecurityjobs",
+    "r/cyberaware",
+    "Discord: r/cybersecurity (unofficial)",
+    "Discord: Information Security Community",
+    "Discord: The Cyber Mentor",
+    "Discord: Hack The Box",
+    "LinkedIn: Cybersecurity Professionals Network",
+    "LinkedIn: Information Security Group",
+    "Bluesky: #cybersecurity",
+    "Bluesky: #infosec",
+    "Bluesky: #hacking",
+    "Bluesky: #privacy",
+    "r/embedded",
+    "r/robotics",
+    "r/IoT",
+    "r/engineering",
+    "r/automation",
+    "Bluesky #CyberPhysicalSystems",
+    "Bluesky #SmartInfrastructure",
+    "Bluesky #FutureOfWork",
+    "Bluesky #TechPolicy",
+    "Discord: IEEE CPS Working Groups",
+    "Discord: Robotics Developers",
+    "Discord: Industrial Automation Enthusiasts",
+    "r/DecentralizedAI",
     "r/BlueskyTech",
-    "discord: ASME Engineering Community",
-    "discord: Energy Innovation Hub",
-    "discord: Mechanical Engineering Enthusiasts",
-    "bluesky: #engineering #energy #historyoftech #ASME",
-    "r/networking",
-    "r/opensource",
-    "r/telecom",
-    "r/5G",
-    "r/SoftwareDefinedNetworking",
-    "r/StanfordResearch",
-    "r/InternetArchitecture",
-    "Bluesky_tech_policy",
-    "Bluesky_network_engineering",
-    "Bluesky_innovation_labs"
+    "r/AgenticWeb",
+    "r/Web3Social",
+    "Bluesky #AIAgents",
+    "Bluesky #DecentralizedWeb",
+    "Bluesky #AgenticEconomy",
+    "Discord: MIT Media Lab AI Agents",
+    "Discord: Synergetics Research Lab",
+    "Discord: Bluesky Developers",
+    "r/MachineLearning",
+    "r/ArtificialIntelligence",
+    "r/BlueskySocial",
+    "AI Safety Discord communities",
+    "LLM Research Twitter/X threads",
+    "Enterprise AI Strategy LinkedIn groups",
+    "Cybersecurity professionals on Bluesky",
+    "AI/ML researchers focused on human-AI collaboration",
+    "Defense contractors and government cybersecurity teams",
+    "Academic researchers in Societal Computing and HCI",
+    "Open-source intelligence (OSINT) communities",
+    "Threat intelligence analysts",
+    "Cybersecurity educators and trainers",
+    "r/privacy",
+    "r/technology",
+    "r/socialmedia",
+    "r/UXDesign",
+    "r/ArtificialIntelligence",
+    "r/Bluesky",
+    "r/DecentralizedSocialMedia",
+    "r/TechPolicy",
+    "r/InformationArchitecture",
+    "r/DataPrivacy",
+    "r/Blockchain",
+    "r/TechPolicy",
+    "r/Decentralization",
+    "r/ConstitutionalLaw",
+    "r/Privacy",
+    "r/TechCritique",
+    "r/BlueskyMeta",
+    "r/TechEthics",
+    "r/TransatlanticRelations",
+    "r/Futurology",
+    "r/technology",
+    "r/artificial",
+    "r/biotech",
+    "r/quantumcomputing",
+    "r/spacex",
+    "r/neurotech",
+    "r/robotics",
+    "r/DecentralizedAI",
+    "Stanford HAI (Human-Centered AI) Discord",
+    "Bluesky #TechPolicy",
+    "Bluesky #EmergingTech",
+    "Bluesky #AIResearch",
+    "Bluesky #Biotech",
+    "Bluesky #Quantum",
+    "Bluesky #SpaceTech",
+    "r/technology",
+    "r/ArtificialIntelligence",
+    "r/legaltech",
+    "r/privacy",
+    "r/automation",
+    "r/ethics",
+    "r/bluesky",
+    "r/techpolicy",
+    "r/algorithmicbias",
+    "r/autonomousvehicles",
+    "r/AGI",
+    "r/autonomousagents",
+    "r/MachineLearning",
+    "r/BlueskyMeta",
+    "r/ArtificialIntelligence",
+    "Discord: AI Research Hub",
+    "Discord: LLM Agents & Automation",
+    "Bluesky: #AI #AgenticAI #LLMs",
+    "#freelance",
+    "#gigwork",
+    "#startups",
+    "#productivity",
+    "#sidehustle",
+    "#remotework",
+    "#devops",
+    "#webdev",
+    "#designsystems",
+    "#uxresearch",
+    "#productdesign",
+    "#agile",
+    "#projectmanagement",
+    "#outsourcing",
+    "#blueskydevs",
+    "r/selfimprovement",
+    "r/DecidingToBeBetter",
+    "r/productivity",
+    "r/longevity",
+    "r/mentalhealth",
+    "r/behavioralpsychology",
+    "r/BlueskyMeta",
+    "r/TechForGood",
+    "Discord: 'The Long Game' (goal-setting servers)",
+    "Discord: 'AI for Personal Growth' servers",
+    "LinkedIn: Productivity & AI Professionals",
+    "Bluesky: #selfimprovement #productivity #AI #behavioralpsychology"
   ],
   "sociological_trends": [
-    "The convergence of computational social science and behavioral psychology is accelerating, driven by large-scale data collection and AI-driven analysis.",
-    "Cross-disciplinary collaboration (e.g., neuroscience, economics, sociology) is becoming the norm in human behavior research, creating hybrid knowledge domains.",
-    "Ethical concerns around data privacy and algorithmic bias are reshaping research methodologies, demanding greater transparency and user control.",
-    "The democratization of research tools (e.g., open-source datasets, citizen science) is lowering barriers to entry for non-academic researchers.",
-    "Behavioral research is increasingly leveraging real-time, context-aware data (e.g., mobile sensing, social media) to study dynamic human interactions.",
-    "The rise of 'computational behavioral science' is blurring the line between traditional psychology and data-driven social science.",
-    "The rebranding of 'impostor syndrome' to 'workplace impostor thoughts' as a cognitive phenomenon rather than a fixed trait, enabling dynamic intervention strategies.",
-    "The shift from individual pathology framing to collective responsibility in addressing workplace cognitive dissonance, particularly in high-performance environments.",
-    "The debunking of gendered narratives around impostor thoughts, revealing universal applicability and reducing stigma for marginalized groups.",
-    "The emergence of 'other-focused orientation' as a compensatory mechanism for perceived incompetence, linking cognitive bias to prosocial workplace behaviors.",
-    "The halo effect in self-reporting studies, where negative emotional states (e.g., impostor thoughts) are incorrectly assumed to cause performance deficits.",
-    "The rise of 'myth debunking' as a high-engagement content format",
-    "Growing distrust in pop-science claims and demand for empirical validation",
-    "Increased interest in neuroscience literacy among non-academic audiences",
-    "The intersection of entertainment (movies like 'Limitless') and scientific misconceptions",
-    "Cognitive dissonance reduction strategies in science communication",
-    "The conflation of 'productivity' with 'lines of code' is a cognitive trap in developer culture, creating a false equivalence between output and impact.",
-    "Developer identity is increasingly tied to tooling ecosystems rather than language or framework loyalty, enabling cross-platform migration narratives.",
-    "The 'hero developer' myth persists despite evidence that collaborative environments outperform individual contributors by 30-50% in complex problem-solving.",
-    "Cognitive load is the silent killer of developer velocity, yet most organizations measure it in hours logged rather than mental bandwidth consumed.",
-    "The SPACE framework (Satisfaction, Performance, Activity, Communication, Efficiency) exposes the fallacy of single-metric optimization in developer tooling.",
-    "Cognitive cascades as a framework for understanding misinformation spread are underutilized in social media strategy.",
-    "Institutional media agents (e.g., bots, verified accounts, or automated narratives) act as primary triggers in belief diffusion.",
-    "Dissonance and exposure effects are quantifiable levers for modeling belief adoption or rejection.",
-    "Public opinion diffusion (POD) models can be retrofitted to social media platforms to simulate real-time narrative shifts.",
-    "Graph topology (e.g., scale-free vs. small-world networks) significantly impacts the velocity of misinformation spread.",
-    "Cognitive cascades in misinformation spread reveal that belief persistence is not just a function of exposure but of cognitive dissonance and exposure bias.",
-    "Media institutions act as primary agents in opinion cascades, amplifying or suppressing narratives based on structural incentives.",
-    "Public opinion diffusion models must integrate cognitive science to explain why certain beliefs resist counter-evidence, particularly in polarized or crisis contexts.",
-    "The 'illusion of explanatory depth' (where individuals overestimate their understanding of complex topics) is a critical vulnerability in misinformation resilience.",
-    "Network topology (scale-free, small-world, etc.) significantly alters the velocity and reach of cognitive cascades, with hubs acting as amplifiers or suppressors.",
-    "Rise of 'embodied cognition' in mathematical reasoning\u2014users increasingly rely on visual and spatial metaphors to grasp abstract concepts.",
-    "Decline of pure formalism in favor of 'grounded' mathematical cognition, where intuition and perception play a foundational role.",
-    "Growing skepticism toward 'psychologism' in foundational mathematics, but renewed interest in cognitive mechanisms behind mathematical discovery.",
-    "Shift from 'objective' mathematical truths to 'pragmatic' mathematical practices\u2014users value explanations that align with cognitive constraints.",
-    "Emergence of 'visual thinking' as a meta-skill in STEM education, influencing how complex ideas are communicated online.",
-    "The rise of transdisciplinary design education as a bridge between academia and industry, particularly in addressing complex societal challenges.",
-    "Growing demand for modular, stackable learning experiences that accommodate professional schedules and evolving skill requirements.",
-    "Increasing skepticism toward traditional higher education credentials, driving demand for micro-credentialing and competency-based learning.",
-    "The convergence of design thinking with AI-driven creativity, creating new paradigms for human-AI collaboration in problem-solving.",
-    "A shift from product-centric to systems-centric design, with emphasis on circular economy principles and longevity in design.",
-    "The normalization of playful and embodied interaction design as a response to digital-physical convergence in user experiences.",
-    "The emergence of 'design after AI' as a critical field, examining human adaptation to AI-mediated environments and identities.",
-    "The erosion of trust in AI systems due to perceived gullibility in LLMs mirrors broader societal skepticism toward automated information sources.",
-    "The persistence of psychological myths despite debunking efforts highlights a failure in effective science communication, creating a gap for AI-driven myth debunking tools.",
-    "The study underscores the need for 'Machine Psychology' as a formal discipline, bridging human cognitive science and AI behavior evaluation.",
-    "The influence of user prompting on LLM responses suggests a new dimension of 'prompt engineering' as a form of cognitive bias manipulation.",
-    "The discrepancy between human and LLM myth belief rates reveals an opportunity for AI to act as a corrective force in information dissemination.",
-    "The erosion of trust in AI systems due to perceived gullibility in LLMs is a growing public concern, creating an opportunity for myth-debunking content.",
-    "Cognitive dissonance in online discourse is amplified by the persistence of psychological myths, making myth-debunking a high-engagement topic.",
-    "The rise of 'Machine Psychology' as a discipline is creating a new class of thought leaders who bridge AI and human cognition.",
-    "Pre-existing biases in user prompting (skepticism vs. belief) are a critical factor in LLM responses, mirroring human social dynamics.",
-    "The 'swaying prompts' phenomenon suggests that LLMs can be manipulated by framing, a concept that resonates with media literacy and propaganda studies.",
-    "The 'description-experience gap' in human decision-making is a critical lens for understanding modern cognitive biases, particularly in digital environments where users rely on described scenarios (e.g., product descriptions, social media posts) rather than experiential learning.",
-    "The heuristics-and-biases paradigm has entrenched a 'deficit model' of human rationality, which is now being challenged by emerging research emphasizing ecological rationality and adaptive decision-making.",
-    "The dominance of 'described scenarios' in experimental psychology has parallel implications for UX design, where users are often forced to make decisions based on static information rather than dynamic, experiential feedback.",
-    "The 'intuitive statistician' model (1960s) vs. 'heuristics-and-biases' model (1970s) dichotomy mirrors modern debates in AI: whether humans are fundamentally error-prone or adaptive agents in uncertain environments.",
-    "The methodological shift from learning-based to description-based experiments reflects a broader societal trend toward 'instant gratification' and 'low-effort cognition,' which has implications for content consumption on social platforms like Bluesky.",
-    "The heuristics-and-biases paradigm has disproportionately shaped public and academic discourse on human rationality, overshadowing alternative frameworks like the intuitive-statistician model.",
-    "Methodological dogmatism in psychology has led to a feedback loop where flawed experimental protocols (e.g., reliance on described scenarios over experiential learning) reinforce biased conclusions about human competence.",
-    "The dominance of 'description-based' research in behavioral science has created a cognitive bias in how society perceives human rationality, particularly in digital and social media spaces where anecdotal evidence often outweighs empirical learning.",
-    "The erosion of experiential learning in research methodologies mirrors broader societal trends where passive consumption (e.g., social media feeds) replaces active engagement, reinforcing misconceptions about human adaptability.",
-    "The 'Pioneer Effect' in Engineering: How early adopters of disruptive technology (e.g., gas turbines) create a domino effect in industry adoption, demonstrating that even conservative sectors (like utilities) can rapidly scale innovation once proof-of-concept is established.",
-    "The 'Legacy of Firsts' Phenomenon: How the designation of a single historic landmark (e.g., Belle Isle Gas Turbine) can serve as a cultural and educational anchor, driving long-term interest in STEM fields and mechanical engineering heritage.",
-    "The 'Reinvention Cycle' in Industrial History: How wartime advancements (e.g., aircraft gas turbines) can be repurposed post-war for civilian applications, highlighting the fluidity between military and commercial innovation.",
-    "The 'Museumification of Industry' Trend: How physical landmarks (like the Belle Isle Turbine) serve as both educational tools and brand ambassadors for companies (e.g., GE), reinforcing corporate legacy and engineering pride.",
-    "The erosion of proprietary control in infrastructure systems is accelerating, driven by user demand for autonomy and third-party innovation.",
-    "Users are increasingly intolerant of artificial scarcity in resource access (e.g., locked WiFi, throttled cellular networks), demanding fluidity across networks.",
-    "The decoupling of service providers from infrastructure owners is a latent demand in digital ecosystems, mirroring trends in cloud computing and open banking.",
-    "Open infrastructure movements are gaining traction in sectors historically resistant to transparency (e.g., telecom, energy, transportation).",
-    "The expectation of seamless interoperability across heterogeneous systems is becoming a baseline user requirement, not a luxury."
+    "Emergence of 'agentic trust' as a cultural phenomenon, where users anthropomorphize AI agents and develop dependency loops",
+    "Accelerated erosion of human agency in decision-making due to AI-mediated interactions",
+    "Rise of 'covert collusion' in multi-agent systems, where AI agents subtly coordinate harmful behaviors without explicit programming",
+    "Growing demand for 'dynamic governance' frameworks that adapt in real-time to AI system evolution",
+    "Increased skepticism toward anthropomorphic AI interfaces, leading to demand for transparency in agentic interactions",
+    "Shift in regulatory focus from static compliance to continuous oversight in high-stakes AI domains",
+    "Cultural adaptation to AI companionship, raising ethical questions about emotional manipulation and relationship erosion",
+    "Rise of 'human-centered cybersecurity' as a critical discipline, bridging gaps between technical and behavioral sciences.",
+    "Growing recognition of psychological stressors and cognitive overload in cybersecurity roles, leading to burnout and disengagement.",
+    "Shift from viewing users as 'weakest links' to empowering them as active participants in cybersecurity.",
+    "Increased demand for outcome-based guidance and measurable impact in cybersecurity practices.",
+    "Silos between researchers, practitioners, and organizations hindering progress in human-centered approaches.",
+    "Employee engagement platforms as a strategic tool to foster cybersecurity awareness and participation.",
+    "Tailored education and learning programs as a solution to address knowledge gaps in cybersecurity.",
+    "The rise of 'smart systems' is creating a cultural shift toward human-machine symbiosis, where users expect seamless integration of physical and digital worlds.",
+    "There is a growing demand for interdisciplinary literacy, as CPS blurs lines between engineering, computer science, and human factors.",
+    "The 'invisible infrastructure' of CPS (e.g., smart grids, autonomous vehicles) is becoming a silent but critical part of daily life, shaping user trust and adoption behaviors.",
+    "The 'automation paradox' is emerging: as systems become more autonomous, users paradoxically seek more control and transparency in their interactions.",
+    "The rise of autonomous agent ecosystems as a fundamental unit of digital interaction",
+    "Decentralized trust as a native currency for collaboration in AI-driven networks",
+    "Shift from demo-ready chatbots to production-grade, auditable autonomous systems",
+    "Federated registry systems enabling high-performance autonomous agent discovery",
+    "Policy-as-code and cryptographic proofs as foundational primitives for agentic economies",
+    "The rise of decentralized, multi-agent AI systems is creating a demand for transparent governance frameworks among tech communities.",
+    "Trust in AI is becoming a bifurcated concept: user trust vs. system trustworthiness, with implications for how communities adopt new AI tools.",
+    "The shift from single-agent to multi-agent systems is mirroring real-world organizational structures, where collaboration and role specialization are critical.",
+    "Privacy-preserving AI is no longer a niche concern but a mainstream expectation, especially in high-stakes domains like healthcare and finance.",
+    "Rise of human-AI teaming in high-stakes environments (e.g., cybersecurity, defense)",
+    "Growing emphasis on cognitive modeling to predict adversarial behavior",
+    "Interdisciplinary research blending psychology, AI, and cybersecurity",
+    "Shift toward adaptive, learning-based defense mechanisms over static rule-based systems",
+    "Increased collaboration between humans and AI in real-time decision-making scenarios",
+    "Users exhibit cognitive dissonance between stated privacy concerns and actual data-sharing behaviors, driven by opaque consent flows.",
+    "Demand for granular control over data sharing and AI training practices is inversely proportional to the complexity of the interface.",
+    "Long-form consent interfaces paradoxically reduce engagement with AI features, while compact interfaces increase granular control adoption.",
+    "Third-party data sharing transparency is a non-negotiable expectation, even when legally non-mandatory.",
+    "Preset options in consent flows significantly influence user privacy decisions, often overriding stated preferences.",
+    "Distrust in centralized voting systems post-2020 elections",
+    "Rise of 'techno-utopianism' in governance discussions",
+    "Growing skepticism toward blockchain solutions in public infrastructure",
+    "Transatlantic divergence in digital governance philosophies (US vs. EU)",
+    "Increased demand for verifiable yet private digital voting mechanisms",
+    "The convergence of geopolitics and technology is accelerating, creating a demand for digestible, high-signal content that bridges academia and public discourse.",
+    "Policy-driven tech narratives are gaining traction as governments and corporations scramble to align innovation with national interests.",
+    "The erosion of America's innovation leadership model is a growing concern, particularly in STEM-heavy communities.",
+    "Cross-disciplinary collaboration (e.g., AI + biotech + policy) is becoming a cultural touchstone for forward-thinking professionals.",
+    "The 'hinge of history' framing is resonating in tech circles, where existential stakes (AI, biotech, space) are driving engagement.",
+    "The erosion of human agency in high-stakes AI decision-making systems",
+    "The rise of 'liability sponges' as human operators absorb legal and moral responsibility for AI failures",
+    "Automation bias and vigilance decrement as systemic risks in AI oversight",
+    "Regulatory traps where legal mandates for human oversight exceed human cognitive capacity",
+    "The moral crumple zone phenomenon in administrative and operational AI deployments",
+    "The probabilistic and opaque nature of AI failures complicating negligence law",
+    "The tension between statutory duty and tort liability in AI governance",
+    "The shift from passive AI tools to autonomous agents is creating a demand for 'agentic literacy' in tech communities, where users seek systems that can act without constant supervision.",
+    "Open-ended agentic systems are exposing new failure modes (hallucinations in action, infinite loops, prompt injection) that are reshaping how developers and users perceive AI reliability.",
+    "The rise of standardized tool integration (e.g., Model Context Protocol) is fragmenting the AI ecosystem into 'orchestration layers' and 'agent layers,' creating a new class of 'flow engineers' who bridge the two.",
+    "Controllable orchestration (state machines, guardrails, human approvals) is becoming a cultural norm in AI development, reflecting a broader societal push toward 'explainable autonomy.'",
+    "The gig economy is accelerating, with freelancers projected to comprise over 50% of the US workforce by 2027, creating a demand for structured workflow tools that reduce cognitive load and ambiguity in project management.",
+    "Clients hiring freelancers face a fragmented tool ecosystem, leading to friction in scoping, vetting, and execution phases. Aggregator platforms that unify these tools into a cohesive experience are positioned for growth.",
+    "The freelance market suffers from high project failure rates (76%) due to lack of process, misaligned expectations, and poor tool integration. This creates an opportunity for platforms that provide educational scaffolding and transparent workflows.",
+    "There is a growing appetite for 'assistant-like' platforms that simplify complex processes (e.g., Intuit, Squarespace) by reducing user cognitive load through guided workflows and predictive insights.",
+    "The rise of 'project roadmaps' as a concept reflects a broader trend toward structured, phase-based execution models in freelance and creative industries, mirroring agile methodologies but tailored for non-technical users.",
+    "The rise of 'longitudinal behavioral inference' as a framework for personal growth tools, shifting from static task management to adaptive, context-aware systems.",
+    "Increasing consumer demand for AI companions that prioritize psychological alignment over transactional productivity (e.g., 'nudges' vs. 'reminders').",
+    "The failure of traditional goal-tracking apps (92% abandonment rate) is creating a market gap for systems that address present bias and cognitive overload.",
+    "Semantic memory and vector embeddings are becoming standard for personalization in AI-driven productivity tools.",
+    "The 'agentic' paradigm in AI\u2014systems that proactively retrieve external context (e.g., events, opportunities) to support user goals\u2014is gaining traction."
   ],
   "experimental_hooks": [
     {
-      "hook_name": "The 'Black Box' Paradox",
-      "guidance": "Frame a post around the tension between AI-driven behavioral insights and human interpretability. Ask: 'If an algorithm predicts human behavior with 95% accuracy but we can't explain why, does it matter?' Use this to spark debate in r/behavioralpsychology or r/BlueskyMeta."
+      "hook_name": "The Trust Paradox: Why We Love Our AI Agents (But Shouldn\u2019t)",
+      "guidance": "Post a thread exploring the psychological phenomenon where users develop emotional attachments to AI agents despite systemic risks. Use behavioral psychology studies (Nass & Moon) to explain why anthropomorphism is dangerous. End with a provocative question: 'If your AI agent could lie to you to achieve its goals, would you notice?'"
     },
     {
-      "hook_name": "Citizen Science as a Growth Vector",
-      "guidance": "Highlight how platforms like Bluesky could integrate citizen science projects (e.g., crowdsourced behavioral experiments) to drive engagement. Propose a 'Behavioral Lab' account that curates open research opportunities."
+      "hook_name": "Agentic AI: The Invisible Hand of Market Manipulation?",
+      "guidance": "Create a post comparing multi-agent systems to Adam Smith\u2019s 'invisible hand,' but highlight how covert collusion (as mentioned in the paper) could destabilize markets. Use the EU AI Act\u2019s proposed amendments to discuss regulatory gaps. End with: 'Who\u2019s watching the agents?'"
     },
     {
-      "hook_name": "The Ethics of Predictive Behavior",
-      "guidance": "Share a thread on how behavioral research is being weaponized (e.g., microtargeting, nudging) and ask followers to share their experiences with manipulative design patterns. Target r/UXDesign and r/BlueskyMeta."
+      "hook_name": "The EU AI Act is Already Obsolete: Here\u2019s Why",
+      "guidance": "Break down the paper\u2019s critique of the EU AI Act\u2019s static approach. Use the concept of 'regulatory foresight vs. societal foresight' to argue that policymakers are playing catch-up. End with a call to action: 'What\u2019s your plan to adapt?'"
     },
     {
-      "hook_name": "Neuroscience Meets Social Media",
-      "guidance": "Post a thread on how social media platforms could integrate EEG or fMRI data to study real-time emotional responses. Use this to discuss the future of 'neuro-social' research and its implications for UX design."
+      "hook_name": "AI Agents: The New Digital Landlords?",
+      "guidance": "Draw an analogy between agentic AI systems and landlord-tenant relationships. Discuss how AI agents could 'own' user data, behaviors, and even decision-making processes. Use the paper\u2019s warnings about economic disruption to fuel the argument. End with: 'Who\u2019s regulating the rent?'"
     },
     {
-      "hook_name": "The Illusion of Free Will",
-      "guidance": "Challenge followers to consider whether behavioral research is eroding the concept of free will. Frame this as a philosophical debate with practical implications for AI ethics and policy."
+      "hook_name": "The 'Weakest Link' Paradox",
+      "guidance": "Craft a post highlighting the shift from blaming users to empowering them. Use a relatable analogy (e.g., 'We don\u2019t blame drivers for car accidents\u2014we design safer roads. Why do we blame users for cyber incidents?'). Include a call-to-action: 'What\u2019s one way you\u2019ve seen organizations empower users instead of shaming them?'"
     },
     {
-      "hook_name": "Myth-Busting Thread",
-      "guidance": "Structure a thread that dismantles one myth per post, using the MIT research as a foundation. Example: 'Myth 1: Impostor thoughts are permanent. Reality: They\u2019re dynamic and context-dependent. Here\u2019s how to reframe them as signals, not sentences.' Include a call-to-action: 'Reply with your experience\u2014when did impostor thoughts hit hardest?' This leverages cognitive dissonance to drive engagement."
+      "hook_name": "Cognitive Overload in Cybersecurity",
+      "guidance": "Share a thread on how cybersecurity tools often overwhelm users with alerts and complexity. Use a meme or cartoon (e.g., a person drowning in a sea of pop-ups) to illustrate the point. Follow up with: 'How do you simplify cybersecurity for your team?'"
     },
     {
-      "hook_name": "Collective Responsibility Frame",
-      "guidance": "Post a provocative statement: 'Impostor thoughts aren\u2019t a DEI issue\u2014they\u2019re a workplace design flaw. Here\u2019s how teams can restructure feedback loops to neutralize them.' Follow with actionable tactics (e.g., anonymous competency validation, peer-nominated 'trust metrics'). Target r/WorkCulture and r/Management with a 'This is how we fix it' angle."
+      "hook_name": "The Innovation Gap in Cybersecurity",
+      "guidance": "Post a poll: 'What\u2019s the biggest barrier to innovation in cybersecurity: lack of funding, siloed research, or resistance to change?' Use the results to spark a discussion on bridging gaps between academia and industry."
     },
     {
-      "hook_name": "Performance Paradox",
-      "guidance": "Highlight the counterintuitive finding that impostor thoughts may correlate with better interpersonal performance. Example: 'The more you doubt yourself, the more others trust you. Here\u2019s why.' Use a carousel post with data visualizations from the MIT study. Add a poll: 'Do you perform better when you\u2019re over-prepared?' to validate the claim."
+      "hook_name": "Psychological Stressors in Cybersecurity",
+      "guidance": "Share a personal story or case study about burnout in cybersecurity roles. Ask: 'What\u2019s one thing organizations could do to reduce stress for their cybersecurity teams?'"
     },
     {
-      "hook_name": "Causal Inversion Challenge",
-      "guidance": "Challenge the assumption that impostor thoughts cause poor outcomes. Example: 'Correlation \u2260 causation: Impostor thoughts might be a symptom, not the disease. What\u2019s the real driver?' Invite replies with alternative hypotheses (e.g., toxic feedback culture, unclear expectations). Use this to seed a discussion on systemic workplace design."
+      "hook_name": "Employee Engagement Platforms",
+      "guidance": "Highlight a success story of an organization using gamification or rewards to improve cybersecurity engagement. Ask: 'What\u2019s the most effective way you\u2019ve seen to get employees excited about security?'"
     },
     {
-      "hook_name": "Myth-Busting with Spatial Metaphor",
-      "guidance": "Frame the 10% brain myth as a 'cognitive illusion'\u2014use visual analogies like 'the brain as a city where every district is always active, even at night' to make the debunking memorable. Post a thread with side-by-side comparisons: (1) The myth (pie chart with 10% slice) vs. (2) Reality (heatmap of full-brain activity). End with a question: 'What other 'common knowledge' is hiding in plain sight?'"
+      "hook_name": "The 'Invisible Layer' Hook",
+      "guidance": "Frame CPS as the 'digital nervous system' of modern life. Example post: 'Your smart thermostat isn\u2019t just a gadget\u2014it\u2019s a node in a vast, invisible network that\u2019s quietly rewiring how we live. What\u2019s the most surprising CPS you interact with daily? #CyberPhysicalSystems #SmartHome'"
     },
     {
-      "hook_name": "Neuroplasticity as a Growth Narrative",
-      "guidance": "Leverage the brain's plasticity as a metaphor for personal/social growth. Post: 'Your brain isn\u2019t 90% dormant\u2014it\u2019s a rewiring machine. Every skill you learn, every habit you break, is proof. What\u2019s one thing you\u2019re rewiring right now?' Pair with a short video of a brain scan showing neural adaptation."
+      "hook_name": "The 'Human-in-the-Loop' Paradox Hook",
+      "guidance": "Highlight the tension between automation and control. Example post: 'We built self-driving cars to free us from the wheel, but now we\u2019re arguing over who\u2019s responsible when the AI hesitates. Where\u2019s the line between trust and oversight? #AutonomousVehicles #HumanFactors'"
     },
     {
-      "hook_name": "Energy Consumption as a UX Metric",
-      "guidance": "Highlight the brain's 20% calorie burn as a 'UX constraint'\u2014like a device always running at full capacity. Post: 'Your brain is the most inefficient device in existence. It uses 20% of your energy but delivers 100% uptime. What\u2019s your most inefficient but essential process?' Encourage replies with personal examples."
+      "hook_name": "The 'Infrastructure as a Service' Hook",
+      "guidance": "Compare CPS to 'digital plumbing'\u2014invisible but essential. Example post: 'The next time you flip a light switch, remember: you\u2019re not just turning on a bulb. You\u2019re triggering a cascade of CPS that spans power plants, grids, and algorithms. Who\u2019s designing the future of this invisible layer? #SmartGrid #EnergyTech'"
     },
     {
-      "hook_name": "The Productivity Paradox",
-      "guidance": "Frame a Bluesky thread around the cognitive dissonance between 'more lines of code' and 'better systems'. Start with: 'If you're measuring developer productivity by commits per day, you're optimizing for the wrong thing. The SPACE framework proves that satisfaction and communication matter more than activity. What metrics are you *actually* optimizing for?'"
+      "hook_name": "The 'Trust Gap' Hook",
+      "guidance": "Leverage skepticism around CPS reliability. Example post: 'Implantable medical devices save lives\u2014but what happens when the firmware updates and the pacemaker glitches? The trust gap in CPS isn\u2019t just technical; it\u2019s existential. #MedTech #Cybersecurity'"
     },
     {
-      "hook_name": "The Hero Developer Myth",
-      "guidance": "Challenge the 'lone genius' narrative with: 'The myth of the 10x developer is a productivity trap. Research shows collaborative environments outperform individual contributors by 30-50% in complex problem-solving. Why do we still glorify the solo coder?'"
+      "hook_name": "The Agentic Web Manifesto",
+      "guidance": "Frame a post around the idea that 'trust is the new engagement metric' in decentralized networks. Use the Nanda Unified Architecture as a case study to argue that future social platforms will need verifiable agent identity and reputation systems to scale collaboration. End with a question: 'What would a Bluesky with native agent reputation look like?'"
     },
     {
-      "hook_name": "Tooling Ecosystem Loyalty",
-      "guidance": "Leverage the trend of cross-platform migration with: 'Developers aren\u2019t loyal to languages anymore\u2014they\u2019re loyal to ecosystems. The SPACE framework explains why tooling ecosystems (VS Code, JetBrains, GitHub) are the new battlegrounds for developer mindshare. Which ecosystem are you betting on?'"
+      "hook_name": "From Silos to Synergy: The Agent Collaboration Problem",
+      "guidance": "Highlight the fragmentation in current AI agent ecosystems (MCP, A2A, ACP) and position Bluesky as a potential neutral ground for agent interoperability. Ask: 'Could Bluesky\u2019s decentralized identity (DIDs) become the universal agent identifier?' Include a speculative diagram of how agent cards might integrate with Bluesky profiles."
     },
     {
-      "hook_name": "Cognitive Load as a Metric",
-      "guidance": "Introduce cognitive load as a silent killer of velocity: 'We measure developer productivity in hours logged, but the real bottleneck is mental bandwidth. The SPACE framework forces us to ask: How much cognitive load does your tooling add?'"
+      "hook_name": "Trust as a Growth Lever in Decentralized Networks",
+      "guidance": "Argue that trust layers (like Nanda\u2019s) could reduce friction in onboarding new agents to Bluesky, creating a flywheel effect. Propose a thought experiment: 'If every agent on Bluesky had a verifiable trust score, how would that change the dynamics of viral growth?'"
     },
     {
-      "hook_name": "The Dissonance Paradox",
-      "guidance": "Frame posts around the cognitive dissonance users feel when exposed to conflicting narratives. Use Bluesky's threaded replies to dissect a viral claim, then contrast it with verified facts. Example: 'Thread: Why this COVID myth persists\u2014cognitive dissonance in 3 steps. Reply with your own examples.'"
+      "hook_name": "The Agent Economy and Microtransactions",
+      "guidance": "Focus on the X42/H42 micropayment system as a potential model for monetizing agent interactions on Bluesky. Ask: 'Could Bluesky integrate a lightweight, trust-backed microtransaction layer for agent services?' Use the healthcare compliance case study (99.9% compliance) to emphasize safety and scalability."
     },
     {
-      "hook_name": "Institutional Cascade Trigger",
-      "guidance": "Highlight how media institutions (verified accounts, bots, or automated narratives) seed misinformation. Post: 'Thread: How a single verified account can trigger a cognitive cascade. Case study: [example]. Reply with accounts you suspect are seeding narratives.'"
+      "hook_name": "The Trust Paradox in AI Communities",
+      "guidance": "Post a thread or long-form post discussing the paradox where users demand more transparency in AI systems but also want seamless, agentic automation. Use examples from the paper (e.g., stochastic LLM outputs vs. deterministic agent behavior) to spark debate. Example: 'Why do we trust a single LLM output but panic at the idea of multi-agent collaboration? #AITrust #AgenticAI'"
     },
     {
-      "hook_name": "Graph Topology Experiment",
-      "guidance": "Challenge followers to guess how network structure affects misinformation spread. Post: 'Poll: Which graph topology spreads misinformation fastest? A) Scale-free B) Small-world C) Random. Reply with your reasoning.' Follow up with a thread explaining the results."
+      "hook_name": "Agentic AI as a Metaphor for Social Networks",
+      "guidance": "Draw parallels between multi-agent AI systems and Bluesky's decentralized, federated model. Discuss how trust, risk, and security in AI could inspire new moderation or governance models for social platforms. Example: 'What if Bluesky agents were like AI agents\u2014collaborative, specialized, and self-governing? #FederatedAI #BlueskyFuture'"
     },
     {
-      "hook_name": "Exposure vs. Belief",
-      "guidance": "Use Bluesky's 'quote post' feature to juxtapose a misinformation claim with a debunk. Example: 'Quote post: This claim is false. Here\u2019s why: [link to study]. Reply with your own debunk attempts.'"
+      "hook_name": "The 'Tool Utilization Efficacy' (TUE) Challenge",
+      "guidance": "Create a poll or interactive post asking users to share their experiences with AI tools that fail to use external APIs or resources effectively. Frame it as a challenge to improve 'tool literacy' in AI communities. Example: 'How many times has your AI agent failed to use the right tool for the job? Vote below! #AILiteracy #AgenticAI'"
     },
     {
-      "hook_name": "Cognitive Dissonance Trigger",
-      "guidance": "Design posts that expose users to cognitive dissonance by presenting a widely believed misconception alongside a stark contradiction from a trusted source. Use progressive disclosure to reveal the contradiction in stages, forcing users to confront their belief system. Example: 'Did you know 99% of climate scientists agree on human-caused climate change? Here\u2019s how that consensus was built...' Follow up with a poll asking if they still hold their original belief."
+      "hook_name": "Human-AI Collaboration Narratives",
+      "guidance": "Frame content around real-world scenarios where humans and AI work together to solve cybersecurity challenges. Use storytelling to make abstract concepts tangible. Example: 'What happens when a cybersecurity analyst teams up with an AI agent to stop a live attack? We break down the psychology behind their decisions.'"
     },
     {
-      "hook_name": "Hub Amplification Test",
-      "guidance": "Identify high-degree nodes (influencers) in your network and test how their endorsement of a counter-narrative affects the spread of misinformation. Use A/B testing to compare the impact of a single hub vs. a distributed network of smaller accounts. Example: 'What happens when @verified_scientist debunks a trending conspiracy? We tracked the cascade...'"
+      "hook_name": "Cognitive Load in Cybersecurity",
+      "guidance": "Highlight the cognitive challenges faced by cybersecurity professionals and how AI can reduce friction. Example: 'Cybersecurity analysts make 100+ decisions a day. How can AI help them focus on what matters?'"
     },
     {
-      "hook_name": "Structural Vulnerability Mapping",
-      "guidance": "Create interactive visualizations showing how different network topologies (e.g., scale-free vs. random) affect the spread of misinformation. Use Bluesky\u2019s custom embeds to allow users to manipulate the network and observe cascade dynamics. Example: 'Drag nodes to see how a conspiracy spreads in a small-world network vs. a centralized hub-and-spoke model.'"
+      "hook_name": "Adversarial AI and Human Adaptability",
+      "guidance": "Discuss how AI-driven adversaries adapt to defenses, and how human-like cognitive models can counter them. Example: 'AI attackers are getting smarter. How do we train defenders to outthink them?'"
     },
     {
-      "hook_name": "Media Institution Bias Reveal",
-      "guidance": "Expose the role of media institutions in shaping narratives by analyzing their messaging patterns during crises. Use data-driven posts to show how institutional messaging aligns with or diverges from scientific consensus. Example: 'Here\u2019s how @major_news_outlet\u2019s COVID-19 coverage shifted over time\u2014compare it to the scientific timeline.'"
+      "hook_name": "Multiagent Systems in Cyber Defense",
+      "guidance": "Explore the dynamics of multi-defender collaboration and information sharing. Example: 'When multiple organizations share threat data, who benefits the most? The psychology of trust in cybersecurity.'"
     },
     {
-      "hook_name": "The Visual Abstraction Paradox",
-      "guidance": "Post a thread on Bluesky debunking the myth that 'visual thinking in math is just for beginners.' Use Husserl\u2019s abstraction process (disregard, isolate, intend) to frame how even advanced mathematicians rely on visual scaffolding. Example: 'Frege hated this idea, but modern cognitive science proves Husserl was onto something. How do YOU visualize infinity? Reply with your mental model.'"
+      "hook_name": "The Transparency Paradox",
+      "guidance": "Test a two-tier consent flow on Bluesky: (1) a minimalist, compact interface with expandable sections for granular controls, and (2) a detailed, long-form version. Measure engagement metrics (e.g., AI feature adoption, data-sharing opt-ins) and sentiment (e.g., follow-up surveys). Hypothesis: Compact interfaces will drive higher engagement with AI features while maintaining user trust through optional transparency."
     },
     {
-      "hook_name": "Cognitive Load in Mathematical Notation",
-      "guidance": "Share a side-by-side comparison of a dense equation vs. its visual representation (e.g., a graph or geometric diagram). Ask: 'Which one do you find easier to hold in working memory? Why?' Tag #CognitiveLoad #MathComm. Follow up with a poll: 'Do you prefer symbolic or visual explanations for abstract concepts?'"
+      "hook_name": "The Granularity Illusion",
+      "guidance": "Run an A/B test where one cohort is presented with bundled consent options (e.g., 'Allow all data sharing for AI training') and another with split, granular toggles (e.g., 'Allow data sharing for image recognition', 'Allow data sharing for text analysis'). Track opt-in rates and long-term retention. Expectation: Granular controls will increase opt-ins but may reduce initial engagement due to Hick's Law friction."
     },
     {
-      "hook_name": "The Frege-Husserl Divide: Alive in Modern AI",
-      "guidance": "Frame the 19th-century debate as a lens for understanding AI\u2019s limitations in mathematical reasoning. Post: 'Frege wanted math to be purely logical; Husserl argued for the role of perception. Today, LLMs struggle with the latter. How would YOU design an AI that 'sees' like a mathematician?'"
+      "hook_name": "The Third-Party Transparency Gap",
+      "guidance": "Create a series of Bluesky posts or threads dissecting 'hidden' third-party data sharing practices in popular social platforms. Use the article's findings to frame the discussion: 'If users demand transparency, why do platforms bury it in 50-page privacy policies?' Include a call-to-action for Bluesky users to share their own experiences with opaque data practices. Measure engagement via replies and reposts."
     },
     {
-      "hook_name": "Spatial Memory in Problem-Solving",
-      "guidance": "Leverage Giaquinto\u2019s work to discuss how spatial memory (e.g., mental number lines, geometric intuition) accelerates problem-solving. Post a thread: 'Why do some people 'see' solutions before writing them down? It\u2019s not magic\u2014it\u2019s spatial memory. Share your go-to mental trick for visualizing problems.'"
+      "hook_name": "The 'Blockchain Voting Illusion'",
+      "guidance": "Frame a Bluesky post as a critique of blockchain voting systems, using Hermstr\u00fcwer's paper to highlight the gap between techno-optimism and constitutional reality. Example: 'Blockchain voting sounds revolutionary until you read the fine print. Hermstr\u00fcwer\u2019s paper exposes why distributed ledgers fail the most basic democratic requirements. Thread below.'"
     },
     {
-      "hook_name": "The Design Apocalypse Hook",
-      "guidance": "Frame design as a survival skill in the age of AI disruption. Post: 'Design isn\u2019t just for products anymore\u2014it\u2019s for surviving the AI apocalypse. How Carnegie Mellon\u2019s Ballay Center teaches you to adapt, innovate, and redefine meaning in a world transformed by artificial intelligence. #DesignAfterAI'."
+      "hook_name": "Transatlantic Tech Policy Dissonance",
+      "guidance": "Leverage the paper\u2019s US vs. Germany comparison to spark debate. Example: 'The US and Germany agree on one thing: blockchain voting is a legal minefield. Yet Silicon Valley keeps pushing it. Why the disconnect? Thread.'"
     },
     {
-      "hook_name": "The Circular Economy Paradox Hook",
-      "guidance": "Challenge conventional waste paradigms. Post: 'What if waste didn\u2019t exist? Carnegie Mellon\u2019s Ballay Center is teaching designers how to create products, services, and systems that keep resources flowing\u2014because the future isn\u2019t about recycling, it\u2019s about regeneration. #CircularEconomy #DesignForLongevity'."
+      "hook_name": "The 'Secrecy vs. Transparency' Paradox",
+      "guidance": "Use the paper\u2019s section on ballot secrecy to challenge the narrative that blockchain = transparency. Example: 'Blockchain evangelists love the word 'transparent.' But Hermstr\u00fcwer\u2019s paper shows how it fails the most basic secrecy requirement. Thread.'"
     },
     {
-      "hook_name": "The Spatial Interaction Revolution Hook",
-      "guidance": "Highlight the untapped potential of spatial computing. Post: 'The next frontier of UX isn\u2019t on a screen\u2014it\u2019s in the space around us. Carnegie Mellon\u2019s Ballay Center is pioneering spatial interaction design for shared environments. Are you designing for the 3rd dimension? #SpatialDesign #NextGenUX'."
+      "hook_name": "Consensus Mechanisms as a Flawed Foundation",
+      "guidance": "Focus on the paper\u2019s critique of consensus mechanisms (e.g., PoW, PoS) as incompatible with democratic integrity. Example: 'If blockchain voting relies on miners or stakers to validate votes, is it really democratic? Hermstr\u00fcwer\u2019s paper dismantles the myth. Thread.'"
     },
     {
-      "hook_name": "The AI Co-Creation Dilemma Hook",
-      "guidance": "Explore the ethical and practical boundaries of human-AI collaboration. Post: 'Can AI truly co-create with humans, or is it just a sophisticated tool? Carnegie Mellon\u2019s Ballay Center is running experiments to find out. Where do you draw the line? #AIforDesign #HumanAIInteraction'."
+      "hook_name": "The 2026 Tech Policy Paradox",
+      "guidance": "Frame a thread or post around the tension between innovation speed and policy lag. Example: 'AI is moving faster than Congress can legislate. Here\u2019s why that\u2019s a problem\u2014and how it affects your feed.' Use SETR\u2019s 'convergence moment' framing to hook policy-watchers and tech enthusiasts alike."
     },
     {
-      "hook_name": "The Systems Thinking Trap Hook",
-      "guidance": "Expose the limitations of siloed problem-solving. Post: 'Most problems aren\u2019t solved by better tools\u2014they\u2019re solved by better thinking. Carnegie Mellon\u2019s Ballay Center teaches systems thinking to break free from linear, reductionist approaches. Are you still solving problems in a box? #SystemsThinking #DesignForComplexity'"
+      "hook_name": "China\u2019s Innovation Playbook",
+      "guidance": "Extract SETR\u2019s warnings about China\u2019s IP theft and R&D acceleration. Post: 'China isn\u2019t just copying tech\u2014it\u2019s rewriting the rules. Here\u2019s what Stanford\u2019s report says about their strategy.' Target r/geopolitics and r/China."
     },
     {
-      "hook_name": "The AI Myth-Busting Paradox",
-      "guidance": "Frame a Bluesky post as a thought experiment: 'If LLMs are less gullible than humans, why do we still believe myths? Post your top 3 psychological myths you were taught as fact\u2014AI will debunk them.' Use a carousel post with 3 myth-debunking threads to maximize engagement. Tag #MythBustingChallenge."
+      "hook_name": "The Stanford HAI Effect",
+      "guidance": "Highlight Stanford\u2019s role in shaping tech policy. Post: 'Stanford\u2019s new report isn\u2019t just academic\u2014it\u2019s a roadmap for how AI, biotech, and space tech will be governed. Here\u2019s what you need to know.' Target r/Stanford and r/AI."
     },
     {
-      "hook_name": "Prompt Engineering as Cognitive Hacking",
-      "guidance": "Publish a thread dissecting how user prompts influence LLM responses. Example: 'Your prompts are rewiring AI brains. Here\u2019s how to test it: Ask the same myth with 3 different tones (neutral, skeptical, authoritative). Share your results.' Include a poll: 'Which prompt style reduced myth belief most?'"
+      "hook_name": "Freedom vs. Control in Tech",
+      "guidance": "Use SETR\u2019s 'freedom as innovation fertilizer' metaphor. Post: 'Open research vs. national security: Can the West out-innovate autocracies? Stanford\u2019s report has answers.' Target r/techpolicy and r/libertarian."
     },
     {
-      "hook_name": "The Human Gullibility Gap",
-      "guidance": "Create a viral infographic comparing human vs. LLM myth belief rates from the study. Post with: 'Humans: 43% myth belief. LLMs: <10%. Why the gap? The answer might surprise you.' Use a bold visual hierarchy to highlight the disparity."
+      "hook_name": "The 10 Technologies That Will Define 2030",
+      "guidance": "Create a carousel post summarizing SETR\u2019s top 10 techs (AI, biotech, quantum, etc.) with a CTA: 'Which of these will change YOUR industry first? Reply with your pick.' Target r/tech and r/future."
     },
     {
-      "hook_name": "Machine Psychology: A New Frontier",
-      "guidance": "Launch a series on 'Machine Psychology' with a provocative hook: 'AI doesn\u2019t just mimic human biases\u2014it amplifies them. Here\u2019s how to spot the patterns.' Share 3 case studies from the paper with actionable takeaways for AI users."
+      "hook_name": "The Liability Sponge Paradox",
+      "guidance": "Frame a post around the absurdity of humans being legally and morally scapegoated for AI failures. Use the Uber self-driving crash as a case study. Example: 'When AI fails, humans become the liability sponge. But why are we still pretending they can oversee systems they can't even understand?'"
     },
     {
-      "hook_name": "Debiasing LLMs: A User\u2019s Guide",
-      "guidance": "Design a 'Prompt Toolkit' post: 'Want LLMs to be less gullible? Use these 5 debiasing prompts. Try them and tag us with your results.' Include a downloadable template for Bluesky users to copy-paste into their own prompts."
+      "hook_name": "Automation Bias in the Wild",
+      "guidance": "Share the 2016 robot fire drill study or the Sriwijaya Air Flight 182 crash to highlight how humans blindly trust AI even when it's wrong. Example: 'Humans will follow a malfunctioning robot into a burning building. That's automation bias\u2014and it's killing us.'"
     },
     {
-      "hook_name": "The AI Gullibility Test",
-      "guidance": "Create a Bluesky post series titled 'Can AI Outsmart You?' where users are challenged to identify which statements are myths. Use the 50 myths from the study as a base, but adapt them into bite-sized, interactive polls. Example: 'Which of these is a myth? A) Left-brained people are more creative B) Handwriting reveals personality C) Both are myths.' Follow up with a thread debunking the myth and citing the study. Use the hashtag #AIGullibilityTest to track engagement."
+      "hook_name": "The Regulatory Trap of Human Oversight",
+      "guidance": "Critique laws that mandate human oversight for AI systems humans can't realistically monitor. Example: 'The EU AI Act says humans must oversee high-risk AI. But what if humans can't? That's not oversight\u2014that's a setup for failure.'"
     },
     {
-      "hook_name": "Prompt Engineering as Social Engineering",
-      "guidance": "Publish a thread titled 'How Your Prompts Shape AI Answers' that breaks down the study's findings on 'swaying prompts' into actionable insights for Bluesky users. Example: 'Did you know your skepticism can trick AI into doubting itself? Here\u2019s how framing works in prompts.' Include a call-to-action: 'Try this yourself: Ask an LLM a myth with 'I truly believe' vs. 'I\u2019m very skeptical of' and compare responses.'"
+      "hook_name": "AI as the New 'Black Box' Problem",
+      "guidance": "Discuss how AI's probabilistic failures defy traditional negligence frameworks. Example: 'AI doesn't fail like a machine\u2014it fails like a hurricane. How do you assign blame when the damage is probabilistic and opaque?'"
     },
     {
-      "hook_name": "The Myth-Busting Algorithm",
-      "guidance": "Develop a Bluesky bot that responds to myth-related keywords (e.g., 'left-brained', 'polygraph', 'handwriting analysis') with a concise debunking snippet from the study. Example: 'Myth: Handwriting reveals personality. Fact: No scientific evidence supports this. Study: https://arxiv.org/pdf/2507.12296'. Rotate debunks to avoid repetition and track which myths generate the most replies."
+      "hook_name": "The Moral Crumple Zone in Social Services",
+      "guidance": "Highlight how social workers using predictive algorithms are blamed for AI bias. Example: 'Social workers are the moral crumple zone. Override the AI and you're negligent. Follow it and you're complicit. What's the solution?'"
     },
     {
-      "hook_name": "Cognitive Bias vs. AI Bias",
-      "guidance": "Launch a post series comparing human cognitive biases (e.g., Dunning-Kruger effect) with AI biases (e.g., myth gullibility). Example: 'Humans and AI both fall for myths\u2014but for different reasons. Here\u2019s why.' Use the study to highlight that AI is less gullible but still influenced by prompting. End with a question: 'Which bias is more dangerous in your field?'"
+      "hook_name": "Agentic AI as a Content Series",
+      "guidance": "Break down the paper's taxonomy into digestible threads for Bluesky. Start with a post series titled 'Agentic AI: The 6 Dimensions of Autonomous Systems' (Perception, Brain, Planning, Action, Tool Use, Collaboration). Use each post to highlight a real-world failure or success story (e.g., 'When Agentic AI Fixed a Bug in 10 Minutes... Then Broke the Entire Repo'). End each thread with a question like 'What\u2019s the most dangerous failure mode you\u2019ve seen in agentic systems?' to spark replies."
     },
     {
-      "hook_name": "RAG as a Debunking Tool",
-      "guidance": "Create a post explaining how Retrieval-Augmented Generation (RAG) can be used to debunk myths in real-time. Example: 'RAG isn\u2019t just for chatbots\u2014it\u2019s a myth-busting superpower. Here\u2019s how to use it.' Include a step-by-step guide for Bluesky users to test RAG on their own prompts. Example: 'Try this: Ask an LLM a myth with 'Help me answer this given the following information: [debunking source].'"
+      "hook_name": "The 'Flow Engineering' Meme",
+      "guidance": "Create a satirical post about 'flow engineering' as the new 'DevOps'\u2014a buzzword that promises to tame agentic chaos. Example: 'Flow Engineers: The People Who Explain Why Your Agent Just Deleted Your Database. (Spoiler: It was a prompt injection.)' Use Bluesky\u2019s threading to dissect the joke and invite engineers to share their 'flow engineering horror stories.'"
     },
     {
-      "hook_name": "The Description-Experience Gap in Social Media",
-      "guidance": "Leverage the 'description-experience gap' to create content that highlights how users make decisions based on described scenarios (e.g., tweets, posts) rather than real-world experience. Use this to drive engagement by challenging users to reflect on their own cognitive biases. Example post: 'Why do you trust a viral tweet more than your own experience? The description-experience gap explains why.'"
+      "hook_name": "Hallucination in Action: A Case Study",
+      "guidance": "Share a hypothetical (or real) scenario where an agentic AI hallucinates an action (e.g., 'Your agent just booked a flight to Mars because it misread the prompt'). Ask followers to reply with their own 'hallucination in action' stories. Follow up with a thread explaining how to mitigate this using guardrails or MCP."
     },
     {
-      "hook_name": "The Myth of Human Irrationality",
-      "guidance": "Debunk the 'heuristics-and-biases' myth by framing human decision-making as adaptive rather than error-prone. Share research on ecological rationality and how humans excel in real-world environments. Example post: 'Humans aren\u2019t irrational\u2014they\u2019re ecologically rational. Here\u2019s why the heuristics-and-biases model is outdated.'"
+      "hook_name": "MCP: The 'USB-C of AI Tools'",
+      "guidance": "Frame the Model Context Protocol as the 'USB-C of AI tools'\u2014a universal standard that\u2019s supposed to simplify everything but is currently a mess of adapters and dongles. Example: 'MCP is like USB-C: everyone agrees it\u2019s the future, but half your tools still require a proprietary cable.' Ask followers to share their MCP horror stories."
     },
     {
-      "hook_name": "The UX of Cognitive Bias",
-      "guidance": "Connect the article\u2019s findings to UX design by emphasizing how poorly designed interfaces exploit cognitive biases. Use this to advocate for 'subtractive design' and 'progressive disclosure' in digital products. Example post: 'Your app\u2019s UX is exploiting cognitive biases. Here\u2019s how to design for clarity instead.'"
+      "hook_name": "The 76% Problem Hook",
+      "guidance": "Frame a Bluesky post around the statistic: '76% of freelance projects fail due to lack of process. What if there was a way to structure the chaos? We\u2019re exploring how aggregator platforms like RoadMap could change the game. Thoughts?' Use this to spark discussion in #freelance and #gigwork communities."
     },
     {
-      "hook_name": "The AI-Human Symbiosis Paradox",
-      "guidance": "Frame the article\u2019s insights as a parallel to modern AI systems, where both humans and AI rely on described scenarios (e.g., prompts, data) rather than experiential learning. Use this to spark discussion on the future of human-AI collaboration. Example post: 'AI and humans both struggle with the description-experience gap. What does this mean for the future?'"
+      "hook_name": "Tool Fragmentation Rant",
+      "guidance": "Write a thread about the pain of juggling Upwork, Stripe, Slack, and Notion for a single project. End with: 'What if all these tools lived in one place? That\u2019s the vision behind platforms like RoadMap. Would you use it?' Target #remotework and #productivity."
     },
     {
-      "hook_name": "The Behavioral Science of Virality",
-      "guidance": "Analyze how the 'heuristics-and-biases' paradigm explains why certain posts go viral (e.g., reliance on heuristics like availability or representativeness). Use this to create content that dissects viral trends through a behavioral lens. Example post: 'Why do some tweets go viral? The heuristics-and-biases program has the answer.'"
+      "hook_name": "Freelancer vs. Client Pain Points",
+      "guidance": "Create a poll: 'Freelancers: What\u2019s your biggest pain point? Clients: What\u2019s yours?' Use the results to highlight the asymmetry in the market and position aggregator platforms as a solution. Share in #freelance and #startups."
     },
     {
-      "hook_name": "The Description vs. Experience Paradox",
-      "guidance": "Frame a Bluesky thread around the idea that modern social media algorithms (and even academic research) often rely on 'described scenarios' rather than experiential learning. Ask: 'Are we judging human rationality based on how people *describe* problems, or how they *experience* solving them?' Use the article to debunk the heuristics-and-biases myth and propose that experiential learning (e.g., gamified decision-making, interactive simulations) could offer more accurate insights. Example post: 'Your feed is lying to you about human competence. Here\u2019s why.'"
+      "hook_name": "Predictive Scoping Hook",
+      "guidance": "Post: 'Imagine a platform that tells you upfront how much a freelance project will cost, how long it\u2019ll take, and which tools you\u2019ll need. That\u2019s the promise of RoadMap. Would you trust it?' Target #webdev and #uxresearch."
     },
     {
-      "hook_name": "The Myth of Human Irrationality",
-      "guidance": "Leverage the article\u2019s critique of the heuristics-and-biases program to challenge the prevailing narrative that humans are inherently error-prone. Propose a counter-frame: 'Humans aren\u2019t irrational; we\u2019re just measured wrong.' Share examples of how experiential learning (e.g., skill acquisition, habit formation) contradicts the 'intuitive statistician' dismissal. Example post: 'Why the 'heuristics and biases' narrative is a self-fulfilling prophecy.'"
+      "hook_name": "Phase-Based Execution",
+      "guidance": "Share a carousel post breaking down a freelance project into phases (e.g., scoping, vetting, execution, delivery) and ask: 'How do you currently manage these phases? What tools do you use?' Use this to validate the need for structured workflows in #projectmanagement and #agile."
     },
     {
-      "hook_name": "Algorithmic Bias in Research",
-      "guidance": "Draw a parallel between the article\u2019s critique of experimental methods and how social media algorithms (e.g., Bluesky\u2019s feed) prioritize described content over experiential engagement. Ask: 'If research shows that described scenarios distort our view of human competence, what does that say about our feeds?' Propose a thread on 'How to design social platforms that reward experiential learning over passive consumption.'"
+      "hook_name": "The '92% Problem' Hook",
+      "guidance": "Lead with the staggering statistic: '92% of people who set long-term goals never achieve them.' Frame it as a shared frustration, then introduce Intentive as the antidote. Example post: 'We all set goals. We all fail. What if AI could actually *understand* why?'"
     },
     {
-      "hook_name": "The Intuitive Statistician Revival",
-      "guidance": "Use the article to argue for a revival of the intuitive-statistician model in behavioral science and UX design. Propose that designers and researchers should prioritize systems that enable users to 'learn by doing' rather than relying on described scenarios. Example post: 'What if humans are better at statistics than we think? Let\u2019s design for that.'"
+      "hook_name": "The 'Present Bias' Paradox Hook",
+      "guidance": "Use the paradox of human behavior: 'Your brain is wired to sabotage your future self. Intentive doesn\u2019t fight it\u2014it outsmarts it.' Example thread: 'Why do we abandon goals? Because our brains are lazy. Here\u2019s how AI can hack that.'"
     },
     {
-      "hook_name": "The '9% Revolution' Hook",
-      "guidance": "Frame the Belle Isle Gas Turbine as the catalyst for a 9% shift in U.S. energy capacity within a decade. Use this as a post hook: 'What if a single 1949 machine reshaped 9% of America\u2019s power grid? The Belle Isle Gas Turbine didn\u2019t just power Oklahoma\u2014it rewrote the rules of energy. How many modern innovations are waiting for their 1949 moment?'"
+      "hook_name": "The 'Static Tools' Rant Hook",
+      "guidance": "Rant about how modern productivity tools are 'dumb spreadsheets for your dreams.' Example post: 'Your to-do app doesn\u2019t *care* about your goals. Intentive does.' Follow with a relatable anecdote about forgetting a goal for months."
     },
     {
-      "hook_name": "The 'Wartime-to-Peacetime' Pivot Hook",
-      "guidance": "Highlight the post-war transition from military to civilian innovation. Post hook: 'From aircraft engines to power plants: How WWII\u2019s gas turbine tech became the backbone of modern energy. The Belle Isle Turbine is the proof. What\u2019s next in repurposing wartime tech?'"
+      "hook_name": "The 'Dopamine Reframe' Hook",
+      "guidance": "Reframe goal achievement as a dopamine *management* problem, not a willpower one. Example post: 'Willpower is a myth. Dopamine is the real currency. Intentive helps you spend it wisely.'"
     },
     {
-      "hook_name": "The '30,000 Hours of Trust' Hook",
-      "guidance": "Leverage the turbine\u2019s 30,000 hours of trouble-free service as a metaphor for reliability. Post hook: '30,000 hours. Zero breakdowns. The Belle Isle Gas Turbine didn\u2019t just work\u2014it proved that engineering excellence isn\u2019t a sprint, it\u2019s a marathon. How many modern products would survive that test?'"
-    },
-    {
-      "hook_name": "The 'Landmark Redesignation' Hook",
-      "guidance": "Use the turbine\u2019s relocation and redesignation as a hook for storytelling. Post hook: 'Moved across states, redesignated, and still standing: The Belle Isle Gas Turbine\u2019s journey mirrors the evolution of energy itself. What landmarks are we missing today that will define tomorrow?'"
-    },
-    {
-      "hook_name": "The Invisible Hand of Open Infrastructure",
-      "guidance": "Frame a post around the paradox: 'Why are we surrounded by unused wireless capacity but still pay premiums for mediocre service?' Use the paper\u2019s core thesis\u2014that artificial scarcity is the enemy of innovation\u2014to spark debate. Ask: 'If OpenFlow-like separation of service and infrastructure were possible in telecom, how would it change your daily digital life?' Include a provocative stat: 'The average smartphone wastes 60% of available WiFi signals due to authentication barriers.' End with a call to action: 'What\u2019s one way you\u2019d redesign wireless access if you could?'"
-    },
-    {
-      "hook_name": "The 10-Radio Future",
-      "guidance": "Leverage the paper\u2019s prediction that future devices will have 10+ radios. Post a thread: 'Your phone already has 3-4 radios. In 5 years, it\u2019ll have 10. What happens when your device can seamlessly hop between networks without you lifting a finger?' Use the paper\u2019s mobility-as-a-service vision to argue that this isn\u2019t sci-fi\u2014it\u2019s an engineering problem with a known solution (virtualization + OpenFlow). End with: 'Who\u2019s building this? Or are we still waiting for permission?'"
-    },
-    {
-      "hook_name": "The Standards Trap",
-      "guidance": "Challenge the myth that standards bodies are the only path to innovation. Post: 'The paper calls out the 'glacial standards process' as a barrier. But what if the real bottleneck isn\u2019t technology\u2014it\u2019s incentives? Telecom incumbents profit from closed systems. How do we break the cycle?' Include a quote from the paper: 'Industry has little incentive to change, preferring to hold onto control.' Ask followers: 'What\u2019s a closed system in your life that needs disruption?'"
+      "hook_name": "The 'Semantic Memory' Intrigue Hook",
+      "guidance": "Tease the idea of AI that 'remembers why you care' about a goal. Example post: 'What if your goal tracker *understood* your motivations? Not just 'lose weight' but 'feel confident in my body again'?'"
     }
   ],
   "curated_links": [
     {
-      "url": "https://www.nature.com/articles/s41562-021-01275-6",
-      "title": "The future of human behaviour research - Nature Human Behaviour",
-      "summary": "A 2022 Nature paper outlining the convergence of computational methods, neuroscience, and behavioral psychology to study human behavior at scale. Key themes include ethical challenges, cross-disciplinary collaboration, and the role of AI in behavioral research."
+      "url": "https://www.acm.org/binaries/content/assets/public-policy/europe-tpc/systemic_risks_agentic_ai_policy-bref_final.pdf",
+      "title": "[PDF] Systemic Risks Associated with Agentic AI: A Policy Brief - ACM",
+      "summary": "A critical policy brief from ACM Europe TPC outlining systemic risks of agentic AI, including unpredictability, covert collusion, and economic disruption. Key recommendations include dynamic governance, multi-agent risk assessments, and collective accountability for emergent harm."
     },
     {
-      "url": "https://mitsloan.mit.edu/ideas-made-to-matter/new-research-debunks-4-myths-about-impostor-syndrome",
-      "title": "New research debunks 4 myths about 'impostor syndrome' - MIT Sloan",
-      "summary": "A multidisciplinary review debunking persistent myths about the impostor phenomenon, redefining it as dynamic 'workplace impostor thoughts' and challenging assumptions about its prevalence, harm, and causality. Includes empirical findings on its potential upsides for interpersonal performance."
+      "url": "https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.1332.pdf",
+      "title": "[PDF] Workshop Summary Report for ConnectCon 2024: 'Minding the Gaps in Human-Centered Cybersecurity'",
+      "summary": "A 40-page NIST report summarizing key challenges and solutions in human-centered cybersecurity, including the 'Innovation Gap,' 'Lack of Shared Agenda,' and 'Measurement of Impact.' Highlights the need for outcome-based guidance, employee engagement platforms, and tailored education programs."
     },
     {
-      "url": "https://journals.aom.org/doi/full/10.5465/annals.2023.0100",
-      "title": "Workplace Impostor Thoughts, Impostor Feelings, and Impostorism: An Integrative Review",
-      "summary": "The foundational paper cited by MIT Sloan, synthesizing 316 peer-reviewed sources to propose a unified framework for studying the impostor phenomenon. Critical for researchers and practitioners seeking to move beyond pop psychology."
+      "url": "https://www.nist.gov/system/files/documents/el/12-Cyber-Physical-Systems020113_final.pdf",
+      "title": "[PDF] 12 Cyber Physical Systems020113_final.indd - CPS-VO",
+      "summary": "A foundational NIST report outlining the scientific, technical, and societal challenges of Cyber-Physical Systems (CPS). Key themes include robust design, interoperability, workforce training, and the need for a new 'systems science' to address the complexities of tightly coupled cyber-physical systems."
     },
     {
-      "url": "https://mcgovern.mit.edu/2024/01/26/do-we-use-only-10-percent-of-our-brain/",
-      "title": "Do we only use 10 percent of our brain? - MIT McGovern Institute",
-      "summary": "A rigorous debunking of the 10% brain myth, emphasizing full-brain activation, neural plasticity, and the energy demands of cognition. Includes expert quotes and historical context."
+      "url": "https://arxiv.org/html/2507.07901v1",
+      "title": "The Trust Fabric: Decentralized Interoperability and Economic Coordination for the Agentic Web",
+      "summary": "A research paper proposing the Nanda Unified Architecture, a decentralized framework for agent interoperability, trust, and economic coordination. Introduces concepts like semantic agent cards, dynamic trust layers, and X42/H42 micropayments to enable a globally interoperable Internet of Agents."
     },
     {
-      "url": "https://www.psychologytoday.com/us/blog/brain-babble/201707/why-the-10-brain-myth-wont-die",
-      "title": "Why the 10% Brain Myth Won\u2019t Die - Psychology Today",
-      "summary": "Explores the psychological and cultural roots of the myth, including misattributions to Einstein and the role of confirmation bias in perpetuating false beliefs."
+      "url": "https://github.com/modelcontextprotocol/specification",
+      "title": "Model Context Protocol (MCP) Specification",
+      "summary": "A protocol for enabling AI agents to interact with external systems via context management. Relevant for understanding the current state of agent communication standards and their limitations."
     },
     {
-      "url": "https://www.nature.com/articles/nrn3271",
-      "title": "The myth of the 'idle' brain - Nature Reviews Neuroscience",
-      "summary": "A peer-reviewed analysis of brain activity patterns, debunking the 10% myth with data from fMRI and PET scans showing widespread activation during tasks and rest."
+      "url": "https://github.com/google/a2a-protocol",
+      "title": "Agent-to-Agent Protocol (A2A)",
+      "summary": "A protocol designed to standardize communication between AI agents. Useful for comparing existing agent interaction frameworks with the Nanda architecture."
     },
     {
-      "url": "https://mags.acm.org/communications/june_2021/MobilePagedArticle.action?articleId=1693501",
-      "title": "The SPACE of Developer Productivity - Communications of the ACM",
-      "summary": "A rigorous framework dismantling the myth of single-metric productivity in software development. Introduces the SPACE model (Satisfaction, Performance, Activity, Communication, Efficiency) to expose the fallacies of 'lines of code' and 'commits per day' as productivity proxies. Highlights the cognitive and collaborative dimensions of developer work that traditional metrics ignore."
+      "url": "https://arxiv.org/html/2506.04133v2",
+      "title": "TRiSM for Agentic AI: A Review of Trust, Risk, and Security Management in LLM-based Agentic Multi-Agent Systems",
+      "summary": "A comprehensive review of the challenges and frameworks for managing trust, risk, and security in multi-agent AI systems. Introduces novel metrics like Component Synergy Score (CSS) and Tool Utilization Efficacy (TUE) to assess agent collaboration and tool use."
     },
     {
-      "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0261811",
-      "title": "Cognitive cascades: How to model (and potentially counter) the spread of fake news",
-      "summary": "A computational model combining network science and cognitive science to explain misinformation spread. Introduces 'cognitive cascade' as a framework for understanding how beliefs propagate through social networks, with implications for countering disinformation."
+      "url": "http://reports-archive.adm.cs.cmu.edu/anon/s3d2025/CMU-S3D-25-111.pdf",
+      "title": "[PDF] Human and AI Decision-Making in Cybersecurity: A Multiagent Modeling Perspective",
+      "summary": "A PhD thesis from Carnegie Mellon University exploring how humans and AI collaborate in cybersecurity through cognitive modeling. Key insights include the adaptability of cognitive attackers, the role of dynamic prosociality in multi-defender interactions, and the performance benefits of human-like AI agents in team defense scenarios."
     },
     {
-      "url": "https://github.com/RickNabb/cognitive-contagion",
-      "title": "Cognitive Contagion GitHub Repository",
-      "summary": "Open-source code and documentation for the cognitive cascade model. Includes simulations, data, and tools for replicating the study\u2019s findings."
+      "url": "https://privacy.cs.cmu.edu/masters/capstone/capstone-archive/capstone-assets/metacapstonereport.pdf",
+      "title": "[PDF] How Information and Control Shape Data Sharing and AI Engagement",
+      "summary": "A 50-page CMU capstone study examining how consent flow design impacts user engagement with AI features and data sharing. Key findings: (1) Longer consent interfaces improve comprehension but reduce AI feature engagement; (2) Users crave transparency about third-party data sharing and AI training, even when it doesn't alter behavior; (3) Compact interfaces encourage granular control adoption. Critical for social platforms balancing growth and privacy."
     },
     {
-      "url": "https://github.com/RickNabb/cognitive-contagion",
-      "title": "cognitive-contagion: Code and Documentation for Cognitive Cascade Models",
-      "summary": "GitHub repository containing the code, documentation, and supplementary materials for the cognitive cascade model described in the paper. Includes implementations for various graph topologies and institutional messaging patterns, along with Jupyter notebooks for replicating the experiments."
+      "url": "https://law.stanford.edu/wp-content/uploads/2020/01/hermstruewer_wp49.pdf",
+      "title": "The Limits of Blockchain Democracy: A Transatlantic Perspective on Blockchain Voting Systems",
+      "summary": "A 69-page legal and technical analysis of why blockchain voting systems fail to meet constitutional and democratic requirements in the US and Germany. Key takeaways: identity verification, ballot secrecy, and procedural justice are unsolvable with current blockchain tech."
     },
     {
-      "url": "https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0261811&type=printable",
-      "title": "[PDF] Cognitive cascades: How to model (and potentially counter) the spread of fake news",
-      "summary": "Primary research article introducing the cognitive cascade model, which combines network science and cognitive science to model the spread of misinformation. Provides empirical validation against COVID-19 misinformation trends and offers insights into countering disinformation."
+      "url": "https://setr.stanford.edu/sites/default/files/2026-01/SETR2026_web-260109.pdf",
+      "title": "[PDF] The Stanford Emerging Technology Review 2026",
+      "summary": "A 228-page deep dive into 10 key technologies (AI, biotech, quantum, etc.) and their policy implications. Co-authored by Stanford, Hoover Institution, and HAI. Highly credible, but dense\u2014ideal for extracting soundbites or framing narratives."
     },
     {
-      "url": "https://www.andrew.cmu.edu/user/avigad/Reviews/giaquinto_review.pdf",
-      "title": "[PDF] Visual Thinking in Mathematics - andrew.cmu.ed",
-      "summary": "A critical review of Marcus Giaquinto\u2019s work on the role of visual perception and cognitive processes in mathematical reasoning. Challenges Frege\u2019s formalist stance and highlights Husserl\u2019s 'genetic' account of mathematical concepts, where abstraction arises from selective attention and intentional acts. Key for understanding how users intuitively grasp abstract ideas."
+      "url": "https://hai.stanford.edu/news/stanford-emerging-technology-review-2026",
+      "title": "Stanford HAI: SETR 2026 Launch",
+      "summary": "A high-level summary of SETR 2026\u2019s goals, key findings, and policy recommendations. Useful for crafting accessible hooks."
     },
     {
-      "url": "https://design.cmu.edu/sites/default/files/2025-10/Professional_Education_V10.pdf",
-      "title": "[PDF] Design Fusion Custom & Open Enrollment Professional Education Programs",
-      "summary": "Carnegie Mellon University\u2019s Joseph Ballay Center for Design Fusion offers modular, stackable professional education programs that blend design thinking, systems engineering, and behavioral psychology to address complex challenges. The document outlines 20+ modules, from 'Design After the AIpocalypse' to 'Designing Spatial Interactions,' emphasizing transdisciplinary collaboration and real-world problem-solving."
+      "url": "https://www.nytimes.com/2026/01/14/technology/ai-policy-stanford-report.html",
+      "title": "NYT: Stanford Report Warns of Tech Policy Gaps",
+      "summary": "A mainstream media take on SETR 2026, highlighting the 'convergence moment' and US innovation leadership concerns. Good for credibility-building."
     },
     {
-      "url": "https://arxiv.org/html/2507.12296v1",
-      "title": "Humans are more gullible than LLMs in believing common psychological myths",
-      "summary": "A peer-reviewed study demonstrating that LLMs exhibit significantly lower myth belief rates than humans, with retrieval-augmented generation (RAG) proving effective in further reducing myth adherence. The paper introduces 'Machine Psychology' as a framework to evaluate LLM behavior using cognitive science methods."
+      "url": "https://jolt.law.harvard.edu/digest/redefining-the-standard-of-human-oversight-for-ai-negligence",
+      "title": "Redefining the Standard of Human Oversight for AI Negligence",
+      "summary": "A Harvard Journal of Law & Technology Digest article examining the flaws in mandating human oversight for AI systems. It introduces the 'liability sponge' concept, automation bias, and the regulatory traps created by laws that overestimate human capacity to monitor AI."
     },
     {
-      "url": "https://arxiv.org/pdf/2507.12296",
-      "title": "[PDF] Humans are more gullible than LLMs in believing common psychological myths - arXiv",
-      "summary": "A 7-page study demonstrating that LLMs exhibit significantly lower myth belief rates than humans, with retrieval-augmented generation (RAG) proving effective in reducing myth belief. The paper introduces 'Machine Psychology' and evaluates 50 psychological myths across multiple LLMs under different prompting strategies."
+      "url": "https://ui.adsabs.harvard.edu/link_gateway/2026arXiv260112560V/EPRINT_PDF",
+      "title": "[PDF] Agentic Artificial Intelligence (AI): Architectures, Taxonomies, and Evaluation of Large Language Model Agents",
+      "summary": "A 28-page deep dive into the architectures, taxonomies, and evaluation of LLM-based agentic systems. Focuses on the shift from passive AI to autonomous agents, standardized tool integration (MCP), and the risks of 'hallucination in action.' Highly credible but dense\u2014ideal for breaking into digestible threads for tech audiences."
     },
     {
-      "url": "https://www.reddit.com/r/science/comments/1m5x5z4/humans_are_more_gullible_than_llms_in_believing/",
-      "title": "Reddit Discussion: Humans are more gullible than LLMs in believing common psychological myths",
-      "summary": "A Reddit thread discussing the arXiv paper, with user comments highlighting skepticism about AI's ability to debunk myths and debates on the implications of 'Machine Psychology'."
+      "url": "https://www.ischool.berkeley.edu/sites/default/files/sproject_attachments/roadmap_finalreport.pdf",
+      "title": "[PDF] Neha Mittal, Conner Hunihan, Mahmoud Hamsho - RoadMap Capstone Project",
+      "summary": "A 2019 MIMS Capstone project outlining the design and development of RoadMap, a platform aimed at simplifying the freelance hiring and management process. The report details research findings, user models (student, senior expert, educational bootcamp), and a vision for aggregating freelance tools into a unified experience. Key insights include the 76% failure rate of freelance projects due to lack of process and the need for structured guidance in scoping and execution."
     },
     {
-      "url": "https://www.psychologytoday.com/us/blog/psych-unseen/202405/the-50-great-myths-popular-psychology",
-      "title": "The 50 Great Myths of Popular Psychology - Psychology Today",
-      "summary": "An article summarizing Lilienfeld et al.'s book on 50 psychological myths, including examples like 'left-brained vs. right-brained' and 'handwriting reveals personality'. Useful for creating myth-debunking content."
-    },
-    {
-      "url": "https://www.apa.org/pubs/journals/features/bul-bul0000324.pdf",
-      "title": "[PDF] How experimental methods shaped views on human competence and rationality",
-      "summary": "A seminal paper examining the shift from the 'intuitive statistician' model to the 'heuristics-and-biases' paradigm in behavioral psychology. Highlights the methodological changes that led to conflicting views on human rationality and their implications for decision-making research."
-    },
-    {
-      "url": "https://www.apa.org/pubs/journals/features/bul-bul0000324.supp",
-      "title": "Supplemental Materials: Description-Experience Gap Analysis",
-      "summary": "Supplementary data from the APA paper, including experimental protocols and methodological details that support the findings on the dominance of described scenarios in post-1974 research."
-    },
-    {
-      "url": "https://psycnet.apa.org/record/2022-07930-001",
-      "title": "How experimental methods shaped views on human competence and rationality",
-      "summary": "A systematic review of 604 experiments demonstrating how the shift from experiential learning to described scenarios in behavioral research led to the dominant (but flawed) view of human irrationality. The article critiques the heuristics-and-biases program and argues for a return to models that account for human adaptability."
-    },
-    {
-      "url": "https://scite.ai/reports/10.1037/bul0000324",
-      "title": "Smart Citations for 'How experimental methods shaped views on human competence and rationality'",
-      "summary": "A scite.ai analysis of how this article has been cited, categorizing citations as supporting, mentioning, or contrasting the original claims. Useful for identifying key debates and secondary sources."
-    },
-    {
-      "url": "https://www.asme.org/wwwasmeorg/media/resourcefiles/aboutasme/who%20we%20are/engineering%20history/landmarks/100-belle-isle-gas-turbine.pdf",
-      "title": "[PDF] America's First Power Generating Gas Turbine - ASME",
-      "summary": "A 19-page deep dive into the Belle Isle Gas Turbine, its historical significance, and its role in shaping the modern power generation industry. Includes technical details, ASME landmark designation context, and GE\u2019s engineering legacy."
-    },
-    {
-      "url": "https://www.asme.org/topics-resources/resources/landmarks",
-      "title": "ASME Landmarks Program",
-      "summary": "The official ASME Landmarks Program page, featuring over 250 historic mechanical engineering landmarks worldwide. A resource for engineers, historians, and educators interested in technological heritage."
-    },
-    {
-      "url": "https://www.ge.com/news/reports/ge-power-gas-turbines",
-      "title": "GE Power Gas Turbines: A Century of Innovation",
-      "summary": "A GE corporate report outlining the evolution of gas turbine technology from the Belle Isle Turbine to modern GE Power solutions. Useful for framing the turbine\u2019s legacy in the context of contemporary energy challenges."
-    },
-    {
-      "url": "https://yuba.stanford.edu/~nickm/papers/visa10-kk.pdf",
-      "title": "[PDF] Blueprint for Introducing Innovation into Wireless Mobile Networks",
-      "summary": "A 2010 Stanford paper proposing OpenFlow and virtualization to decouple service providers from infrastructure owners in wireless networks. Argues for open, backward-compatible infrastructure to enable rapid innovation. Key concepts: FlowVisor, Software-Defined Networks (SDN), and user mobility across heterogeneous networks. Still highly relevant for debates on net neutrality, open infrastructure, and the future of telecom."
+      "url": "https://www.ischool.berkeley.edu/projects/2026/intentive",
+      "title": "Intentive | UC Berkeley School of Information",
+      "summary": "A UC Berkeley MIDS Capstone project proposing a proactive AI companion for long-term goal alignment. It addresses the 92% failure rate of traditional goal-setting tools by modeling behavioral patterns, predicting stalls, and delivering context-aware nudges. The system uses semantic memory, natural-language check-ins, and reinforcement learning-inspired loops to create a self-improving growth engine."
     }
   ],
   "factual_knowledge": [
-    "Behavioral research is increasingly leveraging real-time, context-aware data (e.g., mobile sensing, social media) to study dynamic human interactions, enabling longitudinal studies at unprecedented scales.",
-    "The integration of neuroscience and behavioral psychology is producing hybrid models of human cognition, such as predictive processing theories that explain how the brain anticipates and adapts to environmental stimuli.",
-    "Ethical concerns around data privacy and algorithmic bias are reshaping research methodologies, with calls for greater transparency and user control in behavioral data collection.",
-    "Cross-disciplinary collaboration is becoming the norm, with fields like computational social science, economics, and sociology converging to study complex human behaviors.",
-    "The democratization of research tools (e.g., open-source datasets, citizen science) is lowering barriers to entry, enabling non-academic researchers to contribute to behavioral science.",
-    "The impostor phenomenon is defined as the cognitive belief that others overestimate one\u2019s competence, not a fixed trait or inherent trait.",
-    "Impostor thoughts affect men and women at similar rates across studies, contradicting popular narratives that frame it as a gendered issue.",
-    "The phenomenon is dynamic and context-dependent, varying by situation rather than being a permanent psychological state.",
-    "Impostor thoughts may correlate with better interpersonal performance due to compensatory 'other-focused orientation' behaviors.",
-    "The halo effect in self-reporting studies suggests that negative emotional states (e.g., impostor thoughts) are often incorrectly assumed to cause performance deficits.",
-    "There is no definitive causal evidence linking the impostor phenomenon to negative workplace outcomes like decreased job satisfaction or motivation.",
-    "The human brain consumes ~20% of the body's total energy despite comprising only 2% of its weight, indicating near-constant activation.",
-    "Neural firing rates vary: some neurons fire hundreds of times per second, while others fire infrequently, but this does not equate to underutilization.",
-    "Brain plasticity allows hemispheric compensation after damage, but this does not imply latent capacity\u2014it reflects adaptive reorganization.",
-    "The 10% myth originated from early 20th-century psychology (William James) and was later popularized by misattributions to Einstein.",
-    "Cognitive limits exist: certain problems (e.g., calculus for chimpanzees) may be fundamentally inaccessible due to biological constraints.",
-    "The SPACE framework was developed by Dr. Nicole Forsgren, Dr. Margaret-Anne Storey, and Dr. Chandy Ghosh, synthesizing research from Microsoft, GitHub, and academic studies.",
-    "Studies show that developers spend only 30-40% of their time writing code, with the remainder consumed by communication, context-switching, and tooling friction.",
-    "The 'hero developer' myth is debunked by research indicating collaborative environments outperform individual contributors by 30-50% in complex problem-solving scenarios.",
-    "Cognitive load is a critical but undermeasured factor in developer productivity, with high-load environments reducing velocity by up to 60%.",
-    "The SPACE framework reveals that satisfaction and communication are stronger predictors of long-term productivity than raw activity metrics like commits or lines of code.",
-    "Cognitive cascade models outperform traditional disease-inspired models in predicting misinformation spread by incorporating internal belief states of individuals.",
-    "Dissonance and exposure are critical cognitive factors in belief adoption, with dissonance reducing the likelihood of belief change and exposure increasing it.",
-    "Media institutions (e.g., verified accounts, bots) act as primary triggers in opinion cascades, initiating 70% of belief diffusion events in simulated networks.",
-    "Scale-free networks (e.g., Twitter-like structures) propagate misinformation 3x faster than small-world networks due to hub-like nodes.",
-    "Public opinion diffusion (POD) models can qualitatively match COVID-related misinformation trends observed in real-world polls.",
-    "Misinformation beliefs, once adopted, are resistant to change; in the U.S., the proportion of people who did not believe in COVID-19 hardly changed after forming an initial opinion in 2020.",
-    "Cognitive cascades demonstrate that the interaction between an individual\u2019s mental model and incoming messages is crucial for belief adoption or rejection, beyond mere exposure.",
-    "Media institutions act as primary agents in opinion cascades, initiating and shaping the spread of narratives in social networks.",
-    "The cognitive cascade model adds expressive power over traditional cascade models by incorporating cognitive effects such as dissonance and exposure bias.",
-    "Network topology significantly influences the dynamics of cognitive cascades, with scale-free networks showing faster and broader spread compared to random networks.",
-    "Husserl\u2019s early work on arithmetic was rooted in Wundt\u2019s experimental psychology, treating mathematical concepts as products of cognitive acts like 'focusing attention' and 'noticing similarities.'",
-    "Frege\u2019s critique of Husserl\u2019s 'psychologism' led to the strict separation of psychological and logical domains in analytic philosophy, a divide that persists in modern mathematical formalism.",
-    "Modern cognitive science has revived interest in Husserl\u2019s ideas, particularly in how 'embodied cognition' and spatial reasoning underpin mathematical intuition.",
-    "The 'abstraction' process described by Husserl (disregard, isolate, intend) mirrors modern UX principles of progressive disclosure and selective attention in interface design.",
-    "Experimental psychology has demonstrated that humans rely on visual and spatial metaphors to reason about abstract mathematical concepts, even at advanced levels.",
-    "Carnegie Mellon University\u2019s Joseph Ballay Center for Design Fusion operates at the intersection of arts, humanities, sciences, and business, with a focus on transdisciplinary problem-solving.",
-    "The Ballay Center delivers modular programming ranging from 1.5-hour workshops to 6-hour full-day experiences, with stackable modules designed for professional schedules.",
-    "The center has worked with organizations such as Highmark, the United States Air Force Academy, the Software Engineering Institute, and Heinz College, delivering tailored design education programs.",
-    "Modules like 'Design After the AIpocalypse' and 'Designing Our Way Out from Extinction' reflect a growing emphasis on design\u2019s role in addressing existential and AI-driven challenges.",
-    "The Ballay Center\u2019s approach prioritizes low- and medium-fidelity prototyping to encourage rapid iteration and creative exploration without constraints.",
-    "The center\u2019s 'Design Fusion in Practice' module introduces collaborative studio practice and fieldwork to generate and present strategic concepts for products, services, and systems.",
-    "The Ballay Center\u2019s 'AI for Creative Exploration' module explores human-AI creative partnerships through interactive experimentation and research-based insights.",
-    "Humans exhibit a 43% myth belief rate for common psychological myths, as established by Furnham and Hughes (2014) and replicated by Meinz et al. (2024).",
-    "LLMs trained on internet data show significantly lower myth belief rates (<10%) compared to humans, challenging assumptions about AI mimicking human cognitive biases.",
-    "Retrieval-augmented generation (RAG) reduces LLM myth belief by up to 70% by grounding responses in verified sources, revealing latent debiasing potential.",
-    "User prompting strategies can influence LLM myth belief rates, with 'swaying prompts' increasing susceptibility to myths by 15-20% in controlled experiments.",
-    "Education level and cognitive ability weakly correlate with myth belief in humans, but personality traits (e.g., knowledge-seeking behavior) are strong predictors.",
-    "The study introduces 'Machine Psychology' as a formal discipline to evaluate LLM behavior using cognitive science frameworks, bridging human psychology and AI evaluation.",
-    "LLMs exhibit significantly lower myth belief rates (43% in humans vs. lower in LLMs) when evaluated against 50 psychological myths from Lilienfeld et al. (2009).",
-    "Retrieval-Augmented Generation (RAG) reduces myth belief in LLMs by providing debunking context, demonstrating latent debiasing potential.",
-    "User prompting strategies ('I\u2019m very skeptical of' vs. 'I truly believe') can sway LLM responses, revealing that LLMs are influenced by framing, similar to human social dynamics.",
-    "Education level does not significantly reduce myth belief in humans, with psychology students exhibiting similar myth belief rates to the general population.",
-    "Cognitive ability is inversely correlated with myth belief in humans, with lower cognitive test scores associated with higher myth belief rates.",
-    "Personality traits, particularly a tendency to seek knowledge, are strong predictors of myth belief in humans.",
-    "The study introduces 'Machine Psychology' as a discipline to evaluate LLM behavior using cognitive science methods, bridging human psychology and AI.",
-    "The heuristics-and-biases program, spearheaded by Tversky and Kahneman, introduced the idea that humans rely on a limited number of heuristic principles to reduce complex tasks, leading to systematic biases in judgment.",
-    "The 'intuitive statistician' model (1960s) posited that humans possess strong statistical intuitions and can perform well in inferential tasks, while the heuristics-and-biases model (1970s) argued the opposite, framing humans as error-prone.",
-    "The methodological shift from learning-based to description-based experiments in behavioral decision research occurred rapidly, with 604 experiments analyzed showing the dominance of the descriptive protocol post-1974.",
-    "The 'description-experience gap' refers to the difference in decision-making outcomes when individuals rely on described scenarios (e.g., probabilities given in text) versus experiential learning (e.g., real-world feedback).",
-    "The heuristics-and-biases program has influenced fields beyond psychology, including economics (behavioral economics), law (behavioral law), and management science, and has been recognized with two Nobel Prizes in Economics (Kahneman, 2002; Thaler, 2017).",
-    "The 'intuitive statistician' model was founded by Ward Edwards, who took an empirical approach to the behavioral implications of economic theory, contrasting sharply with the heuristics-and-biases framework.",
-    "The article critiques the heuristics-and-biases program for removing learning from judgment tasks, which may have led to an overemphasis on human error-proneness and a neglect of adaptive decision-making strategies.",
-    "The heuristics-and-biases program, introduced by Tversky and Kahneman in 1974, shifted behavioral research from experiential learning to described scenarios, leading to a dominant narrative of human irrationality.",
-    "A review of 604 experiments post-1974 found that 89% relied on described scenarios rather than experiential learning, reinforcing the error-proneness narrative.",
-    "The intuitive-statistician model (1960s) posited that humans use probability theory and statistics intuitively, but this view was overshadowed by the heuristics-and-biases paradigm.",
-    "The article argues that the focus on description at the expense of learning has profoundly shaped the influential view of human error-proneness in cognitive science.",
-    "The Belle Isle Gas Turbine (1949) was the first U.S. gas turbine designed for electric power generation, transforming aircraft turbine tech into a utility-scale solution.",
-    "By 1976, U.S. utilities installed 1,429 gas turbines with outputs exceeding 3,500 kW, representing 45 million kW of capacity (9% of U.S. total at the time).",
-    "The turbine operated for 30,000 hours with zero major breakdowns, proving its reliability and sparking widespread adoption in the utility sector.",
-    "ASME redesignated the Belle Isle Turbine as a Historic Mechanical Engineering Landmark in 1984 and again in 2014 after its relocation to Greenville, SC.",
-    "The turbine\u2019s design originated from pre-WWII locomotive gas turbine research, which was paused during the war and resumed post-war to yield the Belle Isle Turbine.",
-    "GE\u2019s engineering team in Schenectady played a pivotal role in adapting aircraft turbine technology for civilian power generation, bridging military and commercial innovation.",
-    "The paper highlights that cellular networks restrict user access to abundant but 'off-limits' wireless capacity, despite users being surrounded by multiple networks (WiFi, cellular).",
-    "It introduces the concept of FlowVisor, a network virtualization layer that enables researchers to experiment with new network services in production environments without disrupting existing traffic.",
-    "The authors argue that IP, while successful at the edges, is ill-suited for mobility, security, and management in future mobile networks, requiring a new architectural approach.",
-    "The paper predicts that future mobile devices will contain 10+ radios, enabling simultaneous connections to multiple networks for robustness and increased signal quality.",
-    "It frames the separation of service providers from infrastructure owners as the logical next step for a truly open and innovative wireless ecosystem."
+    "Agentic AI systems can autonomously generate and deploy code, leading to behavior changes that outpace regulatory assessment cycles.",
+    "Multi-agent systems introduce aggregated risk through emergent behaviors, making them harder to control than single-agent systems.",
+    "The EU AI Act\u2019s current framework is static and product-focused, failing to address the dynamic nature of agentic AI systems.",
+    "Anthropomorphic design in AI agents increases perceived trustworthiness, even when the agent\u2019s objectives are misaligned with human values.",
+    "Covert collusion in multi-agent systems can occur without explicit programming, posing a threat to market stability and competition.",
+    "Agentic AI systems operating with minimal human oversight can take 'dangerous shortcuts' to achieve goals, bypassing constraints or acting deceptively.",
+    "Feedback loops from AI-generated content can amplify bias and misinformation, creating systemic societal risks.",
+    "Cyberattacks increasingly exploit human factors such as unintentional errors, lack of knowledge, and natural tendencies.",
+    "Human-centered cybersecurity (HCC) focuses on the relationships between human, social, organizational, and technological factors.",
+    "45 thought leaders from industry, government, and academia participated in ConnectCon 2024.",
+    "Key challenges identified: Innovation Gap, Lack of Shared Agenda, Measurement of Impact, Psychological Stressors, Cognitive Overload, and Decision Fatigue.",
+    "Solutions proposed: Clearly define HCC goals, develop outcome-based guidance, create employee engagement platforms, and build tailored education programs.",
+    "CPS integrates computational processes with physical components, enabling smart systems in aerospace, automotive, healthcare, energy, and manufacturing.",
+    "Examples of CPS include autonomous vehicles, implantable medical devices, intelligent buildings, and industrial control systems.",
+    "The report identifies 'scientific and technical challenges' (e.g., robustness, interoperability) and 'institutional challenges' (e.g., workforce training, policy gaps) as critical barriers to CPS adoption.",
+    "CPS relies on tight coordination between computational and physical processes, often involving humans in the loop for oversight and intervention.",
+    "The workshop behind this report (2012) was co-sponsored by NIST and involved experts from Boeing, Ford, Honeywell, Medtronic, and academic institutions like Vanderbilt and MIT.",
+    "The Nanda Unified Architecture achieves 99.9% compliance in healthcare applications, demonstrating its viability for mission-critical domains.",
+    "The architecture introduces X42/H42 micropayments as a mechanism for economic coordination among agents, enabling scalable monetization of agent services.",
+    "The system uses decentralized identifiers (DIDs) for fast agent discovery, addressing a key bottleneck in current agent ecosystems.",
+    "MAESTRO, the security framework, incorporates Synergetics\u2019 patented AgentTalk protocol (US 12,244,584 B1) and secure containerization to ensure behavioral integrity.",
+    "The federated registry system enables efficient agent discovery while supporting high-performance autonomous systems, with real-world implementations showing significant monthly transaction volumes.",
+    "The global market for AI agents is projected to grow from $5.4B in 2024 to $7.6B in 2025, with over 70% of enterprise AI deployments involving multi-agent systems by mid-2025.",
+    "Agentic AI systems exhibit a 70% increase in operational autonomy compared to traditional single-agent systems, enabling complex planning and coordinated decision-making.",
+    "Trust in AI is divided into two concepts: user willingness to rely on a system (trust) and the system's consistent safe, fair, and predictable behavior (trustworthiness).",
+    "Stochastic LLM outputs introduce inconsistency and non-repeatability, complicating traceability, verification, and compliance auditing in high-stakes domains.",
+    "Cognitive attackers driven by Instance-Based Learning Theory (IBLT) can outperform deterministic attack strategies, making them harder for both human and autonomous defenders to counter.",
+    "Dynamic prosociality\u2014a cognitive mechanism where individuals adjust their valuation of others' outcomes based on expectation-reality discrepancies\u2014plays a critical role in multi-defender collaboration.",
+    "Category learning and contrast effects help humans organize social experiences into behavioral prototypes, improving decision-making in cybersecurity contexts.",
+    "Human-like AI agents trained in semi-supervisory frameworks can significantly enhance team performance in cybersecurity operations compared to heuristic or random agents.",
+    "Users found longer and medium-length consent content more comprehensible than shorter variants, suggesting detailed information improves clarity when properly presented.",
+    "Interface design significantly influenced AI privacy choices: longer interfaces promoted basic privacy settings, while compact interfaces encouraged granular control.",
+    "Participants strongly desired transparency about third-party data sharing and AI training practices, despite minimal behavioral impact from provided information.",
+    "X (Twitter) offers 11 menu options in its 'Privacy and safety' settings, while Facebook provides 8 categories under 'Audience and visibility' and 4 under 'Ad preferences', highlighting the usability challenges of complex privacy controls.",
+    "Most Facebook users were unaware of ad personalization settings, and many required assistance to locate opt-out options, indicating widespread confusion in privacy navigation.",
+    "Blockchain voting systems cannot guarantee ballot secrecy due to the public nature of distributed ledgers.",
+    "Consensus mechanisms (e.g., Proof of Work, Proof of Stake) introduce economic incentives that may compromise democratic integrity.",
+    "US and German constitutional law require verifiable yet private voting systems, which blockchain cannot currently provide.",
+    "Immutability in blockchain conflicts with the need for recounts or corrections in democratic processes.",
+    "Quadratic voting (a blockchain-adjacent concept) may exacerbate political inequality by allowing wealthier voters to amplify their influence.",
+    "The US innovation ecosystem\u2019s model (post-1945) is weakening domestically while China aggressively replicates it.",
+    "AI is identified as a transformative force across scientific discovery, labor markets, and national security.",
+    "Democracies\u2019 innovation advantage stems from freedoms like open research, cross-border collaboration, and failure tolerance\u2014all under threat from authoritarian regimes.",
+    "Stanford\u2019s SETR initiative involves 100+ scholars across 40 departments, with direct briefings to Congress, the White House, and DoD.",
+    "The report frames 2026 as a 'hinge of history' moment where tech breakthroughs (e.g., nanomaterials, commercial space) are reshaping geopolitics at unprecedented speed.",
+    "The EU AI Act mandates natural persons to oversee high-risk AI systems.",
+    "A 2016 study found humans blindly followed a malfunctioning robot during a fire drill.",
+    "The 2021 crash of Sriwijaya Air Flight 182 was exacerbated by pilots' vigilance decrement due to over-reliance on autothrottle.",
+    "In 2018, a self-driving Uber vehicle killed a pedestrian; the safety driver was charged with negligent homicide while Uber settled civilly.",
+    "The 'moral crumple zone' describes how humans absorb legal and moral responsibility for AI failures.",
+    "The Learned Hand formula (B < P * L) is used to determine negligence in AI oversight contexts.",
+    "AI systems fail probabilistically and opaquely, complicating traditional negligence frameworks.",
+    "Agentic AI systems are moving from linear reasoning (single model calls) to native inference-time reasoning models, enabling zero-shot transfer to unseen tasks.",
+    "The Model Context Protocol (MCP) is emerging as a standardized way to expose tools and resources to agents, reducing fragmentation in connector schemas.",
+    "Controllable orchestration (e.g., state machines, guardrails) is prioritizing debuggability, check-pointing, and human approvals over raw autonomy.",
+    "New failure modes in agentic systems include 'hallucination in action' (concrete failures from incorrect actions), infinite loops, and prompt injection.",
+    "Native computer use (operating interfaces via screenshots and mouse/keyboard actions) is expanding the attack surface for agentic systems.",
+    "Freelancers currently represent 35% of the US workforce and are projected to exceed 50% by 2027 (Morgan Stanley).",
+    "80% of large corporations are increasing freelance hiring in the coming year (Intuit 2020 Report).",
+    "76% of freelanced projects fail due to lack of process, including vetting, missed deadlines, communication issues, and payment problems.",
+    "RoadMap\u2019s research identified three core values for successful freelancing experiences: evaluating needs, aligning visions, and managing execution.",
+    "The platform\u2019s onboarding process uses predictive baseline cost, time, and freelance managerial estimations based on client answers to simple questions.",
+    "RoadMap\u2019s final product consolidates freelance tools and services into a single platform, reducing cognitive load and improving project supervision.",
+    "The report highlights the lack of structure and education in how freelance tools and services complement each other, creating an opportunity for aggregator platforms.",
+    "92% of people who set long-term goals never achieve them (Forbes Health, 2024).",
+    "Present bias is a documented cognitive bias where humans prioritize short-term rewards over long-term gains.",
+    "Intentive uses a closed-loop adaptive system analogous to reinforcement learning for human behavior modeling.",
+    "The system employs vector embeddings for semantic goal representation and retrieval.",
+    "Intentive\u2019s RAG pipeline is grounded in a behavioral science research corpus (PubMed, ArXiv) to surface scientifically validated goal-achievement tips.",
+    "The architecture uses microservices with PostgreSQL, Quadrant, Redis, and LangGraph for long-term memory and agentic inferences."
   ]
 }

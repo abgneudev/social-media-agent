@@ -12,10 +12,11 @@ import urllib.error
 from atproto import Client, exceptions, models
 
 from core import config
-from core.config import content_hash, logger, NAME_TEXT, BIO_TEXT
+from core.config import logger
+from core.soul import content_hash
+from core.platform import Platform
 
-
-class BlueskyAdapter:
+class BlueskyPlatform(Platform):
     def __init__(self, handle, app_password):
         self.client = Client()
         profile = self.client.login(handle, app_password)
@@ -268,14 +269,14 @@ class BlueskyAdapter:
         except exceptions.AtProtocolError as e:
             logger.warning(f"      [PROFILE] update skipped (version/permission): {e}")
 
-    def pin_post(self, uri, cid):
+    def pin_post(self, uri, cid, default_name, default_description):
         """Best-effort pin of our anchor post. Version-sensitive, never fatal."""
         try:
             existing = self._get_profile_record()
             val = getattr(existing, "value", None) if existing else None
             record = models.AppBskyActorProfile.Record(
-                display_name=getattr(val, "display_name", NAME_TEXT) if val else NAME_TEXT,
-                description=getattr(val, "description", BIO_TEXT) if val else BIO_TEXT,
+                display_name=getattr(val, "display_name", default_name) if val else default_name,
+                description=getattr(val, "description", default_description) if val else default_description,
                 avatar=getattr(val, "avatar", None) if val else None,
                 banner=getattr(val, "banner", None) if val else None,
                 pinned_post=models.ComAtprotoRepoStrongRef.Main(uri=uri, cid=cid),

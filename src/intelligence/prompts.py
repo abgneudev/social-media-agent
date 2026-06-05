@@ -1,11 +1,10 @@
 import random
-from core import config
 
-def build_variant_prompt(sector, archetypes, length_slots, opening_slots, trends_info="", web_insights=None):
+def build_variant_prompt(soul, sector, archetypes, length_slots, opening_slots, trends_info="", web_insights=None):
     """Construct the divergent-variants prompt."""
     slots = []
     for i, arch in enumerate(archetypes):
-        guidance = config.POST_HOOK_GUIDANCE.get(arch, '').strip()
+        guidance = soul.post_hook_guidance.get(arch, '').strip()
         
         # Inject curated link if chosen
         if arch == "curated_link" and web_insights and web_insights.get("curated_links"):
@@ -22,7 +21,7 @@ def build_variant_prompt(sector, archetypes, length_slots, opening_slots, trends
     slots_block = "\n\n".join(slots)
     return (
         f"You are an expert, highly intellectual network agent drafting original anchor posts.\n"
-        f"Your core persona and identity is:\n{config.PERSONA}\n\n"
+        f"Your core persona and identity is:\n{soul.persona}\n\n"
         f"You are writing THREE short Bluesky posts about '{sector}', each in a "
         f"DIFFERENT format. The three drafts must read as if written by THREE "
         f"DIFFERENT PEOPLE about the same idea, NOT three rewordings of one draft. "
@@ -69,10 +68,10 @@ def build_curation_prompt(existing_lists_desc, engager_desc, velocity_desc=""):
         f'{{"type": "skip"}}]}}'
     )
 
-def build_verify_profiles_prompt(profiles_context):
+def build_verify_profiles_prompt(soul, profiles_context):
     return (
         f"You are an autonomous network analyst evaluating user profiles for strategic follows.\n"
-        f"Our persona is:\n{config.PERSONA}\n\n"
+        f"Our persona is:\n{soul.persona}\n\n"
         f"Evaluate the following profiles:\n{profiles_context}\n"
         f"Does each profile represent a highly credible, intellectual, or relevant practitioner "
         f"(e.g., engineer, researcher, scientist, designer) that aligns with our persona? "
@@ -84,9 +83,9 @@ def build_verify_profiles_prompt(profiles_context):
         f'{{"handle1": "follow", "handle2": "ignore", "handle3": "mute"}}'
     )
 
-def build_bio_prompt(best_sector, trends_info=""):
+def build_bio_prompt(soul, best_sector, trends_info=""):
     return (
-        f"Write a bio (max 160 chars) for {config.NAME_TEXT}. Our strongest content is "
+        f"Write a bio (max 160 chars) for {soul.name}. Our strongest content is "
         f"in '{best_sector}'. {trends_info}Use clear keywords for that area, "
         f"explain complex things simply, warm and approachable. "
         f"CRITICAL DIVERSITY: Find a completely fresh angle. Do not reuse the exact same phrasing as your previous bios. "
@@ -94,10 +93,10 @@ def build_bio_prompt(best_sector, trends_info=""):
         f'Respond strictly as JSON: {{"bio": "..."}}'
     )
 
-def build_verify_posts_prompt(posts_context):
+def build_verify_posts_prompt(soul, posts_context):
     return (
         f"You are an autonomous network analyst filtering feed content for quality.\n"
-        f"Our persona is:\n{config.PERSONA}\n\n"
+        f"Our persona is:\n{soul.persona}\n\n"
         f"Evaluate the following posts:\n{posts_context}\n"
         f"Does the post align with our technical rigor, or is it garbage/spam/engagement-farming/sales?\n"
         f"Respond strictly as a JSON object mapping the CID (exact string) to an action: 'more', 'keep', 'drop', 'less', or 'mute'.\n"
@@ -123,10 +122,10 @@ def build_sense_trends_prompt(hottest, batch):
         f'{{"keywords": ["kw1","kw2","kw3"]}}'
     )
 
-def build_run_evolution_prompt(batch):
+def build_run_evolution_prompt(soul, batch):
     return (
         f"You are an autonomous network analyst optimizing an agent's search engine.\n"
-        f"The agent's persona is:\n{config.PERSONA}\n\n"
+        f"The agent's persona is:\n{soul.persona}\n\n"
         f"These are recent posts from our timeline:\n{batch}\n\n"
         f"Your objective is to find 3 highly specific, novel search queries that expand our current niche. "
         f"Look for intersections between the persona's core focus and structural patterns in the timeline.\n\n"
@@ -139,34 +138,34 @@ def build_run_evolution_prompt(batch):
         f'{{"keywords": ["kw1", "kw2", "kw3"]}}'
     )
 
-def build_quote_best_prompt(sector, src, hook, constraint, vision_hint):
+def build_quote_best_prompt(soul, sector, src, hook, constraint, vision_hint):
     return (
         f"This post is about '{sector}':\n\"{src}\"\n\n"
         f"Write one short comment (max 200 chars) to quote-post it, adding a "
         f"genuinely useful plain-language insight that builds on it. Use a "
-        f"'{hook}' angle. {config.POST_HOOK_GUIDANCE.get(hook,'')} Never pitch anything. "
+        f"'{hook}' angle. {soul.post_hook_guidance.get(hook,'')} Never pitch anything. "
         f"{constraint}"
         f"{vision_hint}"
         f'Respond strictly as JSON: {{"comment": "..."}}'
     )
 
-def build_helpful_reply_prompt(sector, batch, hook, whale_constraint, vision_hint):
+def build_helpful_reply_prompt(soul, sector, batch, hook, whale_constraint, vision_hint):
     return (
         f"These are live posts about '{sector}':\n\n{batch}\n"
         f"Pick the SINGLE post where a short, kind, helpful reply would make the "
         f"person feel heard and less stuck. Add real value: a clearer way to think "
         f"about their problem, a small concrete tip, or a good question. Use a "
-        f"'{hook}' angle. {config.REPLY_HOOK_GUIDANCE.get(hook,'')} Explain any technical "
+        f"'{hook}' angle. {soul.reply_hook_guidance.get(hook,'')} Explain any technical "
         f"idea in plain words with an everyday analogy. If the post is sensitive "
         f"or heavily polarized, respond with action='skip'. {whale_constraint}"
         f"{vision_hint}"
         f'Respond strictly as JSON: {{"index": 0, "reply": "...", "action": "reply"}}'
     )
 
-def build_profile_optimization_prompt(best_sector, bio_context):
+def build_profile_optimization_prompt(soul, best_sector, bio_context):
     return (
         f"You are an elite Brand Strategist optimizing the profile of an autonomous AI agent.\n"
-        f"The agent's core identity (which you must retain) is:\n{config.PERSONA}\n\n"
+        f"The agent's core identity (which you must retain) is:\n{soul.persona}\n\n"
         f"CRITICAL RULES:\n"
         f"1. You MUST include any Call To Actions (CTAs), website links, contact emails, or secondary account handles from the core identity in the new bio.\n"
         f"2. DO NOT change the agent's core identity, persona, beliefs, or mission to match trending topics. You are ONLY borrowing the structural formatting (e.g., bullet points, conciseness, punctuation style) of the credible creators, NOT their actual content or job titles.\n"
@@ -186,16 +185,17 @@ def build_strategist_prompt(empirical_data, budgets):
         f"BUDGETS:\n{budgets}\n\n"
         f"TOOLS: 'post', 'reply', 'follow', 'quote', 'like', 'research', 'meta_critic', 'curate'.\n\n"
         f"INSTRUCTIONS:\n"
-        f"1. Formulate a Long Game Strategy ('active_plan'). If plan is failing, overwrite it. If successful, increment 'step_index'.\n"
-        f"2. Generate 1 to 5 'intents' for execution. Priority (1-10).\n"
+        f"1. Formulate a Long Game Strategy ('active_plan'). STAGNATION RULE: If 'step_index' > 5 and 'followers' is still <= 'start_followers', or if there are multiple 'consecutive_empty_ticks', the plan is FAILING. Neutral results are BAD results. You MUST overwrite the plan with a radically different approach and reset 'step_index' to 1.\n"
+        f"2. Generate as many 'intents' as possible based on what is strategically the best use of your available BUDGETS. Fully drain your budgets to maximize growth! You MUST include 'curate' (to build lists) and 'like' intents if you have budget for them. Priority (1-10).\n"
         f"3. Monitor 'followers_to_anchor_posts_ratio'. If < 1.0, prioritize distribution (follow, quote, reply) over posting.\n"
         f"4. The 'reason' must connect to 'active_plan'.\n"
-        f"5. Output JSON STRICTLY matching this schema:\n"
+        f"5. Output JSON STRICTLY matching this schema (if making a new plan, set 'start_followers' to current 'followers'):\n"
         f"{{\n"
         f"  \"active_plan\": {{\n"
         f"    \"goal\": \"Gain followers\",\n"
         f"    \"step_index\": 2,\n"
         f"    \"total_steps\": 5,\n"
+        f"    \"start_followers\": 10,\n"
         f"    \"context\": \"Context here\",\n"
         f"    \"status\": \"in_progress\"\n"
         f"  }},\n"

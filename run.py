@@ -28,7 +28,7 @@ from core.config import (
     logger, configure_logging,
     FOLLOWER_TARGET, TICK_INTERVAL,
     CONTENT_ATTRIBUTION_SECONDS, FOLLOW_ATTRIBUTION_SECONDS,
-    SECTORS,
+    
 )
 from core.engine import FollowerEngine, write_status
 
@@ -44,10 +44,13 @@ def _dry_run():
     from groq import Groq
     from core.store import Store
     from core.governance import RateBudget, CircuitBreaker
-    from core.config import RATE_BUDGETS, PERSONA
+    from core.config import RATE_BUDGETS
+    from core.soul import load_soul
 
+    soul = load_soul(config.SOUL_FILE)
     e = FollowerEngine.__new__(FollowerEngine)
-    e.store = Store()
+    e.soul = soul
+    e.store = Store(soul)
     
     sector = sys.argv[2] if len(sys.argv) > 2 else (random.choice(e.store.sectors) if e.store.sectors else "generic")
     if e.store.sectors and sector not in e.store.sectors:
@@ -102,7 +105,28 @@ def main():
     logger.info(f"[SYSTEM] kill switch: write HALTED to {config.KILL_SWITCH_FILE.name}")
     logger.info("=" * 60)
 
-    engine = FollowerEngine(handle, password)
+    from core.soul import load_soul
+    from platforms.bluesky import BlueskyPlatform
+    from platforms.threads import ThreadsPlatform
+    from platforms.omni import OmniPlatform
+
+    soul = load_soul(config.SOUL_FILE)
+    
+    bluesky_platform = BlueskyPlatform(handle, password)
+    platforms_list = [bluesky_platform]
+    
+    # Try to initialize Threads if environment variables are present
+    if os.environ.get("THREADS_USER_ID") and os.environ.get("THREADS_ACCESS_TOKEN"):
+        threads_platform = ThreadsPlatform()
+        platforms_list.append(threads_platform)
+        logger.info("[SYSTEM] Threads API enabled! Using OmniPlatform broadcasting.")
+        
+    if len(platforms_list) > 1:
+        platform = OmniPlatform(platforms_list)
+    else:
+        platform = bluesky_platform
+        
+    engine = FollowerEngine(platform, soul)
     engine.bootstrap()
 
     # Launch the firehose daemon as a background thread. It writes

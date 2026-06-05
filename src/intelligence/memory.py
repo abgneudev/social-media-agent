@@ -4,13 +4,19 @@ This module allows the agent to semantically search its own memory banks,
 giving it the ability to remember past interactions with specific users.
 """
 import time
-import chromadb
+try:
+    import chromadb
+    HAS_CHROMA = True
+except ImportError:
+    HAS_CHROMA = False
 from core.config import logger, STATE_DIR
 
 # Initialize ChromaDB persistent client locally
 # We store the vector database inside the state directory
 CHROMA_DIR = STATE_DIR / "chroma_db"
 try:
+    if not HAS_CHROMA:
+        raise Exception("No chromadb")
     client = chromadb.PersistentClient(path=str(CHROMA_DIR))
     
     # 1. Interactions (Episodic memory with users)

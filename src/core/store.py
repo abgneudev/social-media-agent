@@ -12,9 +12,10 @@ import tempfile
 
 from core import config
 from core.config import (
-    POST_DECAY, SECTORS, POST_HOOKS, REPLY_HOOKS,
+    STATE_DIR,
+    POST_DECAY,
     FOLLOW_ATTRIBUTION_SECONDS, CONTENT_ATTRIBUTION_SECONDS,
-    logger, SOUL
+    logger
 )
 import re
 
@@ -51,9 +52,10 @@ def load_json(filepath, default):
 # STORE
 # ==========================================
 class Store:
-    def __init__(self):
+    def __init__(self, soul):
+        self.soul = soul
         es = load_json(config.ENGINE_STATE_FILE, {})
-        self.sectors = es.get("sectors", getattr(SOUL, "sectors", []))
+        self.sectors = es.get("sectors", getattr(self.soul, "sectors", []))
         self.bandit = self._load_bandit(es.get("bandit", None), self.sectors)
         self.ledger = es.get("ledger", [])
         self.keyword_telemetry = es.get("keyword_telemetry", {})
@@ -74,9 +76,9 @@ class Store:
         self.research_interval = es.get("research_interval", 8)
         self.consecutive_empty_ticks = es.get("consecutive_empty_ticks", 0)
         
-        self.topic_angle_examples = es.get("topic_angle_examples", getattr(SOUL, "topic_angle_examples", []))
-        self.keyword_map = es.get("keyword_map", getattr(SOUL, "keyword_map", {}))
-        self.relevance_signals = es.get("relevance_signals", getattr(SOUL, "relevance_signals", []))
+        self.topic_angle_examples = es.get("topic_angle_examples", getattr(self.soul, "topic_angle_examples", []))
+        self.keyword_map = es.get("keyword_map", getattr(self.soul, "keyword_map", {}))
+        self.relevance_signals = es.get("relevance_signals", getattr(self.soul, "relevance_signals", []))
         self._compile_relevance_re()
         
         logger.info(f"      [STATE] bandit={json.dumps(self.bandit)}")
@@ -92,12 +94,12 @@ class Store:
         if web_insights.get("curated_links"):
             dynamic_hooks.append("curated_link")
 
-        all_post_hooks = set(POST_HOOKS) | set(dynamic_hooks)
+        all_post_hooks = set(self.soul.post_hooks) | set(dynamic_hooks)
 
         fresh = {dim: {v: {"alpha": 1.0, "beta": 1.0} for v in vals}
                  for dim, vals in (("sector", active_sectors),
                                    ("post_hook", all_post_hooks),
-                                   ("reply_hook", REPLY_HOOKS))}
+                                   ("reply_hook", self.soul.reply_hooks))}
         if loaded is None:
             return fresh
         for dim, vals in fresh.items():

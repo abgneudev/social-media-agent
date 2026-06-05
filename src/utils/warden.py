@@ -55,7 +55,7 @@ def sanitize_input(llm_client, raw_text):
 
 from intelligence import prompts
 
-def verify_posts_batch(llm_client, posts):
+def verify_posts_batch(soul, llm_client, posts):
     if not posts:
         return {}
         
@@ -89,7 +89,7 @@ def verify_posts_batch(llm_client, posts):
         return pre_filtered_results
         
     # 2. Nuanced Persona-alignment grading on safe candidates
-    prompt = prompts.build_verify_posts_prompt(posts_context)
+    prompt = prompts.build_verify_posts_prompt(soul, posts_context)
     nuanced_results = llm_client.generate_json(prompt, model_purpose="fast", fallback_dict={})
     
     # Merge pre-filtered drop decisions with the granular pass

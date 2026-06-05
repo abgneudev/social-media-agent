@@ -11,15 +11,12 @@ import time
 import uuid
 import random
 
-from atproto import exceptions
+
 
 from core import config
+from core import config
 from core.config import (
-    logger, content_hash, is_relevant_text,
-    NAME_TEXT, BIO_TEXT,
-    SECTORS, POST_HOOKS, REPLY_HOOKS,
-     
-    SENSITIVE_PHRASES, SENSITIVE_WORDS, SPAM_PHRASES,
+    logger,
     RATE_BUDGETS, GROWTH_PHASES,
     FOLLOWER_TARGET, MAX_LIKES_PER_TICK,
     ANCHOR_POST_TARGET, PROFILE_OPT_MIN_TRIALS, PROFILE_OPT_COOLDOWN_TICKS,
@@ -27,9 +24,9 @@ from core.config import (
     
     ANALYZER_CADENCE_TICKS, EXPLORATION_NUDGE_MAX, TOPIC_ANGLES_PER_PROMPT,
 )
+from core.soul import content_hash
 from core.store import Store, atomic_write_json, load_json
 from core.governance import RateBudget, CircuitBreaker
-from clients.adapter import BlueskyAdapter
 from intelligence import analyzer
 import klipy
 from clients import serper
@@ -135,14 +132,14 @@ class IntentQueue:
 # THE ENGINE
 # ==========================================
 class FollowerEngine:
-    def __init__(self, handle, password):
-        self._handle = handle
-        self._password = password
-        self.store = Store()
-        self.net = BlueskyAdapter(handle, password)
+    def __init__(self, platform, soul):
+        self.soul = soul
+        self.net = platform
+        self.store = Store(soul)
+        
 
         from clients import llm
-        self.llm = llm.LLMClient(config.PERSONA)
+        self.llm = llm.LLMClient(self.soul.persona)
 
         # ====================
         # State & OS Scheduler
@@ -156,7 +153,7 @@ class FollowerEngine:
                      for k, v in RATE_BUDGETS.items()}
         self.sector_activity = {}
         self.sector_posts = {}      # cache of fetched posts per sector, reused in _act
-        self.persona = config.PERSONA
+        self.persona = self.soul.persona
         # niche_insights blob is re-read at tick boundaries (cheap, atomic
         # read). Cached here so the variant prompt and sampler do not race
         # with an in-flight analyzer write.
@@ -177,7 +174,7 @@ class FollowerEngine:
         self._bootstrap_taxonomy()
 
     def _rebuild_telemetry(self):
-        """Restore self.store.keyword_map and config.RELEVANCE_SIGNALS from telemetry
+        """Restore self.store.keyword_map and self.soul.relevance_signals from telemetry
         so the agent doesn't forget its dynamically learned vocabulary on reboot."""
         rebuilt_count = 0
         for kw, stats in self.store.keyword_telemetry.items():
@@ -187,12 +184,12 @@ class FollowerEngine:
             if sector in self.store.keyword_map and kw not in self.store.keyword_map[sector]:
                 self.store.keyword_map[sector].append(kw)
                 rebuilt_count += 1
-            if kw not in config.RELEVANCE_SIGNALS:
-                config.RELEVANCE_SIGNALS.append(kw)
+            if kw not in self.soul.relevance_signals:
+                self.soul.relevance_signals.append(kw)
         
         if rebuilt_count > 0:
             self.store.relevance_re = re.compile(
-                r"\b(" + "|".join(re.escape(s) for s in config.RELEVANCE_SIGNALS) + r")s?\b",
+                r"\b(" + "|".join(re.escape(s) for s in self.soul.relevance_signals) + r")s?\b",
                 re.IGNORECASE,
             )
             logger.info(f"      [BOOTSTRAP] rebuilt {rebuilt_count} active keywords from local telemetry.")
@@ -204,7 +201,7 @@ class FollowerEngine:
             logger.info("      [TAXONOMY] No sectors found. Generating taxonomy from soul...")
             prompt = (
                 f"You are an autonomous taxonomy generator for a social media agent.\n"
-                f"Our pure, authentic persona is:\n{config.PERSONA}\n\n"
+                f"Our pure, authentic persona is:\n{self.soul.persona}\n\n"
                 f"Based strictly on this persona, define our computational taxonomy. You must extract:\n"
                 f"1. Exactly 6 'sectors' that represent our overarching domains.\n"
                 f"2. Exactly 15 'relevance_signals' (keywords/phrases indicating high-relevance posts).\n"
@@ -246,7 +243,7 @@ class FollowerEngine:
                 logger.info(f"      [BOOTSTRAP] sector '{sector}' is empty. Generating keywords...")
                 prompt = (
                     f"You are an autonomous taxonomy generator for a social media agent.\n"
-                    f"Our persona is:\n{config.PERSONA}\n\n"
+                    f"Our persona is:\n{self.soul.persona}\n\n"
                     f"Generate exactly 10 highly specific, modern, and discoverable search keywords "
                     f"that intersect our persona with the topic of '{sector}'.\n\n"
                     f"CRITICAL RULES FOR KEYWORDS:\n"
@@ -574,15 +571,15 @@ class FollowerEngine:
             if web_insights:
                 for h in web_insights.get("experimental_hooks", []):
                     hook_name = h.get("hook_name")
-                    if hook_name and hook_name not in config.POST_HOOKS:
-                        config.POST_HOOKS.append(hook_name)
-                        config.POST_HOOK_GUIDANCE[hook_name] = h.get("guidance", "Experimental hook.")
-                if web_insights.get("curated_links") and "curated_link" not in config.POST_HOOKS:
-                    config.POST_HOOKS.append("curated_link")
-                    config.POST_HOOK_GUIDANCE["curated_link"] = "Share a highly credible curated link with your audience. Give a sharp take on it."
+                    if hook_name and hook_name not in self.soul.self.soul.post_hooks:
+                        self.soul.self.soul.post_hooks.append(hook_name)
+                        self.soul.post_hook_guidance[hook_name] = h.get("guidance", "Experimental hook.")
+                if web_insights.get("curated_links") and "curated_link" not in self.soul.self.soul.post_hooks:
+                    self.soul.self.soul.post_hooks.append("curated_link")
+                    self.soul.post_hook_guidance["curated_link"] = "Share a highly credible curated link with your audience. Give a sharp take on it."
                 
                 # Make sure the store knows about dynamic hooks
-                for h in config.POST_HOOKS:
+                for h in self.soul.post_hooks:
                     if h not in self.store.bandit["post_hook"]:
                         self.store.bandit["post_hook"][h] = {"alpha": 1.0, "beta": 1.0}
         except Exception as e:
@@ -643,9 +640,9 @@ class FollowerEngine:
             try:
                 from intelligence import meta_critic
                 if meta_critic.evaluate_strategy(lambda prompt: self._generate(prompt, dedup=False), self.store.bandit):
-                    config.reload_dynamic_strategy()
-                    self.persona = config.PERSONA
-                    self.llm.persona = config.PERSONA
+                    from core.soul import load_soul; self.soul = load_soul(config.SOUL_FILE)
+                    self.persona = self.soul.persona
+                    self.llm.persona = self.soul.persona
             except Exception as e:
                 logger.warning(f"   [META-CRITIC] run raised: {e}")
 
@@ -885,7 +882,7 @@ class FollowerEngine:
 
         if top_bios:
             bio_context = "\n".join([f"- {b}" for b in top_bios])
-            prompt = prompts.build_profile_optimization_prompt(best_sector, bio_context)
+            prompt = prompts.build_profile_optimization_prompt(self.soul, best_sector, bio_context)
             raw = self._generate(prompt, dedup=False, enable_tools=False, model_purpose="reasoning")
             if raw:
                 data = self.llm.parse_json(raw, fallback_dict={})
@@ -945,7 +942,7 @@ class FollowerEngine:
             return
             
         batch = "\n---\n".join([t for t in texts if t][:20])
-        prompt = prompts.build_run_evolution_prompt(batch)
+        prompt = prompts.build_run_evolution_prompt(self.soul, batch)
         logger.info(f"   [EVOLUTION] expanding search taxonomy based on persona")
         raw = self._generate(prompt, dedup=False)
         if not raw:
@@ -974,12 +971,12 @@ class FollowerEngine:
                 "total_engagement": 0.0, "active": True
             }
             self.store.keyword_map[best_sector].append(kw)
-            config.RELEVANCE_SIGNALS.append(kw)
+            self.soul.relevance_signals.append(kw)
             added = True
             
         if added:
             self.store.relevance_re = re.compile(
-                r"\\b(" + "|".join(re.escape(s) for s in config.RELEVANCE_SIGNALS) + r")s?\\b",
+                r"\\b(" + "|".join(re.escape(s) for s in self.soul.relevance_signals) + r")s?\\b",
                 re.IGNORECASE,
             )
             self.store.save_keyword_telemetry()
@@ -1009,7 +1006,7 @@ class FollowerEngine:
         trends_info = ""
         if best_sector in self.store.trends:
             trends_info = f"Weave in these trends if natural: {', '.join(self.store.trends[best_sector])}. "
-        prompt = prompts.build_bio_prompt(best_sector, trends_info)
+        prompt = prompts.build_bio_prompt(self.soul, best_sector, trends_info)
         raw = self._generate(prompt, dedup=False)
         if not raw:
             return
@@ -1036,8 +1033,8 @@ class FollowerEngine:
         pool = live if live else sector_samples
         sector = max(pool, key=lambda x: x[0])[1]
 
-        post_hook = strategy.select_bandit_arm(self.store, "post_hook", list(POST_HOOKS))
-        reply_hook = strategy.select_bandit_arm(self.store, "reply_hook", list(REPLY_HOOKS))
+        post_hook = strategy.select_bandit_arm(self.store, "post_hook", list(self.soul.post_hooks))
+        reply_hook = strategy.select_bandit_arm(self.store, "reply_hook", list(self.soul.reply_hooks))
         logger.info(f"   -> sector={sector} post_hook={post_hook} reply_hook={reply_hook}")
         return sector, post_hook, reply_hook
 
@@ -1235,7 +1232,7 @@ class FollowerEngine:
         if campaign_context:
             vision_hint += f"\nCAMPAIGN STRATEGY: {campaign_context}\n"
 
-        prompt = prompts.build_quote_best_prompt(sector, src, hook, constraint, vision_hint)
+        prompt = prompts.build_quote_best_prompt(self.soul, sector, src, hook, constraint, vision_hint)
         raw = self._generate(prompt, dedup=True, image_b64=image_b64)
         quote_text = None
         if raw:
@@ -1273,7 +1270,8 @@ class FollowerEngine:
             self.breaker.record_failure()
 
     def _verify_posts_batch(self, posts):
-        return warden.verify_posts_batch(self.llm, posts)
+        """Pass a batch of posts through the warden to drop unaligned noise."""
+        return warden.verify_posts_batch(self.soul, self.llm, posts)
 
     def _verify_profiles_batch(self, profiles):
         if not profiles:
@@ -1286,7 +1284,7 @@ class FollowerEngine:
             display = getattr(p, "display_name", "") or ""
             profiles_context += f"- Handle: {handle}\n  Name: {display}\n  Bio: {bio}\n\n"
             
-        prompt = prompts.build_verify_profiles_prompt(profiles_context)
+        prompt = prompts.build_verify_profiles_prompt(self.soul, profiles_context)
         raw = self._generate(prompt, dedup=False)
         return self.llm.parse_json(raw, fallback_dict={})
 
@@ -1512,7 +1510,7 @@ class FollowerEngine:
     def _sample_distinct_post_hooks(self, n=3):
         """Thompson-sample up to n DISTINCT post archetypes. Each draw is an
         independent Beta sample; we sort and take the top n distinct arms.
-        Returns at most len(POST_HOOKS) archetypes. Used by _original_post
+        Returns at most len(self.soul.post_hooks) archetypes. Used by _original_post
         to force structural diversity: each variant in a single generation
         call gets a different archetype, so the three drafts read as if
         written by three different people about the same idea.
@@ -1523,16 +1521,16 @@ class FollowerEngine:
         small so the nudge biases exploration without zeroing other arms:
         every archetype must still be sampled with non-trivial probability.
         """
-        nudges = analyzer.archetype_nudges(self._insights, EXPLORATION_NUDGE_MAX)
+        nudges = analyzer.archetype_nudges(self.soul, self._insights, EXPLORATION_NUDGE_MAX)
         samples = []
-        for v in POST_HOOKS:
+        for v in self.soul.post_hooks:
             arm = self.store.bandit["post_hook"][v]
             samples.append(
                 (random.betavariate(arm["alpha"] + nudges.get(v, 0.0), arm["beta"]),
                  v)
             )
         samples.sort(reverse=True)
-        return [v for _, v in samples[:min(n, len(POST_HOOKS))]]
+        return [v for _, v in samples[:min(n, len(self.soul.post_hooks))]]
 
     # Per-slot length and opening-move shuffle. Layered on top of the
     # archetype-specific constraints. The archetype wins when there is a
@@ -1606,7 +1604,7 @@ class FollowerEngine:
         if campaign_context:
             trends_info += f"\nCAMPAIGN STRATEGY:\n{campaign_context}\nEnsure the variants strongly align with this long-game plan.\n\n"
             
-        prompt = prompts.build_variant_prompt(sector, archetypes, length_slots,
+        prompt = prompts.build_variant_prompt(self.soul, sector, archetypes, length_slots,
                                               opening_slots, trends_info, web_insights)
         raw = self._generate(prompt, dedup=True, enable_tools=False, model_purpose="versatile")
         if not raw:
@@ -1865,7 +1863,7 @@ class FollowerEngine:
         if campaign_context:
             vision_hint += f"\nCAMPAIGN STRATEGY: {campaign_context}\n"
 
-        prompt = prompts.build_helpful_reply_prompt(sector, batch, hook, whale_constraint, vision_hint)
+        prompt = prompts.build_helpful_reply_prompt(self.soul, sector, batch, hook, whale_constraint, vision_hint)
         raw = self._generate(prompt, dedup=True, image_b64=top_image_b64, enable_tools=True, model_purpose="versatile")
         if not raw:
             return
@@ -1930,12 +1928,12 @@ class FollowerEngine:
         if self.store.already_acted_on(content_hash(text)):
             return False
         low = text.lower()
-        if any(p in low for p in SPAM_PHRASES):
+        if any(p in low for p in self.soul.get_spam_phrases(config.SPAM_PHRASES_FLOOR)):
             return False
-        if any(p in low for p in SENSITIVE_PHRASES):
+        if any(p in low for p in self.soul.get_sensitive_phrases(config.SENSITIVE_PHRASES_FLOOR)):
             return False
         # word-boundary check for short risky tokens (avoids domain-term collisions)
-        if any(re.search(r"\b" + re.escape(w) + r"\b", low) for w in SENSITIVE_WORDS):
+        if any(re.search(r"\b" + re.escape(w) + r"\b", low) for w in self.soul.get_sensitive_words(config.SENSITIVE_WORDS_FLOOR)):
             return False
         if any(ch in text for ch in ("\U0001F300", "\u2014")):  # emoji / em dash
             return False
@@ -2138,8 +2136,8 @@ class FollowerEngine:
             sector = max(pool, key=lambda x: x[0])[1] if pool else self.store.sectors[0]
             
         # Select hooks algorithmically
-        post_hook = strategy.select_bandit_arm(self.store, "post_hook", list(POST_HOOKS))
-        reply_hook = strategy.select_bandit_arm(self.store, "reply_hook", list(REPLY_HOOKS))
+        post_hook = strategy.select_bandit_arm(self.store, "post_hook", list(self.soul.post_hooks))
+        reply_hook = strategy.select_bandit_arm(self.store, "reply_hook", list(self.soul.reply_hooks))
         
         # Route execution based on resource availability
         executed = False
@@ -2215,13 +2213,13 @@ class FollowerEngine:
                 if web_insights:
                     for h in web_insights.get("experimental_hooks", []):
                         hook_name = h.get("hook_name")
-                        if hook_name and hook_name not in config.POST_HOOKS:
-                            config.POST_HOOKS.append(hook_name)
-                            config.POST_HOOK_GUIDANCE[hook_name] = h.get("guidance", "Experimental hook.")
-                    if web_insights.get("curated_links") and "curated_link" not in config.POST_HOOKS:
-                        config.POST_HOOKS.append("curated_link")
-                        config.POST_HOOK_GUIDANCE["curated_link"] = "Share a highly credible curated link with your audience. Give a sharp take on it."
-                    for h in config.POST_HOOKS:
+                        if hook_name and hook_name not in self.soul.post_hooks:
+                            self.soul.post_hooks.append(hook_name)
+                            self.soul.post_hook_guidance[hook_name] = h.get("guidance", "Experimental hook.")
+                    if web_insights.get("curated_links") and "curated_link" not in self.soul.post_hooks:
+                        self.soul.post_hooks.append("curated_link")
+                        self.soul.post_hook_guidance["curated_link"] = "Share a highly credible curated link with your audience. Give a sharp take on it."
+                    for h in self.soul.post_hooks:
                         if h not in self.store.bandit["post_hook"]:
                             self.store.bandit["post_hook"][h] = {"alpha": 1.0, "beta": 1.0}
             except Exception as e:

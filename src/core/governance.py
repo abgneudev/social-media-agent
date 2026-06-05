@@ -40,7 +40,7 @@ class RateBudget:
 
 
 import contextlib
-from atproto import exceptions
+
 
 class CircuitBreaker:
     """CLOSED normal, OPEN blocks network and cools down, then auto-resets."""
@@ -72,7 +72,7 @@ class CircuitBreaker:
         try:
             yield
             self.record_success()
-        except exceptions.AtProtocolError as e:
+        except Exception as e:
             logger.warning(f"   [FAULT] {action_name} failed: {e}")
             self.record_failure()
 

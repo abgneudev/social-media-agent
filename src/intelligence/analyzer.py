@@ -1,7 +1,7 @@
 """Niche analyzer.
 
 Samples high-engagement posts from the niche, classifies each by the
-archetype vocabulary (same labels the bandit pulls from POST_HOOKS), and
+archetype vocabulary (same labels the bandit pulls from store.soul.post_hooks), and
 records which archetypes and which topic angles are trending RIGHT NOW
 for the niche.
 
@@ -40,7 +40,7 @@ import random
 
 from core import config
 from core.config import (
-    logger, SECTORS, KEYWORD_MAP, POST_HOOKS,
+    logger,  
     ANALYZER_SAMPLE_PER_SECTOR, ANALYZER_TOTAL_SAMPLE_CAP,
 )
 from core.store import atomic_write_json, load_json
@@ -57,15 +57,15 @@ def _post_engagement(p):
             + (getattr(p, "reply_count", 0) or 0))
 
 
-def _sample_high_engagement_posts(net, keyword_map, sectors):
+def _sample_high_engagement_posts(store, net):
     """Pull recent posts from the niche, rank by engagement, sample the
     top from each sector and combine. Reuses the existing search_posts
     path; no new bulk fetches. Returns a list of (sector, text, engagement)
     tuples capped at ANALYZER_TOTAL_SAMPLE_CAP."""
     pool = []
     our_did = getattr(net, "did", None)
-    for sector in sectors:
-        keywords = keyword_map.get(sector, [])
+    for sector in store.sectors:
+        keywords = store.keyword_map.get(sector, [])
         if not keywords:
             continue
         keyword = random.choice(keywords)
@@ -90,12 +90,12 @@ def _sample_high_engagement_posts(net, keyword_map, sectors):
     return pool[:ANALYZER_TOTAL_SAMPLE_CAP]
 
 
-def _classify_prompt(samples, topic_angle_examples):
+def _classify_prompt(store, samples, topic_angle_examples):
     """Build the classification prompt. The schema requires per-sample
     archetype + a short noun-phrase topic_angle. We forbid copying source
     sentences explicitly and cap angle length so the model cannot smuggle
     a paste-back."""
-    archetypes = ", ".join(POST_HOOKS)
+    archetypes = ", ".join(store.soul.post_hooks)
     body = "\n".join(f"[{i}] {t}" for i, (_, t, _) in enumerate(samples))
     examples_str = ", ".join(repr(ex) for ex in topic_angle_examples) if topic_angle_examples else "'design architecture', 'heuristic breakdown'"
     return (
@@ -119,13 +119,13 @@ def _classify_prompt(samples, topic_angle_examples):
     )
 
 
-def _classify(ai_generate, samples, topic_angle_examples):
+def _classify(store, ai_generate, samples, topic_angle_examples):
     """Call the AI to classify the sampled posts. Returns a list aligned
     with `samples`. Bad rows (missing archetype, oversize topic_angle) are
     dropped so a partial response is still useful."""
     if not samples:
         return []
-    raw = ai_generate(_classify_prompt(samples, topic_angle_examples))
+    raw = ai_generate(_classify_prompt(store, samples, topic_angle_examples))
     if not raw:
         return []
     try:
@@ -139,7 +139,7 @@ def _classify(ai_generate, samples, topic_angle_examples):
             continue
         arch = row.get("archetype")
         angle = row.get("topic_angle")
-        if arch not in POST_HOOKS:
+        if arch not in store.soul.post_hooks:
             continue
         if not isinstance(angle, str) or not angle.strip():
             continue
@@ -155,7 +155,7 @@ def _classify(ai_generate, samples, topic_angle_examples):
     return out
 
 
-def run(net, ai_generate, keyword_map, topic_angle_examples, sectors):
+def run(net, ai_generate,  topic_angle_examples, sectors):
     """One analyzer pass. ai_generate is a callable that takes a prompt
     string and returns a JSON string (the engine's _generate wrapper, with
     its existing fault handling). Writes the niche_insights blob atomically.
@@ -164,15 +164,15 @@ def run(net, ai_generate, keyword_map, topic_angle_examples, sectors):
     samples, AI down, write error) leaves any existing blob in place; the
     engine reads whatever is on disk and gracefully degrades to no nudges
     if the read returns nothing."""
-    samples = _sample_high_engagement_posts(net, keyword_map, sectors)
+    samples = _sample_high_engagement_posts(store, net)
     if not samples:
         logger.info("[ANALYZER] no samples to classify; leaving prior insights.")
         return None
-    classifications = _classify(ai_generate, samples, topic_angle_examples)
+    classifications = _classify(store, llm.generate, samples, store.topic_angle_examples)
     if not classifications:
         logger.info("[ANALYZER] no classifications; leaving prior insights.")
         return None
-    archetype_traction = {a: 0 for a in POST_HOOKS}
+    archetype_traction = {a: 0 for a in store.soul.post_hooks}
     topic_angles = []
     for row in classifications:
         archetype_traction[row["archetype"]] = archetype_traction.get(row["archetype"], 0) + 1
@@ -207,7 +207,7 @@ def load_insights():
     return blob
 
 
-def archetype_nudges(blob, max_nudge):
+def archetype_nudges(soul, blob, max_nudge):
     """Convert archetype_traction counts into per-arm alpha bumps in
     [0, max_nudge]. The most-represented archetype gets the full bump,
     others scale linearly with their share. Missing archetypes get 0.
@@ -216,12 +216,12 @@ def archetype_nudges(blob, max_nudge):
     archetypes without zeroing other arms. Every archetype must still be
     sampled in expectation, which is what the test guarantees."""
     if not blob:
-        return {a: 0.0 for a in POST_HOOKS}
+        return {a: 0.0 for a in soul.post_hooks}
     traction = blob.get("archetype_traction") or {}
-    max_count = max((traction.get(a, 0) for a in POST_HOOKS), default=0)
+    max_count = max((traction.get(a, 0) for a in soul.post_hooks), default=0)
     if max_count <= 0:
-        return {a: 0.0 for a in POST_HOOKS}
-    return {a: (traction.get(a, 0) / max_count) * max_nudge for a in POST_HOOKS}
+        return {a: 0.0 for a in soul.post_hooks}
+    return {a: (traction.get(a, 0) / max_count) * max_nudge for a in soul.post_hooks}
 
 
 def topic_angles_for_prompt(blob, k):
