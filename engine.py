@@ -702,20 +702,23 @@ class FollowerEngine:
             
             self.store.update("sector", a["sector"], reward)
             # Add to engagement telemetry directly
-            if "engagement" not in self.store.bandit["sector"][a["sector"]]:
-                self.store.bandit["sector"][a["sector"]]["engagement"] = 0.0
-            self.store.bandit["sector"][a["sector"]]["engagement"] += eng
+            if a["sector"] in self.store.bandit["sector"]:
+                if "engagement" not in self.store.bandit["sector"][a["sector"]]:
+                    self.store.bandit["sector"][a["sector"]]["engagement"] = 0.0
+                self.store.bandit["sector"][a["sector"]]["engagement"] += eng
 
             if a["kind"] in ("post", "quote"):
                 self.store.update("post_hook", a["hook"], reward)
-                if "engagement" not in self.store.bandit["post_hook"][a["hook"]]:
-                    self.store.bandit["post_hook"][a["hook"]]["engagement"] = 0.0
-                self.store.bandit["post_hook"][a["hook"]]["engagement"] += eng
+                if a["hook"] in self.store.bandit["post_hook"]:
+                    if "engagement" not in self.store.bandit["post_hook"][a["hook"]]:
+                        self.store.bandit["post_hook"][a["hook"]]["engagement"] = 0.0
+                    self.store.bandit["post_hook"][a["hook"]]["engagement"] += eng
             elif a["kind"] == "reply":
                 self.store.update("reply_hook", a["hook"], reward)
-                if "engagement" not in self.store.bandit["reply_hook"][a["hook"]]:
-                    self.store.bandit["reply_hook"][a["hook"]]["engagement"] = 0.0
-                self.store.bandit["reply_hook"][a["hook"]]["engagement"] += eng
+                if a["hook"] in self.store.bandit["reply_hook"]:
+                    if "engagement" not in self.store.bandit["reply_hook"][a["hook"]]:
+                        self.store.bandit["reply_hook"][a["hook"]]["engagement"] = 0.0
+                    self.store.bandit["reply_hook"][a["hook"]]["engagement"] += eng
 
             # Update granular keyword telemetry
             kw = a.get("keyword")

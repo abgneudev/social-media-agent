@@ -1,24 +1,16 @@
 {
-  "ts": 1780629884.484542,
-  "ts_iso": "2026-06-04T23:24:44",
+  "ts": 1780631012.2769008,
+  "ts_iso": "2026-06-04T23:43:32",
   "velocity_posts": [
     {
-      "uri": "at://did:plc:iqlqsgoh3o3di3xdeauuzinw/app.bsky.feed.post/3mnj4zx6c622o",
-      "text": "but if you react to finding out about being resented we\u2019ll all collectively agree to never talk to you again because you\u2019re a shit person to be around and everything you say and do online makes you a Bad Character",
-      "author_did": "did:plc:iqlqsgoh3o3di3xdeauuzinw",
+      "uri": "at://did:plc:dy67e5bo7xbo4co4oivs5mne/app.bsky.feed.post/3mnj7a3upyd2x",
+      "text": "Jeremy Lauzon had 97 blocked shots in 68 regular season games. Was very slow to react to that pass going over to Jarvis and get in the shooting lane. John Tortorella will not love that.",
+      "author_did": "did:plc:dy67e5bo7xbo4co4oivs5mne",
       "likes_in_window": 3,
-      "window_seconds": 159,
-      "ts": 1780628097.737189
-    },
-    {
-      "uri": "at://did:plc:6sjm7mqkryqzazwb5jvum3hg/app.bsky.feed.post/3mnj5ztamu223",
-      "text": "And that was exactly why I asked him if he was a nazi fan. He reacted exactly the way he expected OP to react",
-      "author_did": "did:plc:6sjm7mqkryqzazwb5jvum3hg",
-      "likes_in_window": 3,
-      "window_seconds": 287,
-      "ts": 1780629295.3026724
+      "window_seconds": 393,
+      "ts": 1780630684.711689
     }
   ],
   "our_engagers": [],
-  "tracked_posts_count": 27
+  "tracked_posts_count": 17
 }
