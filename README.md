@@ -1,213 +1,125 @@
 # Kiloforge
 
-Autonomous Bluesky follower-growth agent. Runs as a long-lived daemon that
-ticks every 2.5 minutes, learns which content angles and which sectors of
-its niche actually convert to engagement, and adjusts what it posts next.
+Autonomous multi-platform social media agent (Bluesky & Threads). Runs as a long-lived daemon featuring an OS-style Kernel, a Strategist brain, and a Resource-Constrained Priority Scheduling (RCPSP) loop. The agent learns which content angles and which sectors of its niche actually convert to engagement, and adjusts what it posts next.
 
-**North star:** real followers, measured directly from the platform, not a
-proxy metric. The bandit only learns from outcomes attributable to actions
-the agent itself took.
+**North star:** real followers, measured directly from the platform. The bandit only learns from outcomes attributable to actions the agent itself took.
 
-**Niche (current soul):** UX design, frontend engineering, design systems,
-explained in plain language. Niche, voice, and persona are externalized to
-[`soul.yaml`](soul.yaml); the rest of this README applies to any soul.
+**Niche (current soul):** UX design, frontend engineering, design systems, explained in plain language. Niche, voice, and persona are externalized to [`soul.yaml`](soul.yaml); the rest of this README applies to any soul.
 
-## Repo map
+## Repo Map
 
 ```
-run.py              Entry point. Wires config + logging, builds the engine,
-                    loops forever. Stall counter and heartbeat run from
-                    here so they fire even when a tick raises.
-config.py           All constants, file paths, the logger, the soul loader,
-                    KF_STATE_DIR routing, and the safety floor lists.
-soul.yaml           Persona, niche keywords, hooks. Swap to retarget voice
-                    and domain. Cannot weaken the code-defined safety lists.
-store.py            atomic_write_json + load_json + the Store class.
-                    Store holds bandit, ledger, snapshots, seen-set, engine
-                    scratch state, and pending writes.
-governance.py       RateBudget (token bucket per action) and CircuitBreaker
-                    (persisted, auto-cools, trippable from stall detector).
-adapter.py          BlueskyAdapter. One concrete adapter, no protocol-layer.
-                    Wraps the atproto client; provides find_post() for the
-                    reconcile-before-retry mechanism.
-engine.py           FollowerEngine (orchestration), write_status (heartbeat),
-                    wilson_lower_bound, hook_strength.
+run.py              Entry point. Wires config + logging, loads Soul, detects
+                    environment variables to build OmniPlatform, and boots
+                    the FollowerEngine.
+soul.yaml           Persona, niche keywords, hooks, creative mediums. Swap
+                    to retarget voice and domain.
 
-tests/              29 tests, all passing.
-  test_reconcile.py   idempotent publish, find_post reconciliation
-  test_stall.py       stall detector trips the breaker after N empty ticks
-  test_status.py      status.json heartbeat shape and atomicity
-  test_soul.py        soul loader fails closed; safety floor cannot be weakened
-  test_state_dir.py   KF_STATE_DIR routes every state path
+src/core/
+  engine.py         FollowerEngine (the OS Kernel). Manages the main loop,
+                    Token Buckets, the execution queue, and calls the Brain.
+  config.py         Constants, logger setup, rate limit definitions, and 
+                    safety floor definitions.
+  soul.py           Parses soul.yaml, generates regex signals, dynamic getters.
+  store.py          atomic_write_json + the Store class. Holds the bandit,
+                    ledger, seen-sets, and engine scratch state.
 
-requirements.txt    atproto, groq, PyYAML.
-runtime.txt         python-3.11.9 (for Render).
-render.yaml         Render Blueprint: worker + persistent disk + env vars.
-kiloforge.service   systemd unit for bare-metal hosts.
-kiloforge.env.example   Env template for systemd path.
+src/intelligence/
+  strategist.py     The Brain wrapper.
+  prompts.py        LLM Prompt builders for the Strategist, Warden, and hooks.
+  analyzer.py       Calculates Thompson Sampling posteriors for the bandit.
+  web_research.py   Serper integration for pulling live industry trends.
+  memory.py         Long-term vector-like semantic memory.
 
-DEPLOY.md           Bare-metal/systemd deploy guide.
-DEPLOY_RENDER.md    Render deploy guide. Read this first if deploying.
+src/platforms/
+  platform.py       Abstract base class defining the 23-method network interface.
+  bluesky.py        Concrete adapter for ATProto (Bluesky).
+  threads.py        Concrete adapter for Meta Graph API (Threads).
+  omni.py           Broadcaster wrapper. Defers sensing to Bluesky, broadcasts
+                    writes to all initialized platforms.
 
-.gitignore          Excludes secrets, state files, newagent/, .claude/.
-.renderignore       Same idea for Render's build context.
-
-newagent/           Unrelated experimental project. Gitignored, render-ignored,
-                    not part of the Kiloforge deploy.
+src/utils/
+  warden.py         Content safety and verification.
+  breaker.py        CircuitBreaker logic to halt execution on rapid failure.
 ```
 
-## How a tick works
+## How the Architecture Works
 
-Each tick (default every 150 s):
+Kiloforge runs on a completely decoupled architecture, separating **Thinking (Strategist)** from **Doing (Kernel)**.
 
-1. **Reconcile pending writes.** Any publish from a previous tick that
-   started but did not finalize (process crashed between the network
-   write and the ledger entry) is matched against the author feed by
-   content hash. If found, the ledger entry is recorded and the intent
-   cleared. Prevents double-posting.
+### 1. The OS Kernel
+The main execution loop in `engine.py` functions like a CPU scheduler. It does *not* make strategic decisions. It holds **Token Buckets** representing its budget for actions (e.g., 5 follows, 2 posts, 8 likes, 1 strategist call). Every tick, the Kernel pops the highest priority `Intent` from its queue and executes it, provided the token budget allows it.
 
-2. **Sense.** Fetch the current follower count. Every other tick, scan
-   each sector's keywords against the Bluesky search to build candidate
-   pools and an activity heatmap. Every 5th tick, ask the LLM to pull
-   three trending sub-keywords from the hottest sector for future targeting.
+### 2. The Strategist (Brain)
+When the Kernel's execution queue is empty, and the `strategy_plan` cooldown is met, the Kernel wakes up the Strategist. 
+The Strategist is fed raw telemetry: follower ratios, current rate limits, hot trending sectors, and recent memory. The Strategist outputs an `active_plan` (long-term strategy) and schedules a batch of `intents` (up to 15 actions like `follow`, `like`, `curate`, `post`, `quote`) graded by Priority (1-10) to drain its available budget.
 
-3. **Learn.** Score matured actions. Posts/replies/quotes mature after
-   9 minutes (engagement window); follows mature after 25 minutes (long
-   enough for a human to see the notification). Beta-distribution
-   alpha/beta counters update per sector and per hook.
+### 3. The OmniPlatform (Multi-Network Sync)
+Kiloforge is network-agnostic. The Kernel communicates with the `Platform` interface. If only Bluesky credentials are provided, it uses `BlueskyPlatform`. If `THREADS_USER_ID` is present, it wraps them both in an `OmniPlatform`. 
+- **Read/Sense:** The `OmniPlatform` defers reading timelines and hot topics to the primary network (Bluesky) to keep its internal algorithms and feedback loops stable.
+- **Write/Act:** The `OmniPlatform` broadcasts posts, replies, and quotes identically to all attached networks simultaneously.
 
-4. **Decide.** Thompson-sample sector, post-hook, and reply-hook from
-   their respective Beta posteriors. Dead sectors (zero activity this
-   tick) are excluded from the sector pool unless all are dead.
+## The Cognitive Cycle
 
-5. **Act.** Phase-weighted action plan: cold accounts lean on follows,
-   later phases lean on posting. Each action passes through a per-kind
-   token bucket. The publishing paths (post, reply, quote) go through
-   `_publish_with_reconcile`, which persists the intent before the
-   network call so a crash mid-publish recovers cleanly.
+Kiloforge operates as a fully autonomous agent, driven by a continuous cognitive cycle of Sensing, Planning, Acting, and Learning. Rather than running hardcoded scripts, the agent uses its "heartbeat" (defaulting to 150 seconds) to evaluate its environment and make dynamic, mathematically-backed decisions.
 
-6. **Update stall counter + write heartbeat.** If the tick produced zero
-   successful network actions but was genuinely active (not halted, not
-   breaker-open), bump `consecutive_empty_ticks`. After 8 in a row, force
-   the breaker open. Then atomically write `status.json`.
+1. **Firehose & Sensing (The Eyes):** 
+   - The agent connects to the platform's live data streams. It calculates its real follower count.
+   - It semantically scans the network using the keywords defined in `soul.yaml` to identify trending sectors (e.g., is "frontend engineering" hot right now, while "design systems" is quiet?).
+   - It scores potential targets for engagement, curating candidates based on reciprocity, bio quality, and context match.
+   
+2. **The Strategist's Planning (The Brain):**
+   - The OS Kernel manages a queue of intents. If the queue needs replenishment, it calls upon the **Strategist**.
+   - The Strategist evaluates the agent's current budgets (Token Buckets for limits like follows, likes, quotes per hour) and long-term memory.
+   - It generates a sweeping `active_plan` (a master strategy) and outputs a dynamic batch of `intents` specifically selected to execute that strategy and maximize network velocity.
+   
+3. **Execution & Generation (The Hands):**
+   - The Kernel pops the highest priority `intent` from the queue (e.g., `curate` or `quote`).
+   - For content generation, the Kernel asks the LLM to draft content adhering strictly to the `soul.yaml` persona, leveraging the mathematically highest-performing "hook".
+   
+4. **Warden Gating (The Shield):**
+   - Before any text touches the network, the **Warden** analyzes the generated content.
+   - It checks against the code-enforced `SPAM_PHRASES_FLOOR` and `SENSITIVE_PHRASES_FLOOR` combined with the Soul's specific restrictions.
+   - If the content violates formatting rules (like using an em dash or exceeding character limits), it is ruthlessly rejected and the Kernel skips the action.
+   
+5. **Omni-Broadcasting & Reconciliation:**
+   - The `OmniPlatform` broadcasts the action. If both Bluesky and Threads are connected, it hits both APIs simultaneously.
+   - The Kernel persists the intent's ID *before* the network call. If the script crashes mid-publish, the next Tick will scan the timeline, find the dropped intent, and gracefully recover without double-posting.
 
-The runtime loop in `run.py` catches `Exception` (with a full traceback
-logged) but re-raises `KeyboardInterrupt`/`SystemExit` so operator-driven
-stops are clean. The stall counter and heartbeat run in their own
-try/except after the tick, so a tick that raises still gets accounted for
-and the heartbeat still updates.
+6. **Ledger & Thompson Sampling (The Evolution):**
+   - The agent writes the action to its immutable `action_ledger.json`.
+   - **Maturity:** Actions don't count instantly. A post needs 9 minutes to "mature", and a follow needs 25 minutes for the user to notice.
+   - Once mature, the agent checks if the action resulted in a follower gain. It updates the **Thompson Sampling Bandit**, mathematically rewarding or punishing the specific Sector and Hook that was used. This ensures the agent is constantly evolving toward what actually works.
 
-## State
+## Safety Model
 
-All persistent state lives under `STATE_DIR`:
+`config.py` defines floor lists (`SENSITIVE_PHRASES_FLOOR`, `SPAM_PHRASES_FLOOR`). The `Soul` object extends these dynamically via `extra_sensitive_*` fields. The content gate checks all outputs. The code fails closed if safety checks fail.
 
-- `bandit_state.json`: Beta(alpha, beta) per sector / post_hook / reply_hook.
-- `action_ledger.json`: every action taken, with attribution timestamp.
-- `account_snapshots.json`: per-tick follower count history.
-- `seen_targets.json`: dedup set (avoid liking, following, replying twice).
-- `engine_state.json`: tick counter, phase, anchor posts, trends, stall counter.
-- `circuit_breaker.json`: breaker state across restarts.
-- `pending_writes.json`: unfinalized publish intents (drives reconcile).
-- `status.json`: heartbeat snapshot.
-- `engine_status.txt`: `HALTED` kill switch (operator-written).
-
-`STATE_DIR` is set by the `KF_STATE_DIR` env var. On Render it points at
-the mounted persistent disk. Locally (unset), it falls back to the repo
-directory; existing dev state remains findable.
-
-`soul.yaml` is read-only config that ships with the deploy; it lives in
-the code dir even when state lives on a mounted disk.
-
-## Safety model
-
-`config.py` defines floor lists (`SENSITIVE_PHRASES_FLOOR`,
-`SENSITIVE_WORDS_FLOOR`, `SPAM_PHRASES_FLOOR`) that the content gate
-checks. The soul file MAY add to these via `extra_sensitive_*` fields,
-which are merged by union. The soul CANNOT remove or weaken a floor
-entry: there is no API for it. The soul loader fails closed if the file
-is missing, malformed, or incomplete; it does not degrade to defaults.
-
-Follow-scoring thresholds in `FollowerEngine._score_follow_target` also
-stay code-enforced. Both are marked as future externalization candidates.
-
-## Robustness pieces (items 1 to 4)
-
-- **Idempotent publish** (`_publish_with_reconcile` + `BlueskyAdapter.find_post`):
-  intent persisted before write; on a raised write, scan the author feed
-  by content hash; treat a found post as success. No double-posts on
-  network drops between commit and response.
-- **Stall detector** (`update_stall_counter`): after `STALL_THRESHOLD` (8)
-  active-but-empty ticks, force the breaker open. The daemon stops
-  chewing cycles silently when something upstream is wrong.
-- **Heartbeat** (`write_status`): atomic `status.json` written every loop
-  iteration. Operator's first-line healthcheck.
-- **Structured logging**: ISO timestamp + level on every line, to stderr,
-  so journald and Render dashboards capture it cleanly.
-
-## Running it
+## Running It
 
 ### Local
 
 ```bash
 python -m venv venv
 venv/Scripts/pip install -r requirements.txt
+
+# Bluesky Keys (Required)
 export BLUESKY_HANDLE=yourhandle.bsky.social
-export BLUESKY_PASSWORD=xxxx-xxxx-xxxx-xxxx   # app password
+export BLUESKY_PASSWORD=xxxx-xxxx-xxxx-xxxx
+
+# Groq (Required)
 export GROQ_API_KEY=gsk_...
-python run.py
+
+# Threads Keys (Optional for OmniPlatform Broadcast)
+export THREADS_USER_ID=123456789
+export THREADS_ACCESS_TOKEN=EAAGxxxx...
+
+python run.py --live
 ```
 
-### Render (recommended)
+## Code Conventions
 
-See [`DEPLOY_RENDER.md`](DEPLOY_RENDER.md). One blueprint
-(`render.yaml`) creates the worker, attaches the persistent disk, and
-routes state through `KF_STATE_DIR`. Set the three secrets in the
-dashboard.
-
-### Systemd (bare metal)
-
-See [`DEPLOY.md`](DEPLOY.md). Drop the unit at
-`/etc/systemd/system/kiloforge.service`, put secrets in
-`/etc/kiloforge/kiloforge.env` (mode 600), `systemctl enable --now`.
-
-## Tests
-
-```bash
-venv/Scripts/python -m unittest discover -s tests
-```
-
-29 tests, organized by item:
-
-| File              | What it asserts                                                    |
-|-------------------|--------------------------------------------------------------------|
-| `test_reconcile`  | Successful publish + crash before recording does not double-post.  |
-| `test_stall`      | N empty active ticks trip the breaker; inactive ticks do not.      |
-| `test_status`     | `status.json` shape, atomicity, last_action surface.               |
-| `test_soul`       | Loader fails closed; safety floor cannot be weakened from soul.    |
-| `test_state_dir`  | `KF_STATE_DIR` routes every state path; `soul.yaml` stays with code.|
-
-Tests inject a `MockAdapter` instead of touching the live network.
-
-## Swapping the soul
-
-Edit `soul.yaml`: change `name`, `bio`, `persona`, `post_hooks` and their
-guidance, `reply_hooks` and their guidance, `keyword_map` (sectors come
-from its keys), and `relevance_signals`. Restart. The agent retargets to
-the new domain.
-
-What you cannot change from the soul: the safety floor (you can extend
-it but not narrow it), the follow-scoring thresholds, the bandit and
-governance logic. Those are code-enforced and a new domain has not been
-validated end-to-end. Treat the first run in a new niche as a manual
-review pass.
-
-## Code conventions
-
-- No em dashes anywhere in code, comments, docs, or generated content.
-  The content gate refuses to publish text containing an em dash.
-- Print is forbidden in production code; everything goes through the
-  module logger so it lands in journald / Render logs with level and
-  timestamp.
+- No em dashes anywhere in code, comments, docs, or generated content. The content gate refuses to publish text containing an em dash.
+- State is strictly decoupled from Globals. `Soul` must be explicitly passed down the call stack.
 - Atomic writes only for state. Never write JSON state in place.
-- One concrete adapter. If a second platform ever lands, add a sibling
-  adapter; do not extract a protocol class until there is real demand.
+- All platforms must inherit from the `Platform` interface. Unsupported API actions (like `create_list` on Threads) must fail gracefully or act as no-ops rather than crashing the Kernel.
