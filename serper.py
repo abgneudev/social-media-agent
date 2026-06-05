@@ -81,7 +81,10 @@ def search_images(query: str):
     if not api_key: return None
     
     if cache_key in cache["queries"]:
-        return cache["queries"][cache_key]
+        cached_val = cache["queries"][cache_key]
+        if isinstance(cached_val, str):
+            return [cached_val]
+        return cached_val
         
     data = _post_request("https://google.serper.dev/images", api_key, {"q": clean_query})
     if not data: return None
