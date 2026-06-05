@@ -62,6 +62,17 @@ def _dry_run():
 
 
 def main():
+    env_path = os.path.join(os.path.dirname(__file__), ".env")
+    try:
+        with open(env_path, "r") as f:
+            for line in f:
+                if "=" in line:
+                    k, v = line.strip().split("=", 1)
+                    os.environ.setdefault(k, v.strip(' "\''))
+    except Exception:
+        pass
+
+
     if len(sys.argv) > 1 and sys.argv[1] == "--dry-run":
         _dry_run()
         return

@@ -145,11 +145,8 @@ class LLMClient:
         """
         model = config.LLM_MODEL_GUARDRAIL
         
-        messages = []
-        if policy:
-            messages.append({"role": "system", "content": policy})
-        
-        messages.append({"role": "user", "content": text})
+        user_content = f"Policy: {policy}\n\nContent: {text}" if policy else text
+        messages = [{"role": "user", "content": user_content}]
 
         try:
             resp = self.ai.chat.completions.create(

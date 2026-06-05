@@ -1497,7 +1497,7 @@ class FollowerEngine:
         run.py --dry-run; no network writes occur."""
         archetypes, variants = self._generate_variants(sector)
         ranked = sorted(
-            ((hook_strength(v["text"], v.get("archetype")), v) for v in variants),
+            ((strategy.hook_strength(v["text"], v.get("archetype")), v) for v in variants),
             key=lambda x: x[0], reverse=True,
         )
         # Surface gif_query plus a resolved Klipy URL (when KLIPY_APP_KEY is
@@ -1586,7 +1586,7 @@ class FollowerEngine:
             logger.warning("   [GATE] all post variants rejected. Skipping slot.")
             return
         winner = max(candidates,
-                     key=lambda v: hook_strength(v["text"], v.get("archetype")))
+                     key=lambda v: strategy.hook_strength(v["text"], v.get("archetype")))
         text = winner["text"]
         hook = winner.get("archetype") or archetypes[0]
         # Optional media attachment. Always a bonus, never required: any
@@ -1618,7 +1618,7 @@ class FollowerEngine:
         self._mark_action("post", uri=uri, sector=sector, hook=hook)
         logger.info(f"   [POST] anchor #{self.store.anchor_posts} "
                     f"hook={hook} (hook_strength="
-                    f"{hook_strength(text, hook):.1f}): {text[:70]}...")
+                    f"{strategy.hook_strength(text, hook):.1f}): {text[:70]}...")
         # mini_thread continuations land AFTER the anchor is recorded, so a
         # failure mid-chain never blocks the bookkeeping for the first post.
         if winner.get("thread_parts") and cid:
