@@ -195,7 +195,7 @@ class LLMClient:
             return parsed[extract_key]
         return parsed
 
-    def generate_json(self, prompt, dedup_texts=None, enable_tools=False, extract_key=None, model_purpose="versatile"):
+    def generate_json(self, prompt, dedup_texts=None, enable_tools=False, extract_key=None, fallback_dict=None, model_purpose="versatile"):
         """Helper to generate text and parse it as JSON immediately."""
         raw = self.generate(prompt, dedup_texts=dedup_texts, enable_tools=enable_tools, model_purpose=model_purpose)
-        return self.parse_json(raw, extract_key=extract_key)
+        return self.parse_json(raw, extract_key=extract_key, fallback_dict=fallback_dict)
