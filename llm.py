@@ -1,6 +1,7 @@
 import json
 import re
 import groq
+import openai
 import config
 from config import logger
 import serper
@@ -9,6 +10,14 @@ import os
 class LLMClient:
     def __init__(self, persona):
         self.ai = groq.Groq(api_key=os.environ.get("GROQ_API_KEY"))
+        # Initialize Gemini using OpenAI compatibility endpoint
+        gemini_key = os.environ.get("GEMINI_API_KEY")
+        self.gemini = None
+        if gemini_key:
+            self.gemini = openai.OpenAI(
+                api_key=gemini_key,
+                base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+            )
         self.persona = persona
 
     def generate(self, prompt, dedup_texts=None, image_b64=None, enable_tools=False, model_purpose="versatile"):
@@ -22,12 +31,17 @@ class LLMClient:
                        "these recent posts:\n" + "\n".join(f"- {t}" for t in dedup_texts))
 
         # Model Routing Logic
+        use_gemini = False
         if model_purpose == "fast":
             model = "llama-3.1-8b-instant"
         elif model_purpose == "reasoning":
             model = "openai/gpt-oss-120b"
         else:
-            model = "llama-3.3-70b-versatile"
+            if self.gemini:
+                model = "gemini-3.1-flash-lite"
+                use_gemini = True
+            else:
+                model = "llama-3.1-8b-instant"
             
         user_content = prompt
         
@@ -84,7 +98,8 @@ class LLMClient:
                 else:
                     kwargs["response_format"] = {"type": "json_object"}
 
-                resp = self.ai.chat.completions.create(**kwargs)
+                client = self.gemini if use_gemini else self.ai
+                resp = client.chat.completions.create(**kwargs)
                 msg = resp.choices[0].message
                 
                 if getattr(msg, "tool_calls", None):
@@ -126,9 +141,9 @@ class LLMClient:
     def moderate_content(self, text, policy=None):
         """
         Dedicated method utilizing Groq's safety models for Trust & Safety workflows.
-        Routes to Llama Guard 3 8B for custom policy enforcement.
+        Routes to Prompt Guard 2 for custom policy enforcement.
         """
-        model = "llama-guard-3-8b"
+        model = "meta-llama/llama-prompt-guard-2-86m"
         
         messages = []
         if policy:
