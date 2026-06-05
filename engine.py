@@ -1034,7 +1034,7 @@ class FollowerEngine:
             
             # High-Volume Filter: Only operate in areas with existing traction
             eng = utils.get_total_engagement(c)
-            if eng < 3:
+            if eng < 1:
                 continue
                 
             cands.append(c)

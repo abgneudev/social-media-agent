@@ -21,6 +21,8 @@ def build_variant_prompt(sector, archetypes, length_slots, opening_slots, trends
         )
     slots_block = "\n\n".join(slots)
     return (
+        f"You are an expert, highly intellectual network agent drafting original anchor posts.\n"
+        f"Your core persona and identity is:\n{config.PERSONA}\n\n"
         f"You are writing THREE short Bluesky posts about '{sector}', each in a "
         f"DIFFERENT format. The three drafts must read as if written by THREE "
         f"DIFFERENT PEOPLE about the same idea, NOT three rewordings of one draft. "
@@ -28,6 +30,7 @@ def build_variant_prompt(sector, archetypes, length_slots, opening_slots, trends
         f"{slots_block}\n\n"
         f"{trends_info}"
         f"CRITICAL DIVERSITY: Constantly invent entirely new angles, distinct phrasing, and unexplored ideas. Do not recycle the same vocabulary or structures from typical tech posts.\n"
+        f"CRITICAL CONSTRAINT: DO NOT start your posts with repetitive rhetorical questions like \"Why are we...\", \"How does...\", or \"Why is...\". Make statements, offer insights, or state contrarian facts instead of asking rhetorical questions.\n"
         f"Constraints that apply to ALL drafts: plain language, no jargon left "
         f"unexplained, no pitch, no link, no emoji, no hashtag, no em dash. Skip "
         f"parenting, body image, mental health, religion, politics, money "

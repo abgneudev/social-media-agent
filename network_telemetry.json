@@ -1,6 +1,6 @@
 {
-  "ts": 1780628684.3508923,
-  "ts_iso": "2026-06-04T23:04:44",
+  "ts": 1780629764.480715,
+  "ts_iso": "2026-06-04T23:22:44",
   "velocity_posts": [
     {
       "uri": "at://did:plc:iqlqsgoh3o3di3xdeauuzinw/app.bsky.feed.post/3mnj4zx6c622o",
@@ -9,8 +9,16 @@
       "likes_in_window": 3,
       "window_seconds": 159,
       "ts": 1780628097.737189
+    },
+    {
+      "uri": "at://did:plc:6sjm7mqkryqzazwb5jvum3hg/app.bsky.feed.post/3mnj5ztamu223",
+      "text": "And that was exactly why I asked him if he was a nazi fan. He reacted exactly the way he expected OP to react",
+      "author_did": "did:plc:6sjm7mqkryqzazwb5jvum3hg",
+      "likes_in_window": 3,
+      "window_seconds": 287,
+      "ts": 1780629295.3026724
     }
   ],
   "our_engagers": [],
-  "tracked_posts_count": 20
+  "tracked_posts_count": 27
 }
