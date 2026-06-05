@@ -1,0 +1,220 @@
+import json
+import re
+import groq
+import openai
+from core import config
+from core.config import logger
+from clients import serper
+import os
+
+class LLMClient:
+    def __init__(self, persona):
+        groq_key = os.environ.get("GROQ_API_KEY")
+        self.groq = groq.Groq(api_key=groq_key) if groq_key else None
+        
+        gemini_key = os.environ.get("GEMINI_API_KEY")
+        self.gemini = openai.OpenAI(api_key=gemini_key, base_url="https://generativelanguage.googleapis.com/v1beta/openai/") if gemini_key else None
+            
+        mistral_key = os.environ.get("MISTRAL_API_KEY")
+        self.mistral = openai.OpenAI(api_key=mistral_key, base_url="https://api.mistral.ai/v1") if mistral_key else None
+            
+        nvidia_key = os.environ.get("NVIDIA_API_KEY")
+        self.nim = openai.OpenAI(api_key=nvidia_key, base_url="https://integrate.api.nvidia.com/v1") if nvidia_key else None
+        
+        self.persona = persona
+
+    def generate(self, prompt, dedup_texts=None, image_b64=None, enable_tools=False, model_purpose="versatile"):
+        """
+        Executes a prompt against the Groq API. Handles tools, vision payloads, and 
+        automatic deduplication rules.
+        model_purpose: 'fast' (Llama 8B), 'reasoning' (GPT-OSS 120B), 'versatile' (Llama 70B)
+        """
+        if dedup_texts:
+            prompt += ("\n\nDo NOT repeat the concepts, phrases, or angles of "
+                       "these recent posts:\n" + "\n".join(f"- {t}" for t in dedup_texts))
+
+        # Model Routing Logic
+        if model_purpose == "fast":
+            model = config.LLM_MODEL_FAST
+        elif model_purpose == "reasoning":
+            model = config.LLM_MODEL_REASONING
+        else:
+            model = config.LLM_MODEL_VERSATILE_FALLBACK
+            
+        # Determine client and actual model string
+        client = None
+        target_model = model
+        
+        if model.startswith("nvidia/"):
+            client = self.nim
+            target_model = model # NIM expects the nvidia/ prefix
+        elif model.startswith("mistral/"):
+            client = self.mistral
+            target_model = model.replace("mistral/", "")
+        elif model.startswith("groq/"):
+            client = self.groq
+            target_model = model.replace("groq/", "")
+        elif model.startswith("gemini/"):
+            client = self.gemini
+            target_model = model.replace("gemini/", "")
+        else:
+            client = self.mistral # Fallback default
+            
+        if not client:
+            logger.warning(f"   [FAULT] Required API key for model '{model}' is missing.")
+            return "{}"
+            
+        user_content = prompt
+        
+        if image_b64:
+            logger.warning("   [LLM] Vision requested but no vision models available in tier. Ignoring image.")
+
+        messages = []
+        if "groq/compound" not in model:
+            messages.append({"role": "system", "content": self.persona})
+        messages.append({"role": "user", "content": user_content})
+
+        tools = []
+        if enable_tools:
+            tools = [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "search_news",
+                        "description": "Searches Google News for the latest headlines and snippets on a technical topic. Use to find real-world updates before writing.",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "query": {"type": "string", "description": "The topic to search for (e.g. 'React 19 updates')"}
+                            },
+                            "required": ["query"]
+                        }
+                    }
+                },
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "search_images",
+                        "description": "Searches Google Images for diagrams, mockups, or technical visuals.",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "query": {"type": "string", "description": "The image to search for"}
+                            },
+                            "required": ["query"]
+                        }
+                    }
+                }
+            ]
+
+        for turn in range(3):
+            try:
+                kwargs = {
+                    "model": model,
+                    "messages": messages,
+                }
+                if tools:
+                    kwargs["tools"] = tools
+                    kwargs["tool_choice"] = "auto"
+                else:
+                    kwargs["response_format"] = {"type": "json_object"}
+
+                kwargs["model"] = target_model
+                resp = client.chat.completions.create(**kwargs)
+                msg = resp.choices[0].message
+                
+                if getattr(msg, "tool_calls", None):
+                    messages.append(msg)
+                    for tc in msg.tool_calls:
+                        func_name = tc.function.name
+                        try:
+                            args = json.loads(tc.function.arguments)
+                        except:
+                            args = {}
+                            
+                        logger.info(f"   [TOOL] LLM autonomously called {func_name}({args})")
+                        res = "No results."
+                        if func_name == "search_news":
+                            res = serper.search_news(args.get("query", "")) or "No results."
+                        elif func_name == "search_images":
+                            urls = serper.search_images(args.get("query", ""))
+                            res = urls[0] if urls else "No results."
+                            
+                        messages.append({
+                            "role": "tool",
+                            "tool_call_id": tc.id,
+                            "name": func_name,
+                            "content": res
+                        })
+                else:
+                    ans = msg.content.strip() if msg.content else ""
+                    if ans.startswith("```json"):
+                        ans = ans[7:].strip()
+                    elif ans.startswith("```"):
+                        ans = ans[3:].strip()
+                    if ans.endswith("```"):
+                        ans = ans[:-3].strip()
+                    return ans
+            except Exception as e:
+                logger.warning(f"   [FAULT] generation failed ({model}) turn {turn}: {e}")
+                import time
+                time.sleep(5 * (turn + 1)) # More aggressive backoff
+                continue
+        return "{}"
+
+    def moderate_content(self, text, policy=None):
+        """
+        Dedicated method utilizing fast models for Trust & Safety workflows.
+        Routes to the standard dynamic FAST model for policy enforcement.
+        """
+        user_content = f"Policy: {policy}\n\nContent: {text}" if policy else text
+        prompt = f"You are a strict content moderation filter. Evaluate the content against the policy. Return strictly 'unsafe' if it violates the policy, or 'safe' if it does not.\n\n{user_content}"
+        
+        try:
+            # Route via the standard generation method which has retries and dynamic clients
+            ans = self.generate(
+                prompt=prompt,
+                model_purpose="fast"
+            ).strip().lower()
+            
+            if "unsafe" in ans:
+                return {"is_safe": False}
+            return {"is_safe": True}
+        except Exception as e:
+            logger.warning(f"   [FAULT] Safeguard moderation failed: {e}")
+            # Fail closed for security
+            return {"is_safe": False}
+
+    def parse_json(self, raw_text, extract_key=None, fallback_dict=None):
+        """
+        Robustly extracts and parses JSON from LLM output, handling hallucinations.
+        If extract_key is provided, returns that key's value from the root object.
+        If fallback_dict is provided, returns it on failure.
+        """
+        if fallback_dict is None:
+            fallback_dict = {}
+            
+        parsed = fallback_dict
+        try:
+            match = re.search(r'\[.*\]|\{.*\}', raw_text, re.DOTALL)
+            clean_json = match.group(0) if match else raw_text
+            data = json.loads(clean_json, strict=False)
+            parsed = data
+        except Exception:
+            try:
+                # Attempt to recover multiple sequential objects
+                fixed_raw = "[" + re.sub(r'\}\s*\{', '}, {', raw_text) + "]"
+                data = json.loads(fixed_raw, strict=False)
+                parsed = data
+            except Exception as e2:
+                logger.warning(f"   [LLM] JSON parse entirely failed: {e2}")
+                return fallback_dict
+
+        if extract_key and isinstance(parsed, dict) and extract_key in parsed:
+            return parsed[extract_key]
+        return parsed
+
+    def generate_json(self, prompt, dedup_texts=None, enable_tools=False, extract_key=None, fallback_dict=None, model_purpose="versatile"):
+        """Helper to generate text and parse it as JSON immediately."""
+        raw = self.generate(prompt, dedup_texts=dedup_texts, enable_tools=enable_tools, model_purpose=model_purpose)
+        return self.parse_json(raw, extract_key=extract_key, fallback_dict=fallback_dict)

@@ -19,10 +19,10 @@ os.environ.setdefault("GROQ_API_KEY", "test-key-not-used")
 
 from atproto import exceptions
 
-import config
-from store import Store
-from governance import RateBudget, CircuitBreaker
-from engine import FollowerEngine
+from core import config
+from core.store import Store
+from core.governance import RateBudget, CircuitBreaker
+from core.engine import FollowerEngine
 
 
 class FakeRecord:

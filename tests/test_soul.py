@@ -22,8 +22,8 @@ from textwrap import dedent
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 os.environ.setdefault("GROQ_API_KEY", "test-key-not-used")
 
-import config
-from config import load_soul, SoulLoadError
+from core import config
+from core.config import load_soul, SoulLoadError
 
 
 def _write(tmpdir, content):

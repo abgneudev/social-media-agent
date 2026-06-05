@@ -31,14 +31,14 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 os.environ.setdefault("GROQ_API_KEY", "test-key-not-used")
 
-import config
-from config import (
+from core import config
+from core.config import (
     CONTENT_ATTRIBUTION_SECONDS, FOLLOW_ATTRIBUTION_SECONDS,
     POST_DECAY, POST_HOOKS, TRACTION_REWARD_CAP,
 )
-from store import Store
-from governance import RateBudget, CircuitBreaker
-from engine import FollowerEngine
+from core.store import Store
+from core.governance import RateBudget, CircuitBreaker
+from core.engine import FollowerEngine
 
 
 class _IsolatedStateTest(unittest.TestCase):

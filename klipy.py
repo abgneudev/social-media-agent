@@ -32,11 +32,17 @@ Notes on Bluesky embed behavior (4A finding):
   and the fix is to prefer the sm.gif over sm.webp in the URL order.
 """
 import os
+import sys
+from pathlib import Path
+
+# Add src to python path so internal imports work seamlessly
+sys.path.insert(0, str(Path(__file__).parent / 'src'))
+
 import json
 import urllib.parse
 import urllib.request
 
-from config import logger
+from core.config import logger
 
 
 KLIPY_API_BASE = "https://api.klipy.com/api/v1"

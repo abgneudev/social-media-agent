@@ -13,19 +13,24 @@ publishing.
 """
 import os
 import sys
+from pathlib import Path
+
+# Add src to python path so internal imports work seamlessly
+sys.path.insert(0, str(Path(__file__).parent / 'src'))
+
 import json
 import time
 import random
 import signal
 
-import config
-from config import (
+from core import config
+from core.config import (
     logger, configure_logging,
     FOLLOWER_TARGET, TICK_INTERVAL,
     CONTENT_ATTRIBUTION_SECONDS, FOLLOW_ATTRIBUTION_SECONDS,
     SECTORS,
 )
-from engine import FollowerEngine, write_status
+from core.engine import FollowerEngine, write_status
 
 
 def _dry_run():
@@ -37,18 +42,19 @@ def _dry_run():
         logger.error("[DRYRUN] set GROQ_API_KEY to exercise the generation path.")
         raise SystemExit(1)
     from groq import Groq
-    from store import Store
-    from governance import RateBudget, CircuitBreaker
-    from config import RATE_BUDGETS, PERSONA
-
-    sector = sys.argv[2] if len(sys.argv) > 2 else random.choice(SECTORS)
-    if sector not in SECTORS:
-        logger.error(f"[DRYRUN] unknown sector '{sector}'. Choose from: {SECTORS}")
-        raise SystemExit(1)
-    logger.info(f"[DRYRUN] generating divergent variants for sector='{sector}'")
+    from core.store import Store
+    from core.governance import RateBudget, CircuitBreaker
+    from core.config import RATE_BUDGETS, PERSONA
 
     e = FollowerEngine.__new__(FollowerEngine)
     e.store = Store()
+    
+    sector = sys.argv[2] if len(sys.argv) > 2 else (random.choice(e.store.sectors) if e.store.sectors else "generic")
+    if e.store.sectors and sector not in e.store.sectors:
+        logger.error(f"[DRYRUN] unknown sector '{sector}'. Choose from: {e.store.sectors}")
+        raise SystemExit(1)
+    logger.info(f"[DRYRUN] generating divergent variants for sector='{sector}'")
+
     e.net = None
     e.ai = Groq(api_key=os.environ.get("GROQ_API_KEY"))
     e.breaker = CircuitBreaker()
@@ -104,8 +110,8 @@ def main():
     # If the websockets package is missing or the connection fails, the
     # daemon thread logs and retries; the main loop is never affected.
     try:
-        import firehose_daemon
-        from store import atomic_write_json
+        from daemons import firehose_daemon
+        from core.store import atomic_write_json
         firehose_daemon.start(
             our_did=engine.net.did,
             telemetry_file=config.NETWORK_TELEMETRY_FILE,
@@ -130,8 +136,9 @@ def main():
     # ------------------------
 
     while True:
+        sleep_time = 30 # Default backoff if engine.orchestrate() crashes
         try:
-            engine.tick()
+            sleep_time = engine.orchestrate()
             engine.report()
         except (KeyboardInterrupt, SystemExit):
             # Operator stop. Let the process exit cleanly so systemd sees it.
@@ -157,8 +164,8 @@ def main():
             write_status(engine)
         except Exception:
             logger.exception("[GUARD] status write raised")
-        logger.info(f"[SYSTEM] sleeping {TICK_INTERVAL // 60} min...")
-        time.sleep(TICK_INTERVAL)
+        logger.info(f"[SYSTEM] sleeping {sleep_time} seconds before next cycle...")
+        time.sleep(sleep_time)
 
 
 if __name__ == "__main__":

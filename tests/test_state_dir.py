@@ -21,7 +21,7 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 os.environ.setdefault("GROQ_API_KEY", "test-key-not-used")
 
-import config
+from core import config
 
 
 class ResolveStateDirTest(unittest.TestCase):

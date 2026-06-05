@@ -32,11 +32,11 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 os.environ.setdefault("GROQ_API_KEY", "test-key-not-used")
 
-import config
-from config import POST_HOOKS
-from store import Store, atomic_write_json
-from governance import RateBudget, CircuitBreaker
-from engine import FollowerEngine, hook_strength
+from core import config
+from core.config import POST_HOOKS
+from core.store import Store, atomic_write_json
+from core.governance import RateBudget, CircuitBreaker
+from core.engine import FollowerEngine, hook_strength
 
 
 # A clean, safe exemplar for each archetype. Used to confirm the gates do
