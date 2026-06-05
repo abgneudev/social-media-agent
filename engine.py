@@ -714,7 +714,6 @@ class FollowerEngine:
                 
                 # Check for swipe file
                 try:
-                    import memory
                     for p in posts:
                         eng = float(utils.get_total_engagement(p))
                         if eng > 50:  # threshold for "high engagement"
@@ -1650,7 +1649,6 @@ class FollowerEngine:
             
         # Inject Phase 3.5 Long-Term Brain Memory
         try:
-            import memory
             self_hist = memory.recall_self_threads(sector, limit=1)
             swipe_hist = memory.recall_swipe_file(limit=1)
             kb_hist = memory.recall_knowledge(sector, limit=1)
@@ -1863,7 +1861,6 @@ class FollowerEngine:
             self.breaker.record_failure()
             return
             
-        import memory
         memory.remember_self_thread(sector, text)
         
         cid = self.net.get_post_cid(uri)
@@ -1979,7 +1976,6 @@ class FollowerEngine:
             self.breaker.record_failure()
             return
             
-        import memory
         target_text = getattr(target.record, "text", "")
         memory.remember_interaction(target.author.handle, target_text, text)
         

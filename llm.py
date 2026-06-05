@@ -126,9 +126,9 @@ class LLMClient:
     def moderate_content(self, text, policy=None):
         """
         Dedicated method utilizing Groq's safety models for Trust & Safety workflows.
-        Routes to GPT-OSS-Safeguard-20B for custom policy enforcement.
+        Routes to Llama Guard 3 8B for custom policy enforcement.
         """
-        model = "openai/gpt-oss-safeguard-20b"
+        model = "llama-guard-3-8b"
         
         messages = []
         if policy:
