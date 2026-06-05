@@ -4,14 +4,10 @@ Evaluates the agent's mathematical performance from the bandit,
 prompts the LLM to act as a strategy critic, and outputs JSON
 overrides to the agent's base persona and hooks.
 """
-import json
 import time
 
 import config
-from config import logger, STATE_DIR
-from store import load_json, atomic_write_json
-
-STRATEGY_FILE = STATE_DIR / "dynamic_strategy.json"
+from config import logger
 
 def _compute_ev(bandit_dict):
     """Computes Expected Value (alpha / (alpha + beta)) for items in a bandit dimension."""
@@ -73,8 +69,16 @@ def evaluate_strategy(ai_generate, bandit):
         return False
         
     try:
-        parsed = json.loads(raw)
+        # Creating a dummy engine or accessing llm.
+        # Wait, ai_generate doesn't give us parse_json. Let's just import llm to get parse_json.
+        import llm
+        temp_llm = llm.LLMClient(config.PERSONA)
+        parsed = temp_llm.parse_json(raw, fallback_dict={})
         
+        if not parsed or "persona_override" not in parsed:
+            logger.warning("[META-CRITIC] Strategic metadata schema missing fields.")
+            return False
+            
         # Save to dynamic strategy
         strategy = {
             "ts": time.time(),
@@ -83,12 +87,14 @@ def evaluate_strategy(ai_generate, bandit):
             "extra_hooks": parsed.get("extra_hooks", [])
         }
         
-        atomic_write_json(STRATEGY_FILE, strategy)
+        from store import atomic_write_json
+        atomic_write_json(config.STRATEGY_FILE, strategy)
         logger.info(f"[META-CRITIC] Strategy updated: appended {len(strategy['extra_hooks'])} new hooks.")
         return True
     except Exception as e:
-        logger.warning(f"[META-CRITIC] Failed to parse JSON or save strategy: {e}")
+        logger.error(f"[META-CRITIC] System write failure: {e}")
         return False
 
 def load_dynamic_strategy():
-    return load_json(STRATEGY_FILE, {})
+    from store import load_json
+    return load_json(config.STRATEGY_FILE, {})

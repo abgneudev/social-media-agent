@@ -110,12 +110,24 @@ KEYWORD_TELEMETRY_FILE = STATE_DIR / "keyword_telemetry.json"
 NETWORK_TELEMETRY_FILE = STATE_DIR / "network_telemetry.json"
 # Tracks the at:// URI of the curated list the engine creates and populates.
 CURATED_LIST_FILE = STATE_DIR / "curated_list.json"
+STRATEGY_FILE = STATE_DIR / "dynamic_strategy.json"
 
 
 # ==========================================
 # SCALARS
 # ==========================================
+LLM_MODEL_FAST = "llama-3.1-8b-instant"
+LLM_MODEL_REASONING = "openai/gpt-oss-120b"
+LLM_MODEL_VERSATILE_FALLBACK = "llama-3.1-8b-instant"
+LLM_MODEL_GEMINI = "gemini-3.1-flash-lite"
+LLM_MODEL_GUARDRAIL = "meta-llama/llama-prompt-guard-2-86m"
+FEED_URI_FALLBACK = "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot"
+
 FOLLOWER_TARGET = 100
+FOLLOW_TARGET_MAX_FOLLOWERS = 50000
+FOLLOW_TARGET_MIN_POSTS = 3
+HOOK_STRENGTH_BONUS = 1.5
+HOOK_STRENGTH_PENALTY = 1.5
 TICK_INTERVAL = 150                  # 2.5 min/tick, ~24 ticks/hour, human-paced
 # Content attribution: 24h is realistic for organic Bluesky reach on a small
 # account. The prior 9-minute window meant almost everything matured as a

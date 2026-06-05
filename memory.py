@@ -113,7 +113,7 @@ def recall_self_threads(sector: str, limit: int = 2) -> str:
             return ""
         docs = results["documents"][0]
         return "\n".join([f"- {doc}" for doc in docs])
-    except Exception as e:
+    except Exception:
         return ""
 
 def save_to_swipe_file(text: str, engagement: float):
@@ -143,7 +143,7 @@ def recall_swipe_file(limit: int = 1) -> str:
             return ""
         docs = results["documents"][0]
         return "\n".join([f"- {doc}" for doc in docs])
-    except Exception as e:
+    except Exception:
         return ""
 
 def save_knowledge(topic: str, fact: str):
@@ -172,5 +172,5 @@ def recall_knowledge(topic: str, limit: int = 2) -> str:
             return ""
         docs = results["documents"][0]
         return "\n".join([f"- {doc}" for doc in docs])
-    except Exception as e:
+    except Exception:
         return ""

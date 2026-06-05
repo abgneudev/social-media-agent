@@ -1,6 +1,4 @@
 import os
-import sys
-
 env_path = os.path.join(os.path.dirname(__file__), ".env")
 try:
     with open(env_path, "r") as f:

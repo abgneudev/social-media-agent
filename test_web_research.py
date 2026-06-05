@@ -4,8 +4,6 @@ config.configure_logging(logging.DEBUG)
 
 import web_research
 from store import Store, atomic_write_json
-import os
-import json
 
 print("Starting test...")
 def dummy_ai(prompt):

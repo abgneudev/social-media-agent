@@ -1,10 +1,6 @@
 import os
-import klipy
-import utils
-import llm
-import store
 import config  # Added config import
-from governance import CircuitBreaker, RateBudget
+from governance import CircuitBreaker
 from atproto import exceptions
 import traceback
 
@@ -65,8 +61,6 @@ def test_json_parser():
     print('✅ LLMClient.parse_json passed')
 
 def test_store_keywords():
-    s = store.Store()
-    
     # Test the actual global configuration logic 
     assert hasattr(config, 'RELEVANCE_SIGNALS')
     assert hasattr(config, 'is_relevant_text')
@@ -84,6 +78,6 @@ if __name__ == '__main__':
         test_json_parser()
         test_store_keywords()
         print('ALL REFACTOR TESTS PASSED!')
-    except Exception as e:
+    except Exception:
         print('TEST FAILED:')
         traceback.print_exc()

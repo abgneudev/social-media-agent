@@ -7,6 +7,7 @@ adapter alongside this one and let the engine pick.
 """
 import base64
 import urllib.request
+import urllib.error
 
 from atproto import Client, exceptions, models
 
@@ -35,14 +36,14 @@ class BlueskyAdapter:
         try:
             resp = self.client.app.bsky.feed.get_timeline({"limit": limit})
             return [item.post for item in getattr(resp, "feed", []) if hasattr(item, "post")]
-        except Exception as e:
+        except exceptions.AtProtocolError as e:
             logger.warning(f"      [FAULT] fetch_timeline failed: {e}")
             return []
 
     def get_profile(self, actor):
         try:
             return self.client.get_profile(actor=actor)
-        except Exception:
+        except exceptions.AtProtocolError:
             return None
 
     def post_engagement(self, uri) -> int:
@@ -54,7 +55,7 @@ class BlueskyAdapter:
             return ((getattr(post, "like_count", 0) or 0)
                     + (getattr(post, "repost_count", 0) or 0)
                     + (getattr(post, "reply_count", 0) or 0))
-        except Exception as e:
+        except exceptions.AtProtocolError as e:
             logger.warning(f"      [TELEMETRY] cannot inspect {uri[:40]}: {e}")
             return 0
 
@@ -67,7 +68,7 @@ class BlueskyAdapter:
         try:
             resp = self.client.get_followers(actor=self.did, limit=limit)
             return list(getattr(resp, "followers", []) or [])
-        except Exception as e:
+        except exceptions.AtProtocolError as e:
             logger.warning(f"      [FAULT] recent_followers: {e}")
             return []
 
@@ -84,7 +85,7 @@ class BlueskyAdapter:
                 cursor = getattr(resp, "cursor", None)
                 if not cursor:
                     break
-        except Exception as e:
+        except exceptions.AtProtocolError as e:
             logger.warning(f"      [FAULT] get_all_follows failed: {e}")
         return follows
 
@@ -106,11 +107,11 @@ class BlueskyAdapter:
             if not img_url:
                 return None
             req = urllib.request.Request(img_url, headers={"User-Agent": "kiloforge/1"})
-            with urllib.request.urlopen(req, timeout=8) as resp:
+            with urllib.request.urlopen(req, timeout=2) as resp:
                 data = resp.read(4 * 1024 * 1024)
             return base64.b64encode(data).decode("utf-8")
-        except Exception as e:
-            logger.warning(f"      [VISION] image extraction failed: {e}")
+        except urllib.error.URLError as e:
+            logger.warning(f"      [VISION] image extraction network timeout/error: {e}")
             return None
 
     # writes
@@ -132,12 +133,12 @@ class BlueskyAdapter:
         try:
             self.client.mute(did)
             logger.info(f"   [MUTE] Muted actor: {did}")
-        except Exception as e:
+        except exceptions.AtProtocolError as e:
             logger.warning(f"   [MUTE] Failed to mute {did}: {e}")
 
     def send_interaction(self, item_uri, interaction_type, feed_uri=None):
         try:
-            feed = feed_uri or "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot"
+            feed = feed_uri or config.FEED_URI_FALLBACK
             self.client.app.bsky.feed.send_interactions(
                 data={
                     "feed": feed,
@@ -145,7 +146,7 @@ class BlueskyAdapter:
                 }
             )
             logger.info(f"   [FEEDBACK] Sent {interaction_type.split('#')[-1]} for {item_uri}")
-        except Exception as e:
+        except exceptions.AtProtocolError as e:
             logger.warning(f"   [FEEDBACK] Failed to send interaction: {e}")
 
     def reply(self, target, text) -> str:
@@ -203,7 +204,7 @@ class BlueskyAdapter:
         try:
             resp = self.client.app.bsky.feed.get_post_thread({"uri": uri, "depth": 0})
             return getattr(getattr(resp.thread, "post", None), "cid", None)
-        except Exception:
+        except exceptions.AtProtocolError:
             return None
 
     def repost(self, uri, cid):
@@ -225,7 +226,7 @@ class BlueskyAdapter:
         the exact text we generated."""
         try:
             resp = self.client.get_author_feed(actor=self.did, limit=limit)
-        except Exception as e:
+        except exceptions.AtProtocolError as e:
             logger.warning(f"      [RECONCILE] find_post fetch failed: {e}")
             return None
         for item in getattr(resp, "feed", None) or []:
@@ -243,7 +244,7 @@ class BlueskyAdapter:
             return self.client.com.atproto.repo.get_record({
                 "repo": self.did, "collection": "app.bsky.actor.profile", "rkey": "self",
             })
-        except Exception:
+        except exceptions.AtProtocolError:
             return None
 
     def set_profile(self, name, description):
@@ -264,7 +265,7 @@ class BlueskyAdapter:
                 "swap_record": getattr(existing, "cid", None) if existing else None,
             })
             logger.info(f"      [PROFILE] set name='{name}' and bio.")
-        except Exception as e:
+        except exceptions.AtProtocolError as e:
             logger.warning(f"      [PROFILE] update skipped (version/permission): {e}")
 
     def pin_post(self, uri, cid):
@@ -285,7 +286,7 @@ class BlueskyAdapter:
                 "swap_record": getattr(existing, "cid", None) if existing else None,
             })
             logger.info("      [PROFILE] pinned anchor post.")
-        except Exception as e:
+        except exceptions.AtProtocolError as e:
             logger.warning(f"      [PROFILE] pin skipped (version/permission): {e}")
 
     # ---- list management ----
@@ -309,7 +310,7 @@ class BlueskyAdapter:
             uri = getattr(resp, "uri", None)
             logger.info(f"      [LIST] created list '{name}': {uri}")
             return uri
-        except Exception as e:
+        except exceptions.AtProtocolError as e:
             logger.warning(f"      [LIST] create_list failed: {e}")
             return None
 
@@ -331,7 +332,7 @@ class BlueskyAdapter:
             })
             logger.info(f"      [LIST] added {target_did[:30]} to list")
             return True
-        except Exception as e:
+        except exceptions.AtProtocolError as e:
             logger.warning(f"      [LIST] add_to_list failed: {e}")
             return False
 
@@ -342,7 +343,7 @@ class BlueskyAdapter:
         try:
             resp = self.client.app.bsky.feed.get_likes({"uri": uri, "limit": limit})
             return [item.actor for item in getattr(resp, "likes", []) if hasattr(item, "actor")]
-        except Exception as e:
+        except exceptions.AtProtocolError as e:
             logger.warning(f"      [TELEMETRY] get_likers failed: {e}")
             return []
 
@@ -352,7 +353,7 @@ class BlueskyAdapter:
         try:
             resp = self.client.app.bsky.feed.get_reposted_by({"uri": uri, "limit": limit})
             return list(getattr(resp, "reposted_by", []) or [])
-        except Exception as e:
+        except exceptions.AtProtocolError as e:
             logger.warning(f"      [TELEMETRY] get_reposters failed: {e}")
             return []
 

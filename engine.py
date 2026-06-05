@@ -6,30 +6,25 @@ CircuitBreaker, and RateBudget; runs the sense -> learn -> decide -> act
 loop; and exposes update_stall_counter for the runtime to call after every
 tick (including ticks that raised).
 """
-import os
 import re
-import json
-import math
 import time
 import uuid
 import random
 
 from atproto import exceptions
-from groq import Groq
 
 import config
 from config import (
     logger, content_hash, is_relevant_text,
     NAME_TEXT, BIO_TEXT,
     SECTORS, POST_HOOKS, REPLY_HOOKS,
-    POST_HOOK_GUIDANCE, REPLY_HOOK_GUIDANCE,
      
     SENSITIVE_PHRASES, SENSITIVE_WORDS, SPAM_PHRASES,
     RATE_BUDGETS, GROWTH_PHASES,
     FOLLOWER_TARGET, MAX_LIKES_PER_TICK,
     ANCHOR_POST_TARGET, PROFILE_OPT_MIN_TRIALS, PROFILE_OPT_COOLDOWN_TICKS,
     PENDING_GRACE_SECONDS, STALL_THRESHOLD,
-    TRACTION_REWARD_CAP,
+    
     ANALYZER_CADENCE_TICKS, EXPLORATION_NUDGE_MAX, TOPIC_ANGLES_PER_PROMPT,
 )
 from store import Store, atomic_write_json, load_json
@@ -42,65 +37,14 @@ import web_research
 import utils
 import warden
 import memory
+import strategy
+import prompts
+import threading
 
 
 # ==========================================
-# HONEST RANKING
+# HEARTBEAT
 # ==========================================
-def wilson_lower_bound(successes, trials, z=1.96):
-    if trials == 0:
-        return 0.0
-    p = max(0.0, min(1.0, successes / trials))
-    denom = 1 + z * z / trials
-    center = p + z * z / (2 * trials)
-    margin = z * math.sqrt((p * (1 - p) + z * z / (4 * trials)) / trials)
-    return (center - margin) / denom
-
-
-def hook_strength(text, archetype=None):
-    """Cheap proxy for hook quality so we can pick among generated variants
-    without an extra API call. Rewards a short, curious, concrete first line.
-    Archetype adjusts the length expectation: one_line_provocation should be
-    very short, single_question should end in '?', mini_thread judges only
-    the first part."""
-    if not text:
-        return -1.0
-    first = re.split(r"(?<=[.!?])\s|\n", text.strip(), maxsplit=1)[0]
-    score = 0.0
-    fl = len(first)
-    if fl <= 90:
-        score += 2.0
-    elif fl > 140:
-        score -= 1.5
-    low = first.lower()
-    if "?" in first:
-        score += 1.0
-    if re.match(r"^\s*\d", first) or low.startswith(("most ", "the ", "why ", "here's", "everyone ")):
-        score += 1.0
-    if any(low.startswith(g) for g in ("in this", "today i", "let's talk", "i want to", "so i")):
-        score -= 1.5
-    total = len(text)
-    if archetype == "one_line_provocation":
-        if total <= 120:
-            score += 1.5
-        elif total > 160:
-            score -= 1.5
-    elif archetype == "single_question":
-        if text.strip().endswith("?"):
-            score += 1.5
-        else:
-            score -= 1.0
-    elif archetype == "mini_thread":
-        if total <= 200:
-            score += 1.0
-    elif archetype == "before_after":
-        if 80 <= total <= 240:
-            score += 1.0
-    else:
-        if 120 <= total <= 280:
-            score += 1.0
-    return score
-
 
 # ==========================================
 # HEARTBEAT
@@ -132,6 +76,8 @@ def write_status(engine):
 # ==========================================
 class FollowerEngine:
     def __init__(self, handle, password):
+        self._handle = handle
+        self._password = password
         self.store = Store()
         self.net = BlueskyAdapter(handle, password)
 
@@ -205,24 +151,21 @@ class FollowerEngine:
                 )
                 raw = self._generate(prompt, dedup=False)
                 if raw:
-                    try:
-                        kws = json.loads(raw).get("keywords", [])
-                        added = 0
-                        for kw in kws:
-                            kw = kw.strip().lower()
-                            if kw and kw not in self.store.keyword_map[sector]:
-                                self.store.keyword_map[sector].append(kw)
-                                config.RELEVANCE_SIGNALS.append(kw)
-                                self.store.keyword_telemetry[kw] = {
-                                    "sector": sector, "trials": 0, "successes": 0,
-                                    "total_engagement": 0.0, "active": True
-                                }
-                                added += 1
-                        if added > 0:
-                            bootstrapped = True
-                            logger.info(f"      [BOOTSTRAP] successfully injected {added} keywords for '{sector}'.")
-                    except Exception as e:
-                        logger.warning(f"      [FAULT] failed to parse bootstrap taxonomy for '{sector}': {e}")
+                    kws = self.llm.parse_json(raw, fallback_dict={}).get("keywords") or []
+                    added = 0
+                    for kw in kws:
+                        kw = kw.strip().lower()
+                        if kw and kw not in self.store.keyword_map[sector]:
+                            self.store.keyword_map[sector].append(kw)
+                            config.RELEVANCE_SIGNALS.append(kw)
+                            self.store.keyword_telemetry[kw] = {
+                                "sector": sector, "trials": 0, "successes": 0,
+                                "total_engagement": 0.0, "active": True
+                            }
+                            added += 1
+                    if added > 0:
+                        bootstrapped = True
+                        logger.info(f"      [BOOTSTRAP] successfully injected {added} keywords for '{sector}'.")
         
         if bootstrapped:
             self.store.relevance_re = re.compile(
@@ -358,37 +301,14 @@ class FollowerEngine:
             for p in engager_profiles
         )
 
-        prompt = (
-            f"You are the curation strategist for an autonomous social media agent focused on "
-            f"UX/UI design, frontend engineering, and adjacent disciplines.\n\n"
-            f"YOUR EXISTING LISTS:\n{existing_lists_desc}\n\n"
-            f"PEOPLE WHO RECENTLY ENGAGED WITH OUR CONTENT:\n{engager_desc}\n\n"
-            f"{velocity_desc}\n\n"
-            f"AVAILABLE ACTIONS:\n"
-            f"1. create_list: Create a brand new curated list with a name and description\n"
-            f"2. add_to_list: Add a user (by handle) to an existing list\n"
-            f"3. skip: Do nothing this cycle\n\n"
-            f"RULES:\n"
-            f"- Only create a new list if no existing list fits the users' profiles\n"
-            f"- List names should be specific and discoverable (e.g., 'Motion Design Pioneers', "
-            f"'Accessibility Advocates', 'Systems Thinkers in Design')\n"
-            f"- Only add users who genuinely fit a list's theme\n"
-            f"- You may issue multiple actions in one response\n"
-            f"- Max 3 actions per cycle\n\n"
-            f'Respond strictly as JSON: {{"actions": ['
-            f'{{"type": "create_list", "name": "...", "description": "..."}}, '
-            f'{{"type": "add_to_list", "list_name": "...", "handle": "..."}}, '
-            f'{{"type": "skip"}}]}}'
-        )
+        prompt = prompts.build_curation_prompt(existing_lists_desc, engager_desc, velocity_desc)
 
         raw = self._generate(prompt, dedup=False)
         if not raw:
             return
 
-        try:
-            actions = json.loads(raw).get("actions", [])
-        except Exception as e:
-            logger.warning(f"   [CURATE] LLM response malformed: {e}")
+        actions = self.llm.parse_json(raw, fallback_dict={}).get("actions", [])
+        if not actions:
             return
 
         for action in actions[:3]:
@@ -577,7 +497,7 @@ class FollowerEngine:
         # learn) so it has fresh search results to work with. First pass
         # fires early so we are not flying blind for ANALYZER_CADENCE_TICKS.
         if t == 1 or t % ANALYZER_CADENCE_TICKS == 0:
-            self._run_analyzer()
+            threading.Thread(target=self._run_analyzer, daemon=True).start()
 
         # Web research pass: Exponential backoff
         # Runs frequently early on (e.g., 8, 64 ticks) and scales up to 500 max.
@@ -588,11 +508,16 @@ class FollowerEngine:
                     "trends": self.store.trends,
                     "followers": self.store.snapshots[-1]["followers"] if self.store.snapshots else 0
                 }
-                web_research.run_daily_research(lambda prompt: self._generate(prompt, dedup=False), empirical_data)
+                def _do_research():
+                    try:
+                        web_research.run_daily_research(lambda prompt: self._generate(prompt, dedup=False), empirical_data)
+                    except Exception as e:
+                        logger.warning(f"   [WEB RESEARCH] thread raised: {e}")
                 self.store.last_research_tick = t
                 self.store.research_interval = min(500, int(self.store.research_interval * 1.5))
+                threading.Thread(target=_do_research, daemon=True).start()
             except Exception as e:
-                logger.warning(f"   [WEB RESEARCH] run raised: {e}")
+                logger.warning(f"   [WEB RESEARCH] setup raised: {e}")
 
         sector, post_hook, reply_hook = self._decide()
         self._act(sector, post_hook, reply_hook)
@@ -628,12 +553,10 @@ class FollowerEngine:
         analyzer is a luxury, never load-bearing for posting."""
         if self._halted() or self.breaker.is_open():
             return
-        try:
-            blob = analyzer.run(self.net, lambda prompt: self._generate(prompt, dedup=False))
-            if blob is not None:
-                self._insights = blob
-        except Exception as e:
-            logger.warning(f"   [ANALYZER] run raised: {e}")
+        local_net = BlueskyAdapter(self._handle, self._password)
+        blob = analyzer.run(local_net, lambda prompt: self._generate(prompt, dedup=False))
+        if blob is not None:
+            self._insights = blob
 
     def _mark_action(self, kind, **details):
         """Single touch-point for every successful network action: bumps the
@@ -739,29 +662,16 @@ class FollowerEngine:
         if not texts:
             return
         batch = "\n---\n".join(texts)
-        prompt = (
-            f"You are a Product Design Engineer (UX/UI, Frontend, OOUX, System Architecture).\n"
-            f"These are recent posts in the '{hottest}' space:\n{batch}\n\n"
-            f"Extract exactly 3 highly specific, trending keywords or concepts people are "
-            f"actively discussing that are RELEVANT TO UX AND PRODUCT DESIGN.\n"
-            f"CRITICAL RULES FOR KEYWORDS:\n"
-            f"1. Must be exactly 1-3 words.\n"
-            f"2. Must be highly specific tech/UX terms (e.g. 'cognitive load', 'design system', 'state management').\n"
-            f"3. Must NOT be formatted as snake_case.\n"
-            f"Respond strictly as JSON: "
-            f'{{"keywords": ["kw1","kw2","kw3"]}}'
-        )
+        prompt = prompts.build_sense_trends_prompt(hottest, batch)
         raw = self._generate(prompt, dedup=False, model_purpose="fast")
         if not raw:
             return
-        try:
-            kws = json.loads(raw).get("keywords", [])
-            if kws:
-                self.store.trends[hottest] = kws
-                self.store.save_engine()
-                logger.info(f"   [TRENDS] {hottest}: {kws}")
-        except Exception as e:
-            logger.warning(f"   [FAULT] trend parsing failed: {e}")
+            
+        kws = self.llm.parse_json(raw, fallback_dict={}).get("keywords") or []
+        if kws:
+            self.store.trends[hottest] = kws
+            self.store.save_engine()
+            logger.info(f"   [TRENDS] {hottest}: {kws}")
 
     # ---- LEARN ----
     def _learn(self):
@@ -859,34 +769,23 @@ class FollowerEngine:
         except Exception as e:
             logger.warning(f"   [OPT] failed to fetch competitor bios: {e}")
 
-        # 2. LLM Credibility Generation
         if top_bios:
-            try:
-                bio_context = "\n".join([f"- {b}" for b in top_bios])
-                prompt = (
-                    f"You are an elite Brand Strategist optimizing the profile of an autonomous AI agent.\n"
-                    f"The agent's core identity (which you must retain) is:\n{config.PERSONA}\n\n"
-                    f"CRITICAL RULES:\n"
-                    f"1. You MUST include any Call To Actions (CTAs), website links, contact emails, or secondary account handles from the core identity in the new bio.\n"
-                    f"2. DO NOT change the agent's core identity, persona, beliefs, or mission to match trending topics. You are ONLY borrowing the structural formatting (e.g., bullet points, conciseness, punctuation style) of the credible creators, NOT their actual content or job titles.\n"
-                    f"3. Strict Character Limits: Display Name must be under 50 characters. Bio must be under 250 characters.\n\n"
-                    f"The agent's most successful topic is: '{best_sector}'.\n"
-                    f"Here are the bios of 5 highly credible creators in this exact space:\n{bio_context}\n\n"
-                    f"Respond STRICTLY as JSON:\n"
-                    f"{{\n  \"display_name\": \"...\",\n  \"bio\": \"...\"\n}}"
-                )
-                raw = self._generate(prompt, dedup=False, enable_tools=False, model_purpose="reasoning")
-                data = self.llm.parse_json(raw)
+            bio_context = "\n".join([f"- {b}" for b in top_bios])
+            prompt = prompts.build_profile_optimization_prompt(best_sector, bio_context)
+            raw = self._generate(prompt, dedup=False, enable_tools=False, model_purpose="reasoning")
+            if raw:
+                data = self.llm.parse_json(raw, fallback_dict={})
                 new_name = data.get("display_name")
                 new_bio = data.get("bio")
                 if new_name and new_bio:
                     # Enforce hard limits before pushing to ATProto
                     new_name = new_name[:64]
                     new_bio = new_bio[:256]
-                    self.net.set_profile(name=new_name, description=new_bio)
-                    logger.info(f"   [OPT] Updated profile: Name='{new_name}', Bio='{new_bio[:30]}...'")
-            except Exception as e:
-                logger.warning(f"   [OPT] LLM bio generation failed: {e}")
+                    try:
+                        self.net.set_profile(name=new_name, description=new_bio)
+                        logger.info(f"   [OPT] Updated profile: Name='{new_name}', Bio='{new_bio[:30]}...'")
+                    except exceptions.AtProtocolError as e:
+                        logger.warning(f"   [OPT] failed to update profile: {e}")
 
         # 3. Dynamic Pinning
         try:
@@ -932,30 +831,13 @@ class FollowerEngine:
             return
             
         batch = "\n---\n".join([t for t in texts if t][:20])
-        prompt = (
-            f"You are an autonomous network analyst optimizing an agent's search engine.\n"
-            f"The agent's persona is:\n{config.PERSONA}\n\n"
-            f"These are recent posts from our timeline:\n{batch}\n\n"
-            f"Your objective is to find 3 highly specific, novel search queries that expand our current niche. "
-            f"Look for intersections between the persona's core focus and structural patterns in the timeline.\n\n"
-            f"CRITICAL RULES FOR KEYWORDS:\n"
-            f"1. LENGTH: 1 to 3 words MAXIMUM. If you generate 4 words, you fail.\n"
-            f"2. FORMAT: Use normal spaces. DO NOT use snake_case, DO NOT mash words together, NO hashtags.\n"
-            f"3. TARGETING: At least one keyword must explicitly target an organization, brand, or institution.\n"
-            f"4. DIVERSITY: Constantly rotate institutions. Target startups, labs, and diverse brands.\n\n"
-            f"Respond strictly as JSON: "
-            f'{{"keywords": ["kw1", "kw2", "kw3"]}}'
-        )
+        prompt = prompts.build_run_evolution_prompt(batch)
         logger.info(f"   [EVOLUTION] expanding search taxonomy based on persona")
         raw = self._generate(prompt, dedup=False)
         if not raw:
             return
             
-        try:
-            kws = json.loads(raw).get("keywords", [])
-        except Exception as e:
-            logger.warning(f"   [FAULT] evolution JSON parsing failed: {e}")
-            return
+        kws = self.llm.parse_json(raw, fallback_dict={}).get("keywords") or []
 
         # 3B. Expand (State Mutation)
         best_sector = max(self.store.bandit["sector"].items(), key=lambda x: x[1]["alpha"] / (x[1]["alpha"] + x[1]["beta"]))[0]
@@ -1000,8 +882,8 @@ class FollowerEngine:
                 core_trials = (sector_arm["alpha"] - 1) + (sector_arm["beta"] - 1)
                 
                 # We use total_engagement for continuous WLB as requested
-                core_wlb = wilson_lower_bound(sector_arm.get("engagement", 0.0), core_trials) if core_trials > 0 else 0.0
-                kw_wlb = wilson_lower_bound(stats["total_engagement"], trials)
+                core_wlb = strategy.wilson_lower_bound(max(0, sector_arm["alpha"] - 1.0), core_trials) if core_trials > 0 else 0.0
+                kw_wlb = strategy.wilson_lower_bound(stats.get("successes", 0), trials)
                 
                 if kw_wlb < core_wlb * 0.5: # Clearly below baseline
                     logger.info(f"   [EVOLUTION] retiring keyword '{kw}' (trials={trials}, wlb={kw_wlb:.3f} < baseline={core_wlb:.3f})")
@@ -1013,19 +895,12 @@ class FollowerEngine:
         trends_info = ""
         if best_sector in self.store.trends:
             trends_info = f"Weave in these trends if natural: {', '.join(self.store.trends[best_sector])}. "
-        prompt = (
-            f"Write a bio (max 160 chars) for {NAME_TEXT}. Our strongest content is "
-            f"in '{best_sector}'. {trends_info}Use clear keywords for that area, "
-            f"explain complex things simply, warm and approachable. "
-            f"CRITICAL DIVERSITY: Find a completely fresh angle. Do not reuse the exact same phrasing as your previous bios. "
-            f"Must end with 'Boston based. https://abgneudev.github.io/Portfolio/ Automated account.' No hashtags. "
-            f'Respond strictly as JSON: {{"bio": "..."}}'
-        )
+        prompt = prompts.build_bio_prompt(best_sector, trends_info)
         raw = self._generate(prompt, dedup=False)
         if not raw:
             return
         try:
-            bio = json.loads(raw)["bio"][:256]
+            bio = self.llm.parse_json(raw, fallback_dict={}).get("bio", "")[:256]
             self.net.set_profile(NAME_TEXT, bio)
             self.store.last_profile_opt_tick = self.store.tick
             self.store.save_engine()
@@ -1047,17 +922,8 @@ class FollowerEngine:
         pool = live if live else sector_samples
         sector = max(pool, key=lambda x: x[0])[1]
 
-        def best_arm(dim, values):
-            best, pick = -1.0, values[0]
-            for v in values:
-                arm = self.store.bandit[dim][v]
-                s = random.betavariate(arm["alpha"], arm["beta"])
-                if s > best:
-                    best, pick = s, v
-            return pick
-
-        post_hook = best_arm("post_hook", POST_HOOKS)
-        reply_hook = best_arm("reply_hook", REPLY_HOOKS)
+        post_hook = strategy.select_bandit_arm(self.store, "post_hook", list(POST_HOOKS))
+        reply_hook = strategy.select_bandit_arm(self.store, "reply_hook", list(REPLY_HOOKS))
         logger.info(f"   -> sector={sector} post_hook={post_hook} reply_hook={reply_hook}")
         return sector, post_hook, reply_hook
 
@@ -1229,22 +1095,11 @@ class FollowerEngine:
             "'In this image', just integrate the analysis naturally. "
         ) if image_b64 else ""
 
-        prompt = (
-            f"This post is about '{sector}':\n\"{src}\"\n\n"
-            f"Write one short comment (max 200 chars) to quote-post it, adding a "
-            f"genuinely useful plain-language insight that builds on it. Use a "
-            f"'{hook}' angle. {POST_HOOK_GUIDANCE.get(hook,'')} Never pitch anything. "
-            f"{constraint}"
-            f"{vision_hint}"
-            f'Respond strictly as JSON: {{"comment": "..."}}'
-        )
+        prompt = prompts.build_quote_best_prompt(sector, src, hook, constraint, vision_hint)
         raw = self._generate(prompt, dedup=True, image_b64=image_b64)
         quote_text = None
         if raw:
-            try:
-                quote_text = json.loads(raw)["comment"]
-            except Exception:
-                quote_text = None
+            quote_text = self.llm.parse_json(raw, fallback_dict={}).get("comment", None)
         handle = getattr(best.author, "handle", "unknown")
         if quote_text and self._passes_gates(quote_text):
             with self.breaker.guard():
@@ -1278,58 +1133,7 @@ class FollowerEngine:
             self.breaker.record_failure()
 
     def _verify_posts_batch(self, posts):
-        if not posts:
-            return {}
-            
-        # 1. Pre-filter feed candidates using Groq Safeguard to instantly drop unsafe content
-        safe_posts = []
-        pre_filtered_results = {}
-        for p in posts:
-            text = getattr(p.record, "text", "") or ""
-            cid = getattr(p, "cid", "")
-            if not text or not cid:
-                continue
-                
-            eval_res = self.llm.moderate_content(text, policy=warden.CUSTOM_POLICY)
-            if not eval_res or not eval_res.get("is_safe", False):
-                logger.info(f"   [CURATION-SAFEGUARD] Post {cid} flagged unsafe by policy. Dropping instantly.")
-                pre_filtered_results[cid] = "drop"
-            else:
-                safe_posts.append(p)
-                
-        if not safe_posts:
-            return pre_filtered_results
-            
-        posts_context = ""
-        for p in safe_posts:
-            text = (getattr(p.record, "text", "") or "")[:200]
-            handle = getattr(p.author, "handle", "") or ""
-            cid = getattr(p, "cid", "")
-            posts_context += f"- CID: {cid}\n  Author: @{handle}\n  Text: {text}\n\n"
-            
-        if not posts_context:
-            return pre_filtered_results
-            
-        # 2. Nuanced Persona-alignment grading on safe candidates
-        prompt = (
-            f"You are an autonomous network analyst filtering feed content for quality.\n"
-            f"Our persona is:\n{config.PERSONA}\n\n"
-            f"Evaluate the following posts:\n{posts_context}\n"
-            f"Does the post align with our technical rigor, or is it garbage/spam/engagement-farming/sales?\n"
-            f"Respond strictly as a JSON object mapping the CID (exact string) to an action: 'more', 'keep', 'drop', 'less', or 'mute'.\n"
-            f"- 'more': high quality, deeply intellectual, highly aligned to our specific persona.\n"
-            f"- 'keep': relevant and acceptable, but not algorithmic-feedback worthy.\n"
-            f"- 'drop': random keyword match, off-topic, sales ad, or totally irrelevant. Do not interact with it.\n"
-            f"- 'less': generic tech-bro advice, bloat, highly annoying formatting.\n"
-            f"- 'mute': obvious spam, engagement farmers, crypto scammers, NSFW.\n"
-            f'{{"cid1": "more", "cid2": "keep", "cid3": "drop", "cid4": "less"}}'
-        )
-        raw = self._generate(prompt, dedup=False, model_purpose="fast")
-        nuanced_results = self.llm.parse_json(raw, fallback_dict={})
-        
-        # Merge pre-filtered drop decisions with the granular pass
-        pre_filtered_results.update(nuanced_results)
-        return pre_filtered_results
+        return warden.verify_posts_batch(self.llm, posts)
 
     def _verify_profiles_batch(self, profiles):
         if not profiles:
@@ -1342,19 +1146,7 @@ class FollowerEngine:
             display = getattr(p, "display_name", "") or ""
             profiles_context += f"- Handle: {handle}\n  Name: {display}\n  Bio: {bio}\n\n"
             
-        prompt = (
-            f"You are an autonomous network analyst evaluating user profiles for strategic follows.\n"
-            f"Our persona is:\n{config.PERSONA}\n\n"
-            f"Evaluate the following profiles:\n{profiles_context}\n"
-            f"Does each profile represent a highly credible, intellectual, or relevant practitioner "
-            f"(e.g., engineer, researcher, scientist, designer) that aligns with our persona? "
-            f"Reject generic tech influencers, crypto farmers, and random personal accounts.\n"
-            f"Respond strictly as a JSON object mapping the handle (exact string) to a string action: 'follow', 'ignore', or 'mute'.\n"
-            f"- 'follow': if they are highly credible and aligned.\n"
-            f"- 'ignore': if they are irrelevant, generic, or off-topic.\n"
-            f"- 'mute': if they are obvious spam, engagement farmers, crypto scammers, NSFW, or highly misaligned.\n"
-            f'{{"handle1": "follow", "handle2": "ignore", "handle3": "mute"}}'
-        )
+        prompt = prompts.build_verify_profiles_prompt(profiles_context)
         raw = self._generate(prompt, dedup=False)
         return self.llm.parse_json(raw, fallback_dict={})
 
@@ -1458,9 +1250,9 @@ class FollowerEngine:
             return (-1.0, "already follows us")
         if viewer and getattr(viewer, "following", None):
             return (-1.0, "we already follow them")
-        if followers > 50000:
+        if followers > config.FOLLOW_TARGET_MAX_FOLLOWERS:
             return (-1.0, f"too large ({followers})")
-        if posts < 3:
+        if posts < config.FOLLOW_TARGET_MIN_POSTS:
             return (-1.0, f"too few posts ({posts})")
 
         if self._is_bot(profile):
@@ -1570,53 +1362,6 @@ class FollowerEngine:
                       "open with a claim",
                       "open mid-scene or with a concrete detail")
 
-    def _build_variant_prompt(self, sector, archetypes, length_slots, opening_slots,
-                              trends_info=""):
-        """Construct the divergent-variants prompt. Each slot pairs an
-        archetype with a length and an opening move, and the prompt insists
-        on three drafts that read as if written by three different people."""
-        slots = []
-        for i, arch in enumerate(archetypes):
-            guidance = config.POST_HOOK_GUIDANCE.get(arch, '').strip()
-            # Inject curated link if chosen
-            try:
-                web_insights = web_research.load_insights()
-                if arch == "curated_link" and web_insights and web_insights.get("curated_links"):
-                    link_obj = random.choice(web_insights["curated_links"])
-                    guidance += f" YOU MUST SHARE THIS EXACT LINK IN YOUR POST: {link_obj['url']} (Title: {link_obj['title']}). Write a sharp take on it."
-            except Exception:
-                pass
-
-            slots.append(
-                f"[{i+1}] archetype = \"{arch}\"\n"
-                f"    Archetype rule: {guidance}\n"
-                f"    Length slot: {length_slots[i]}.\n"
-                f"    Opening move slot: {opening_slots[i]}.\n"
-                f"    If the archetype rule conflicts with the slot, follow the archetype."
-            )
-        slots_block = "\n\n".join(slots)
-        return (
-            f"You are writing THREE short Bluesky posts about '{sector}', each in a "
-            f"DIFFERENT format. The three drafts must read as if written by THREE "
-            f"DIFFERENT PEOPLE about the same idea, NOT three rewordings of one draft. "
-            f"Follow each slot's archetype STRICTLY.\n\n"
-            f"{slots_block}\n\n"
-            f"{trends_info}"
-            f"CRITICAL DIVERSITY: Constantly invent entirely new angles, distinct phrasing, and unexplored ideas. Do not recycle the same vocabulary or structures from typical tech posts.\n"
-            f"Constraints that apply to ALL drafts: plain language, no jargon left "
-            f"unexplained, no pitch, no link, no emoji, no hashtag, no em dash. Skip "
-            f"parenting, body image, mental health, religion, politics, money "
-            f"struggles. Explain confusing UX, design, or frontend ideas in plain "
-            f"words with everyday analogies.\n\n"
-            f"Respond strictly as JSON with exactly three keys per variant: 'content', 'media_type', 'media_query', and an optional 'thread_parts' array.\n"
-            f"CRITICAL RULES FOR THREADS: If the archetype is 'mini_thread', you MUST provide a list of strings in 'thread_parts' (e.g. [\"part 2...\", \"part 3...\"]). The 'content' key will be the anchor post.\n"
-            f"CRITICAL RULES FOR MEDIA:\n"
-            f"- MAXIMIZE MEDIA USAGE: You MUST attach media to almost every post.\n"
-            f"- IF media_type='gif': media_query should be a 1-3 word human emotion (e.g., 'frustrated', 'mind blown').\n"
-            f"- IF media_type='image': Make an educated guess on the best visual to complement the post. The media_query MUST be highly concrete (e.g. a diagram, mockup, or code structure) and you should append a relevant industry modifier (e.g., 'dribbble', 'architecture diagram', 'figma', 'github layout') to ensure high-quality search results. If discussing an abstract theory, search for a concrete UI application of it.\n"
-            f'{{"variants": [{{"content": "...", "media_type": "...", "media_query": "...", "thread_parts": []}}]}}'
-        )
-
     def _generate_variants(self, sector):
         """Sample distinct archetypes, ask the model for divergent drafts,
         parse them. Returns the raw parsed variant dicts (no gating, no
@@ -1632,6 +1377,7 @@ class FollowerEngine:
                            f"{', '.join(self.store.trends[sector])}\n")
                            
         # Inject Web Strategic Guidance
+        web_insights = None
         try:
             web_insights = web_research.load_insights()
             if web_insights:
@@ -1673,8 +1419,8 @@ class FollowerEngine:
                 f"(pick at most ONE if it fits, otherwise ignore and choose your "
                 f"own angle): {', '.join(angles)}.\n\n"
             )
-        prompt = self._build_variant_prompt(sector, archetypes, length_slots,
-                                            opening_slots, trends_info)
+        prompt = prompts.build_variant_prompt(sector, archetypes, length_slots,
+                                              opening_slots, trends_info, web_insights)
         raw = self._generate(prompt, dedup=True, enable_tools=False, model_purpose="versatile")
         if not raw:
             return archetypes, []
@@ -1925,36 +1671,26 @@ class FollowerEngine:
         top_image_b64 = None
         vision_hint = ""
 
-        prompt = (
-            f"These are live posts about '{sector}':\n\n{batch}\n"
-            f"Pick the SINGLE post where a short, kind, helpful reply would make the "
-            f"person feel heard and less stuck. Add real value: a clearer way to think "
-            f"about their problem, a small concrete tip, or a good question. Use a "
-            f"'{hook}' angle. {REPLY_HOOK_GUIDANCE.get(hook,'')} Explain any technical "
-            f"idea in plain words with an everyday analogy. If the post is sensitive "
-            f"(parenting, body image, mental health, religion, politics, money "
-            f"struggles, sexual content, NSFW), set index to -1 to skip. "
-            f"If the post is exceptionally spammy, generic engagement farming, crypto scams, or completely opposed to our persona, set index to -2 to mute the author. "
-            f"Do not pitch anything. Do not say 'great post'. Max 280 chars. No emoji, hashtag, em dash. "
-            f"CRITICAL DIVERSITY: Never repeat standard tech advice. Provide a unique, highly specific synthesis that the author hasn't heard before.\n"
-            f"{whale_constraint}"
-            f"{vision_hint}\n"
-            f'Respond strictly as JSON: {{"index": int, "reply": "..."}}'
-        )
+        prompt = prompts.build_helpful_reply_prompt(sector, batch, hook, whale_constraint, vision_hint)
         raw = self._generate(prompt, dedup=True, image_b64=top_image_b64, enable_tools=True, model_purpose="versatile")
         if not raw:
             return
+        
+        data = self.llm.parse_json(raw, fallback_dict={})
+        if not data:
+            logger.warning(f"   [GATE] reply JSON malformed. Skipping.")
+            return
+            
         try:
-            data = json.loads(raw)
-            idx, text = int(data["index"]), data["reply"]
-        except Exception as e:
-            logger.warning(f"   [GATE] reply JSON malformed: {e}. Skipping.")
+            idx, text = int(data.get("index", -1)), data.get("reply", "")
+        except ValueError:
+            logger.warning(f"   [GATE] reply JSON missing index. Skipping.")
             return
         if idx == -2:
             logger.info("   [GATE] reply prompt requested MUTE. Muting author.")
             try:
                 self.net.mute_actor(candidates[0].author.did)
-            except Exception as e:
+            except Exception:
                 pass
             return
         if idx < 0 or idx >= len(candidates) or not self._passes_gates(text):
@@ -2022,7 +1758,8 @@ class FollowerEngine:
                 a, b = arm["alpha"], arm["beta"]
                 trials = (a - 1) + (b - 1)
                 eng = arm.get("engagement", 0.0)
-                wlb = wilson_lower_bound(eng, trials) if trials > 0 else 0.0
+                successes = arm["alpha"] - 1.0
+                wlb = strategy.wilson_lower_bound(successes, trials) if trials > 0 else 0.0
                 mean_eng = (eng / trials) if trials > 0 else 0.0
                 logger.info(f"   {dim}/{v}: Beta({a:.1f},{b:.1f}) MeanEng={mean_eng:.2f} "
                             f"Wilson_lb={wlb:.3f} n={trials:.0f} TotalEng={eng:.0f}")

@@ -1,7 +1,7 @@
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from config import SOUL, KEYWORD_MAP, RELEVANCE_SIGNALS
+from config import KEYWORD_MAP, RELEVANCE_SIGNALS
 from engine import FollowerEngine
 
 engine = FollowerEngine("dummy", "dummy")

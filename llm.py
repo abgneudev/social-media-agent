@@ -33,15 +33,15 @@ class LLMClient:
         # Model Routing Logic
         use_gemini = False
         if model_purpose == "fast":
-            model = "llama-3.1-8b-instant"
+            model = config.LLM_MODEL_FAST
         elif model_purpose == "reasoning":
-            model = "openai/gpt-oss-120b"
+            model = config.LLM_MODEL_REASONING
         else:
             if self.gemini:
-                model = "gemini-3.1-flash-lite"
+                model = config.LLM_MODEL_GEMINI
                 use_gemini = True
             else:
-                model = "llama-3.1-8b-instant"
+                model = config.LLM_MODEL_VERSATILE_FALLBACK
             
         user_content = prompt
         
@@ -143,7 +143,7 @@ class LLMClient:
         Dedicated method utilizing Groq's safety models for Trust & Safety workflows.
         Routes to Prompt Guard 2 for custom policy enforcement.
         """
-        model = "meta-llama/llama-prompt-guard-2-86m"
+        model = config.LLM_MODEL_GUARDRAIL
         
         messages = []
         if policy:
@@ -154,8 +154,7 @@ class LLMClient:
         try:
             resp = self.ai.chat.completions.create(
                 model=model,
-                messages=messages,
-                response_format={"type": "json_object"}
+                messages=messages
             )
             msg = resp.choices[0].message
             ans = msg.content.strip() if msg.content else "{}"
@@ -180,7 +179,7 @@ class LLMClient:
             clean_json = match.group(0) if match else raw_text
             data = json.loads(clean_json)
             parsed = data
-        except Exception as e:
+        except Exception:
             try:
                 # Attempt to recover multiple sequential objects
                 fixed_raw = "[" + re.sub(r'\}\s*\{', '}, {', raw_text) + "]"

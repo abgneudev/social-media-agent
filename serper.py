@@ -107,7 +107,6 @@ def search_images(query: str):
 def search_news(query: str):
     """Fetches the top 3 latest news snippets for a topic."""
     clean_query = query.replace('"', '').replace("'", "").strip()
-    cache_key = f"news:{clean_query}"
     
     api_key, cache = _check_budget(clean_query)
     if not api_key: return None
@@ -157,7 +156,6 @@ def fetch_image_bytes(url):
 def search_web_organic(query: str, num_results=3):
     """Fetches top organic web results for a given query."""
     clean_query = query.replace('"', '').replace("'", "").strip()
-    cache_key = f"web:{clean_query}"
     
     api_key, cache = _check_budget(clean_query)
     if not api_key: return []

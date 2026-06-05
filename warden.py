@@ -52,3 +52,46 @@ def sanitize_input(llm_client, raw_text):
         return summary.strip()
         
     return None
+
+import prompts
+
+def verify_posts_batch(llm_client, posts):
+    if not posts:
+        return {}
+        
+    # 1. Pre-filter feed candidates using Groq Safeguard to instantly drop unsafe content
+    safe_posts = []
+    pre_filtered_results = {}
+    for p in posts:
+        text = getattr(p.record, "text", "") or ""
+        cid = getattr(p, "cid", "")
+        if not text or not cid:
+            continue
+            
+        eval_res = llm_client.moderate_content(text, policy=CUSTOM_POLICY)
+        if not eval_res or not eval_res.get("is_safe", False):
+            logger.info(f"   [CURATION-SAFEGUARD] Post {cid} flagged unsafe by policy. Dropping instantly.")
+            pre_filtered_results[cid] = "drop"
+        else:
+            safe_posts.append(p)
+            
+    if not safe_posts:
+        return pre_filtered_results
+        
+    posts_context = ""
+    for p in safe_posts:
+        text = (getattr(p.record, "text", "") or "")[:200]
+        handle = getattr(p.author, "handle", "") or ""
+        cid = getattr(p, "cid", "")
+        posts_context += f"- CID: {cid}\n  Author: @{handle}\n  Text: {text}\n\n"
+        
+    if not posts_context:
+        return pre_filtered_results
+        
+    # 2. Nuanced Persona-alignment grading on safe candidates
+    prompt = prompts.build_verify_posts_prompt(posts_context)
+    nuanced_results = llm_client.generate_json(prompt, model_purpose="fast", fallback_dict={})
+    
+    # Merge pre-filtered drop decisions with the granular pass
+    nuanced_results.update(pre_filtered_results)
+    return nuanced_results

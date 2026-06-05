@@ -1,6 +1,5 @@
 import pytest
 from engine import FollowerEngine
-import warden
 
 class MockRecord:
     def __init__(self, text):

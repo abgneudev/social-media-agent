@@ -30,8 +30,6 @@ import time
 import threading
 import asyncio
 import logging
-from collections import defaultdict
-
 logger = logging.getLogger("kiloforge.firehose")
 
 # How often (seconds) the daemon flushes its in-memory state to disk.

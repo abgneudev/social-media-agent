@@ -7,7 +7,6 @@ and category of fetched articles and extracts hooks, guidance, and links.
 """
 import json
 import time
-import random
 
 import config
 from config import logger, STATE_DIR

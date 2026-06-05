@@ -109,7 +109,7 @@ def main():
                        f"Engine will run without network telemetry.")
 
     # --- INJECT THIS TRAP ---
-    def handle_sigterm(signum, frame):
+    def handle_sigterm(_signum, _frame):
         logger.info("[SYSTEM] SIGTERM received from systemd. Saving state and shutting down.")
         engine.store.save_engine()
         sys.exit(0)
