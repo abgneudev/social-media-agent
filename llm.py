@@ -116,7 +116,8 @@ class LLMClient:
                         if func_name == "search_news":
                             res = serper.search_news(args.get("query", "")) or "No results."
                         elif func_name == "search_images":
-                            res = serper.search_images(args.get("query", "")) or "No results."
+                            urls = serper.search_images(args.get("query", ""))
+                            res = urls[0] if urls else "No results."
                             
                         messages.append({
                             "role": "tool",

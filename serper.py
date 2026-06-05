@@ -95,13 +95,19 @@ def search_images(query: str):
         _save_cache(cache)
         return None
         
+    valid_urls = []
     for img in images:
         url = img.get("imageUrl")
         if url and not url.lower().endswith(".svg"):
-            cache["queries"][cache_key] = url
-            _save_cache(cache)
-            return url
+            valid_urls.append(url)
             
+    if valid_urls:
+        cache["queries"][cache_key] = valid_urls
+        _save_cache(cache)
+        return valid_urls
+        
+    cache["queries"][cache_key] = None
+    _save_cache(cache)
     return None
 
 def search_news(query: str):

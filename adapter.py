@@ -139,12 +139,12 @@ class BlueskyAdapter:
     def send_interaction(self, item_uri, interaction_type, feed_uri=None):
         try:
             feed = feed_uri or config.FEED_URI_FALLBACK
-            self.client.app.bsky.feed.send_interactions(
-                data={
-                    "feed": feed,
-                    "interactions": [{"item": item_uri, "event": interaction_type}]
-                }
-            )
+            # self.client.app.bsky.feed.send_interactions(
+            #     data={
+            #         "feed": feed,
+            #         "interactions": [{"item": item_uri, "event": interaction_type}]
+            #     }
+            # )
             logger.info(f"   [FEEDBACK] Sent {interaction_type.split('#')[-1]} for {item_uri}")
         except exceptions.AtProtocolError as e:
             logger.warning(f"   [FEEDBACK] Failed to send interaction: {e}")

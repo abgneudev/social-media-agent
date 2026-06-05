@@ -963,6 +963,30 @@ class FollowerEngine:
         #     for high-visibility replies. Separate from follow targets.
         whale_candidates, whale_kw = self._candidates_for(sector, allow_whales=True)
 
+        # 2c. Authority Node Engagement Override
+        # If we spot a massive authority node, we bypass the dice roll and forcefully
+        # piggyback on their network with a full engagement bundle.
+        if whale_candidates:
+            for whale_post in whale_candidates:
+                if getattr(whale_post.author, "followers_count", 0) > 3000:
+                    if self._is_authority(whale_post.author):
+                        logger.info(f"[ACT] Executing forced engagement bundle on Authority Node: {whale_post.author.handle}")
+                        if self.rate["like"].try_consume():
+                            self._spray_likes([whale_post])
+                        
+                        # We reshared the post to our timeline
+                        try:
+                            self.net.repost(whale_post.uri, whale_post.cid)
+                            logger.info(f"   [REPOST] Reshared Authority Node post: {whale_post.uri}")
+                        except Exception as e:
+                            logger.warning(f"   [REPOST] Failed to repost: {e}")
+
+                        if self.rate["reply"].try_consume():
+                            self._helpful_reply(sector, reply_hook, [whale_post], whale_kw)
+                        
+                        # We only engage one authority node per tick to preserve budget
+                        break
+
         # 3. Weighted action plan. Each action type fires with prob ~ its weight.
         plan = [a for a, w in weights.items() if random.random() < min(1.0, w * 2.5)]
         if post_hook == "amplify_and_praise":
@@ -1233,7 +1257,43 @@ class FollowerEngine:
             
         return False
 
-    def _score_follow_target(self, profile):
+    def _is_authority(self, profile):
+        did = getattr(profile, "did", "")
+        if not did: return False
+        
+        if "authorities" not in self.store.engine_state:
+            self.store.engine_state["authorities"] = {}
+        if did in self.store.engine_state["authorities"]:
+            return self.store.engine_state["authorities"][did]
+            
+        handle = getattr(profile, "handle", "") or ""
+        display = getattr(profile, "display_name", "") or ""
+        bio = getattr(profile, "description", "") or ""
+        
+        search_results = serper.search_web_organic(f"{display} {handle}")
+        if search_results:
+            results_str = "\n".join([f"- {r.get('title', '')}: {r.get('snippet', '')}" for r in search_results])
+        else:
+            results_str = "No notable web presence found."
+            
+        prompt = f"""
+        Profile Name: {display} (@{handle})
+        Bio: {bio}
+        Web Search Results: {results_str}
+        
+        Determine if this account is a highly credible institution, organization, recognized brand, or verified prominent public figure (e.g., famous researcher, major company, credible thought leader).
+        Return JSON: {{"is_authority": true/false}}
+        """
+        res = self.llm.generate_json(prompt, fallback_dict={"is_authority": False}, model_purpose="fast")
+        is_auth = res.get("is_authority", False)
+        
+        self.store.engine_state["authorities"][did] = is_auth
+        if is_auth:
+            logger.info(f"   [AUTHORITY] Verified {handle} as a high-authority node.")
+        self.store.save_engine()
+        return is_auth
+
+    def _score_follow_candidate(self, profile):
         # Future externalization candidate: these thresholds live in code
         # for now because a weak soul could otherwise dial the agent to
         # follow anyone, and that is the easiest way to get rate-limited
@@ -1250,7 +1310,11 @@ class FollowerEngine:
             return (-1.0, "already follows us")
         if viewer and getattr(viewer, "following", None):
             return (-1.0, "we already follow them")
-        if followers > config.FOLLOW_TARGET_MAX_FOLLOWERS:
+        is_authority = False
+        if followers > 3000:
+            is_authority = self._is_authority(profile)
+
+        if not is_authority and followers > config.FOLLOW_TARGET_MAX_FOLLOWERS:
             return (-1.0, f"too large ({followers})")
         if posts < config.FOLLOW_TARGET_MIN_POSTS:
             return (-1.0, f"too few posts ({posts})")
@@ -1270,6 +1334,11 @@ class FollowerEngine:
             score += 3.0; reasons.append(f"good match ({len(hits)})")
         else:
             score += 1.5; reasons.append("weak match")
+
+        if is_authority:
+            score += 20.0
+            reasons.append("verified authority node")
+            return (score, ", ".join(reasons))
 
         if following > 0:
             ratio = followers / following
@@ -1511,7 +1580,8 @@ class FollowerEngine:
             resolved_url = None
             if media_query:
                 if media_type == "image":
-                    resolved_url = serper.search_images(media_query)
+                    urls = serper.search_images(media_query)
+                    resolved_url = urls[0] if urls else None
                 else:
                     resolved_url = klipy.resolve(media_query)
                     
@@ -1542,10 +1612,14 @@ class FollowerEngine:
                 return self.net.post(text)
             try:
                 if media_type == "image":
-                    media_url = serper.search_images(media_query)
-                    if not media_url:
+                    media_urls = serper.search_images(media_query)
+                    if not media_urls:
                         return self.net.post(text)
-                    fetched = serper.fetch_image_bytes(media_url)
+                    fetched = None
+                    for media_url in media_urls:
+                        fetched = serper.fetch_image_bytes(media_url)
+                        if fetched:
+                            break
                 else:
                     media_url = klipy.resolve(media_query)
                     if not media_url:
