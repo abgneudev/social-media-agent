@@ -1112,49 +1112,57 @@ class FollowerEngine:
                 self._spray_likes(candidates)
 
     def _candidates_for(self, sector, allow_whales=False):
-        posts = []
+        cands = []
         keyword = "authority_feed"
+        
+        def _filter_posts(posts):
+            valid = []
+            for c in posts or []:
+                did = getattr(c.author, "did", None)
+                if did == self.net.did: continue
+                if not allow_whales and did in self.known_follows: continue
+                if not allow_whales and self.store.already_acted_on(did): continue
+                if self._is_bot(c.author): continue
+                
+                eng = utils.get_total_engagement(c)
+                if eng < 1: continue
+                valid.append(c)
+            return valid
+
         authorities = list(self.store.authorities.keys())
-        # SOURCING: 50% of the time, try to pull from our mapped Hit List instead of searching
         if authorities and random.random() < 0.5:
             target_did = random.choice(authorities)
             logger.info(f"   [SOURCING] Pulling candidates from mapped authority feed...")
-            posts = self.net.get_author_feed(target_did, limit=10)
-            
-        if not posts:
+            cands = _filter_posts(self.net.get_author_feed(target_did, limit=15))
+
+        if not cands and random.random() < 0.6:
+            clean_sector = sector.replace('_', ' ')
+            logger.info(f"   [SOURCING] Searching for professionals matching '{clean_sector}'...")
+            actors = self.net.search_actors(clean_sector, limit=30)
+            if actors:
+                fresh_actors = [a for a in actors if not self.store.already_acted_on(getattr(a, "did", ""))]
+                if fresh_actors:
+                    target_actor = random.choice(fresh_actors)
+                    target_did = getattr(target_actor, "did", None)
+                    if target_did:
+                        cands = _filter_posts(self.net.get_author_feed(target_did, limit=15))
+                        keyword = clean_sector
+                        
+        if not cands:
             trend_kw = (random.choice(self.store.trends[sector])
                         if sector in self.store.trends and self.store.trends[sector] else None)
             if trend_kw:
                 keyword = trend_kw
                 try:
-                    posts = self.net.search_posts(keyword)
+                    cands = _filter_posts(self.net.search_posts(keyword))
                     self.breaker.record_success()
                 except exceptions.AtProtocolError as e:
                     logger.warning(f"   [FAULT] market scan failed: {e}")
                     self.breaker.record_failure()
-                    posts = []
             else:
                 keyword = self.sector_activity.get(sector, {}).get("keyword", sector)
-                posts = self.sector_posts.get(sector, [])
-        cands = []
-        for c in posts:
-            did = getattr(c.author, "did", None)
-            if did == self.net.did:
-                continue
-            if not allow_whales and did in self.known_follows:
-                continue
-            if not allow_whales and self.store.already_acted_on(did):
-                continue
-            if self._is_bot(c.author):
-                continue
-            
-            # High-Volume Filter: Only operate in areas with existing traction
-            eng = utils.get_total_engagement(c)
-            if eng < 1:
-                continue
+                cands = _filter_posts(self.sector_posts.get(sector, []))
                 
-            cands.append(c)
-            
         import heapq
         cands = heapq.nlargest(10, cands, key=utils.get_total_engagement)
         
