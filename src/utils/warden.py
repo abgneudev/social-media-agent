@@ -94,6 +94,9 @@ def verify_posts_batch(soul, llm_client, posts, learned_signals=None):
     prompt = prompts.build_verify_posts_prompt(soul, posts_context, learned_signals=learned_signals)
     nuanced_results = llm_client.generate_json(prompt, model_purpose="fast", fallback_dict={})
     
+    logger.info(f"   [WARDEN DEBUG] Extracted JSON keys: {list(nuanced_results.keys())}")
+    logger.info(f"   [WARDEN DEBUG] Extracted JSON mapping: {nuanced_results}")
+    
     # Merge pre-filtered drop decisions with the granular pass
     nuanced_results.update(pre_filtered_results)
     return nuanced_results

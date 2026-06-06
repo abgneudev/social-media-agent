@@ -1168,12 +1168,13 @@ class FollowerEngine:
         
         # Live Algorithmic Curation
         if cands and self.net:
-            logger.info("   [CURATION] analyzing candidate batch for feed feedback...")
+            logger.info(f"   [CURATION] analyzing {len(cands)} candidates for feed feedback...")
             results = self._verify_posts_batch(cands)
             filtered_cands = []
             for c in cands:
                 cid = getattr(c, "cid", "")
                 grade_data = results.get(cid, "drop")
+                logger.info(f"   [CURATION DEBUG] mapping CID '{cid}' -> {grade_data}")
                 
                 action = grade_data
                 if isinstance(grade_data, dict):

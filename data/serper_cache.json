@@ -591,10 +591,46 @@
       "https://s3-alpha.figma.com/hub/file/4952520175/47fd8dd3-527c-443b-97a0-2804ceebae30-cover.png",
       "https://s3-alpha.figma.com/hub/file/4308061696/e944fd45-db7a-429a-974d-36cee37a4298-cover.png",
       "https://miro.medium.com/v2/da:true/resize:fit:1071/1*ebmDMPXU9xqgwqdob0XbKQ.gif"
+    ],
+    "image:NN/g choice overload diagram figma": [
+      "https://media.nngroup.com/media/editor/2024/07/30/sludge_quote-edit-1.jpg",
+      "https://media.nngroup.com/media/videos/thumbnails/Choice_Overload_Impedes_User_Decision_Making_Thumbnail.jpg",
+      "https://media.nngroup.com/media/editor/2018/11/13/choice-architecture-revised.png",
+      "https://s3-alpha.figma.com/hub/file/4468098382/154faeb6-c5b3-4b9a-8869-4faef60883f4-cover.png",
+      "https://media.nngroup.com/media/editor/2017/05/11/simple_flowchart_for_nng_wireflows_article-8.png",
+      "https://media.nngroup.com/media/report_images/Helping_Users_Make_Decisions_Cover.png.300x470_q75_autocrop_crop-scale_upscale.png",
+      "https://lookaside.instagram.com/seo/google_widget/crawler/?media_id=3906297537624424843",
+      "https://cdn.sanity.io/images/599r6htc/regionalized/d2f8263d79449b282af857e9e430dc5d255e5684-1440x850.png?w=1440&h=850&q=75&fit=max&auto=format",
+      "https://media.licdn.com/dms/image/v2/D5622AQH5p9KOFayOLg/feedshare-shrink_800/B56Zaz8iQNH0Ag-/0/1746775714311?e=2147483647&v=beta&t=vO5SO9vWPxnPthj6NxmZwFTYEPZeaOhH1u8QMZYC26w",
+      "https://media.nngroup.com/media/articles/opengraph_images/Slide01articlessimplicity-vs-choice.png"
+    ],
+    "image:progressive disclosure diagram figma": [
+      "https://s3-alpha.figma.com/hub/file/1176465222/057dc463-f544-427f-a62f-084e1ebe152b-cover.png",
+      "https://assets.justinmind.com/wp-content/uploads/2021/01/justinmind-blog-progressive-disclosure-example.png",
+      "https://assets.justinmind.com/wp-content/uploads/2021/01/progressive-disclosure-ui-elements.png",
+      "https://assets.justinmind.com/wp-content/uploads/2021/01/ryanair-progressive-disclosure-example.png",
+      "https://miro.medium.com/v2/resize:fit:1400/0*qERea76PdosFutOG.jpg",
+      "https://assets.justinmind.com/wp-content/uploads/2021/01/multi-step-progress-form.png",
+      "https://think360studio-media.s3.ap-south-1.amazonaws.com/photo/plugin/article/2022/progressive-disclousre-26122022.png",
+      "https://miro.medium.com/v2/resize:fit:2000/1*vjiMtIz4Hzn3390Ybh8xjQ.jpeg",
+      "https://pbs.twimg.com/media/E9MA2FwWQAg6ojw.jpg",
+      "https://magora-systems.com/uploads/pages/575/IRhLgYl_y_IZE9_C9BdpB4r1aB-2UesX.webp"
+    ],
+    "image:reciprocity graph figma": [
+      "https://s3-alpha.figma.com/hub/file/2190748778791946120/2d34d329-63ce-4ddc-b93b-7bb9ce9bbf9b-cover.png",
+      "https://miro.medium.com/1*75KsSGf8w1ShxdwyRrjQiw.png",
+      "https://s3-alpha.figma.com/hub/file/960484261/fef3196e-2c3d-4928-838f-1a85dbbb4dee-cover.png",
+      "https://s3-alpha.figma.com/hub/file/1975018188/f719ab72-0533-44fa-a24c-ee9f3c8f1ba7-cover.png",
+      "https://s3-figma-hubfile-images-production.figma.com/hub/file/carousel/img/87e1e7e6cec9a18688a0ef227c4d592decd21b05/75ffb3cb0f3ca0c7002c5c6cc8c5d4b48008b2b2",
+      "https://miro.medium.com/v2/resize:fit:1400/1*YLK32IhMizUqyTeRwqAtIg.png",
+      "https://www.figma.com/community/thumbnail?resource_id=1379306078597887713&resource_type=plugin",
+      "https://i.ytimg.com/vi/an4JxEPj_Dw/hq720.jpg?sqp=-oaymwE7CK4FEIIDSFryq4qpAy0IARUAAAAAGAElAADIQj0AgKJD8AEB-AHYCIAC0AWKAgwIABABGFogYShlMA8=&rs=AOn4CLDFS_uNUQU6nfqryCXz0oif5_OzSA",
+      "https://miro.medium.com/v2/resize:fit:1400/1*Lpnxr8wIw88TXRn8D-BawA.gif",
+      "https://i.ytimg.com/vi/P5YvgfWer_M/maxresdefault.jpg"
     ]
   },
   "daily_usage": {
     "2026-06-04": 16,
-    "2026-06-05": 338
+    "2026-06-05": 342
   }
 }

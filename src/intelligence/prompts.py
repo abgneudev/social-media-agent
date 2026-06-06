@@ -93,7 +93,8 @@ def build_verify_profiles_prompt(soul, profiles_context, learned_signals=None):
         f"- 'follow': if they are highly credible and aligned.\n"
         f"- 'ignore': if they are irrelevant, generic, or off-topic.\n"
         f"- 'mute': if they are obvious spam, engagement farmers, crypto scammers, NSFW, or highly misaligned.\n"
-        f'{{"handle1": "follow", "handle2": "ignore", "handle3": "mute"}}'
+        f"CRITICAL: The keys in your JSON MUST be the exact handle strings from the profiles above (e.g., 'johndoe.bsky.social'). Do not use placeholders like 'handle1'.\n"
+        f'Example Output: {{"johndoe.bsky.social": "follow", "janedoe.bsky.social": "ignore", "spambot.bsky.social": "mute"}}'
     )
 
 def build_bio_prompt(soul, best_sector, trends_info=""):
@@ -125,7 +126,8 @@ def build_verify_posts_prompt(soul, posts_context, learned_signals=None):
         f"- 'drop': random keyword match, off-topic, sales ad, empty/low-quality bot account, or totally irrelevant. Do not interact with it.\n"
         f"- 'less': generic, low-quality bloat, highly annoying formatting.\n"
         f"- 'mute': obvious spam, engagement farmers, crypto scammers, NSFW, pure bot accounts.\n"
-        f'{{"cid1": {{"action": "more", "high_value_signals": ["signal_1"]}}, "cid2": "keep", "cid3": "drop", "cid4": "less"}}'
+        f"CRITICAL: The keys in your JSON MUST be the exact CID strings from the posts above. Do not use placeholders like 'cid1'.\n"
+        f'Example Output: {{"3mndcczcd4k2v": {{"action": "more", "high_value_signals": ["signal_1"]}}, "bafyreih36z": "keep", "3mndcczcd4k2w": "drop"}}'
     )
 
 def build_sense_trends_prompt(soul, hottest, batch):
@@ -173,7 +175,7 @@ def build_quote_best_prompt(soul, sector, src, hook, constraint, vision_hint, le
         f"{vision_hint}"
         f"{signals_text}"
         f"CRITICAL RULES:\n"
-        f"- READ THE ROOM: You MUST analyze the context of the post. If the post is casual (e.g., asking to hang out, sharing a personal update, casual chat), respond like a normal human peer. DROP all technical frameworks, jargon, and unsolicited advice for casual posts.\n"
+        f"- EXTREMELY IMPORTANT: You MUST analyze the context of the post and act like a real, authentic human. If someone is venting, making a joke, asking to hang out, or sharing a personal update, JUST TALK TO THEM NORMALLY. DO NOT use technical frameworks, bullet points, object-oriented UX terms, or sound like a robot teaching a lesson. NEVER fall back to 'heuristics' or 'OOUX' unless they explicitly ask a technical question.\n"
         f"- NEVER print the hook name (e.g., '{hook}') directly in your comment text.\n"
         f"- ABSOLUTELY NO EMOJIS. None.\n"
         f"- ABSOLUTELY NO EM DASHES (—) or similar punctuation. Use simple hyphens if needed.\n"
@@ -197,7 +199,7 @@ def build_helpful_reply_prompt(soul, sector, batch, hook, whale_constraint, visi
         f"{vision_hint}"
         f"{signals_text}"
         f"CRITICAL RULES FOR REPLIES:\n"
-        f"- READ THE ROOM: You MUST analyze the context of the post. If the post is casual (e.g., asking to hang out, sharing a personal update, casual chat), respond like a normal human peer. DROP all technical frameworks, jargon, and unsolicited advice for casual posts.\n"
+        f"- EXTREMELY IMPORTANT: You MUST analyze the context of the post and act like a real, authentic human. If someone is venting, making a joke, asking to hang out, or sharing a personal update, JUST TALK TO THEM NORMALLY. DO NOT use technical frameworks, bullet points, object-oriented UX terms, or sound like a robot teaching a lesson. NEVER fall back to 'heuristics' or 'OOUX' unless they explicitly ask a technical question.\n"
         f"- NEVER print the hook name (e.g., '{hook}') directly in your reply text.\n"
         f"- Keep your reply under 280 characters to pass API limits.\n"
         f"- ABSOLUTELY NO EMOJIS. None.\n"
