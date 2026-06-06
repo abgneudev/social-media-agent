@@ -360,11 +360,13 @@ class FollowerEngine:
         and its own engagement data, then decides what lists to create or
         populate. This is the agent's full authority over its list strategy."""
         if not self._network_telemetry:
+            logger.info("   [CURATE] skipping (no network telemetry available yet)")
             return
 
         engagers = self._network_telemetry.get("our_engagers", [])
         velocity_posts = self._network_telemetry.get("velocity_posts", [])
         if not engagers and not velocity_posts:
+            logger.info("   [CURATE] skipping (0 recent engagers and 0 viral posts to curate)")
             return
 
         # Build profiles for engagers (cap API calls)
@@ -1137,8 +1139,14 @@ class FollowerEngine:
 
         if not cands and random.random() < 0.6:
             clean_sector = sector.replace('_', ' ')
-            logger.info(f"   [SOURCING] Searching for professionals matching '{clean_sector}'...")
-            actors = self.net.search_actors(clean_sector, limit=30)
+            search_query = clean_sector
+            if self.store.relevance_signals and random.random() < 0.7:
+                search_query = random.choice(self.store.relevance_signals)
+                logger.info(f"   [SOURCING] Searching for professionals matching learned signal '{search_query}'...")
+            else:
+                logger.info(f"   [SOURCING] Searching for professionals matching '{clean_sector}'...")
+            
+            actors = self.net.search_actors(search_query, limit=30)
             if actors:
                 fresh_actors = [a for a in actors if not self.store.already_acted_on(getattr(a, "did", ""))]
                 if fresh_actors:
@@ -1146,14 +1154,22 @@ class FollowerEngine:
                     target_did = getattr(target_actor, "did", None)
                     if target_did:
                         cands = _filter_posts(self.net.get_author_feed(target_did, limit=15))
-                        keyword = clean_sector
+                        keyword = search_query
                         
         if not cands:
             trend_kw = (random.choice(self.store.trends[sector])
                         if sector in self.store.trends and self.store.trends[sector] else None)
-            if trend_kw:
+            
+            if self.store.relevance_signals and random.random() < 0.7:
+                keyword = random.choice(self.store.relevance_signals)
+            elif trend_kw:
                 keyword = trend_kw
+            else:
+                keyword = None
+                
+            if keyword:
                 try:
+                    logger.info(f"   [SOURCING] Sourcing posts matching learned keyword '{keyword}'...")
                     cands = _filter_posts(self.net.search_posts(keyword))
                     self.breaker.record_success()
                 except exceptions.AtProtocolError as e:
@@ -1163,8 +1179,8 @@ class FollowerEngine:
                 keyword = self.sector_activity.get(sector, {}).get("keyword", sector)
                 cands = _filter_posts(self.sector_posts.get(sector, []))
                 
-        import heapq
-        cands = heapq.nlargest(10, cands, key=utils.get_total_engagement)
+        # We sort by engagement to prioritize the best, but we no longer slice to a hardcoded limit.
+        cands.sort(key=utils.get_total_engagement, reverse=True)
         
         # Live Algorithmic Curation
         if cands and self.net:
@@ -1267,7 +1283,8 @@ class FollowerEngine:
         if campaign_context:
             vision_hint += f"\nCAMPAIGN STRATEGY: {campaign_context}\n"
 
-        prompt = prompts.build_quote_best_prompt(self.soul, sector, src, hook, constraint, vision_hint, learned_signals=self.store.relevance_signals)
+        kb_hist = memory.recall_knowledge(sector, limit=1)
+        prompt = prompts.build_quote_best_prompt(self.soul, sector, src, hook, constraint, vision_hint, learned_signals=self.store.relevance_signals, kb_hist=kb_hist)
         raw = self._generate(prompt, dedup=True, image_b64=image_b64)
         quote_text = None
         if raw:
@@ -1895,7 +1912,8 @@ class FollowerEngine:
         if campaign_context:
             vision_hint += f"\nCAMPAIGN STRATEGY: {campaign_context}\n"
 
-        prompt = prompts.build_helpful_reply_prompt(self.soul, sector, batch, hook, whale_constraint, vision_hint, learned_signals=self.store.relevance_signals)
+        kb_hist = memory.recall_knowledge(sector, limit=1)
+        prompt = prompts.build_helpful_reply_prompt(self.soul, sector, batch, hook, whale_constraint, vision_hint, learned_signals=self.store.relevance_signals, kb_hist=kb_hist)
         raw = self._generate(prompt, dedup=True, image_b64=top_image_b64, enable_tools=True, model_purpose="versatile")
         if not raw:
             return
@@ -2297,7 +2315,7 @@ class FollowerEngine:
             return random.randint(45, 120)
         else:
             logger.info(f"   [OS KERNEL] Action '{action}' dropped (Rate limited or no candidates).")
-            return 15
+            return 2
     def _run_system_maintenance(self):
         """Runs periodic background tasks like learning, decaying, and reconciling."""
         now = time.time()
@@ -2318,12 +2336,8 @@ class FollowerEngine:
                     for h in web_insights.get("experimental_hooks", []):
                         hook_name = h.get("hook_name")
                         if hook_name and hook_name not in self.soul.post_hooks:
-                            # 7 core hooks + 1 curated_link + 4 experimental = 12 total hooks allowed
-                            if len(self.soul.post_hooks) < 12:
-                                self.soul.post_hooks.append(hook_name)
-                                self.soul.post_hook_guidance[hook_name] = h.get("guidance", "Experimental hook.")
-                            else:
-                                logger.info(f"   [WEB RESEARCH] Hook capacity reached (12 max). Dropping '{hook_name}'.")
+                            self.soul.post_hooks.append(hook_name)
+                            self.soul.post_hook_guidance[hook_name] = h.get("guidance", "Experimental hook.")
                     if web_insights.get("curated_links") and "curated_link" not in self.soul.post_hooks:
                         self.soul.post_hooks.append("curated_link")
                         self.soul.post_hook_guidance["curated_link"] = "Share a highly credible curated link with your audience. Give a sharp take on it."

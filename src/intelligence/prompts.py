@@ -38,10 +38,10 @@ def build_variant_prompt(soul, sector, archetypes, length_slots, opening_slots, 
         f"CRITICAL DIVERSITY: Constantly invent entirely new angles, distinct phrasing, and unexplored ideas. Do not recycle the same vocabulary or structures from typical tech posts.\n"
         f"CRITICAL CONSTRAINT: DO NOT start your posts with repetitive rhetorical questions like \"Why are we...\", \"How does...\", or \"Why is...\". Make statements, offer insights, or state contrarian facts instead of asking rhetorical questions.\n"
         f"Constraints that apply to ALL drafts: plain language, no jargon left "
-        f"unexplained, no pitch, no link, no emoji, no hashtag, no em dash. Skip "
+        f"unexplained, no pitch, no emoji, no hashtag, no em dash. Skip "
         f"parenting, body image, mental health, religion, politics, money "
         f"struggles. Explain confusing or complex ideas in plain "
-        f"words with everyday analogies.\n\n"
+        f"words with everyday analogies. If sharing a link from your knowledge base, do so naturally.\n\n"
         f"Respond strictly as JSON with exactly three keys per variant: 'content', 'media_type', 'media_query', and an optional 'thread_parts' array.\n"
         f"CRITICAL RULES FOR THREADS: If the archetype is 'mini_thread', you MUST provide a list of strings in 'thread_parts' (e.g. [\"part 2...\", \"part 3...\"]). The 'content' key will be the anchor post.\n"
         f"CRITICAL RULES FOR MEDIA:\n"
@@ -86,9 +86,10 @@ def build_verify_profiles_prompt(soul, profiles_context, learned_signals=None):
         f"Our persona is:\n{soul.persona}\n\n"
         f"{signals_text}"
         f"Evaluate the following profiles:\n{profiles_context}\n"
-        f"MINDSET: Assume the platform is 80% noise. You must ruthlessly drop the garbage, but balance this skepticism with the need to find the top 20% to interact with for growth. Do not follow anyone who does not explicitly align with the high-value signals.\n"
-        f"Does each profile represent a highly credible, intellectual, or relevant practitioner that aligns with our persona? "
-        f"Reject generic influencers, crypto farmers, and random personal accounts.\n"
+        f"MINDSET: You must filter out spam, but you also MUST find the best users in this batch to interact with. If you drop everyone, the agent fails.\n"
+        f"Does each profile represent a credible practitioner that aligns with our persona? "
+        f"Reject clear spam and bots, but be generous to real humans who are trying.\n"
+        f"CRITICAL: DO NOT DROP EVERYONE. You MUST grade at least 20-30% of these profiles as 'follow', even if you have to lower your standards slightly.\n"
         f"Respond strictly as a JSON object mapping the handle (exact string) to a string action: 'follow', 'ignore', or 'mute'.\n"
         f"- 'follow': if they are highly credible and aligned.\n"
         f"- 'ignore': if they are irrelevant, generic, or off-topic.\n"
@@ -118,8 +119,9 @@ def build_verify_posts_prompt(soul, posts_context, learned_signals=None):
         f"Our persona is:\n{soul.persona}\n\n"
         f"{signals_text}"
         f"Evaluate the following posts AND their authors:\n{posts_context}\n"
-        f"Does the post align with our technical rigor, and is the author a credible professional? Or is this garbage/spam/bot/engagement-farming?\n"
-        f"MINDSET: Assume the platform is 80% noise. You must ruthlessly drop the garbage, but balance this skepticism with the need to find the top 20% to interact with for growth. Do not be so strict that you interact with nobody.\n"
+        f"Does the post align with our technical rigor, and is the author a credible professional? Or is this obvious garbage/spam/bot/engagement-farming?\n"
+        f"MINDSET: You must filter out spam, but you also MUST find the best posts in this batch to interact with. If you drop everything, the agent fails.\n"
+        f"CRITICAL: DO NOT DROP EVERYTHING. You MUST grade at least 20-30% of these posts as 'keep' or 'more', even if you have to lower your standards slightly.\n"
         f"Respond strictly as a JSON object mapping the CID (exact string) to either a string ('keep', 'drop', 'less', 'mute') or an object for 'more'.\n"
         f"- 'more': high quality post, deeply intellectual, highly aligned to our persona, from a credible author. For 'more', you MUST return an object extracting the specific signals that proved their credibility: {{\"action\": \"more\", \"high_value_signals\": [\"signal_1\", \"signal_2\"]}}.\n"
         f"- 'keep': relevant and acceptable, from a legitimate account. Just return the string 'keep'.\n"
@@ -160,11 +162,15 @@ def build_run_evolution_prompt(soul, batch):
         f'{{"keywords": ["kw1", "kw2", "kw3"]}}'
     )
 
-def build_quote_best_prompt(soul, sector, src, hook, constraint, vision_hint, learned_signals=None):
+def build_quote_best_prompt(soul, sector, src, hook, constraint, vision_hint, learned_signals=None, kb_hist=""):
     signals_text = ""
     if learned_signals:
         top_signals = ", ".join(learned_signals[-30:])
         signals_text = f"Align your comment with our high-value learned signals: [{top_signals}].\n"
+        
+    kb_text = ""
+    if kb_hist:
+        kb_text = f"KNOWLEDGE BASE FACT: Try to organically weave this factual data point into your comment to demonstrate authority: {kb_hist}\n"
 
     return (
         f"This post is about '{sector}':\n\"{src}\"\n\n"
@@ -174,6 +180,7 @@ def build_quote_best_prompt(soul, sector, src, hook, constraint, vision_hint, le
         f"{constraint}"
         f"{vision_hint}"
         f"{signals_text}"
+        f"{kb_text}"
         f"CRITICAL RULES:\n"
         f"- EXTREMELY IMPORTANT: You MUST analyze the context of the post and act like a real, authentic human. If someone is venting, making a joke, asking to hang out, or sharing a personal update, JUST TALK TO THEM NORMALLY. DO NOT use technical frameworks, bullet points, object-oriented UX terms, or sound like a robot teaching a lesson. NEVER fall back to 'heuristics' or 'OOUX' unless they explicitly ask a technical question.\n"
         f"- NEVER print the hook name (e.g., '{hook}') directly in your comment text.\n"
@@ -182,11 +189,15 @@ def build_quote_best_prompt(soul, sector, src, hook, constraint, vision_hint, le
         f'Respond strictly as JSON: {{"comment": "..."}}'
     )
 
-def build_helpful_reply_prompt(soul, sector, batch, hook, whale_constraint, vision_hint, learned_signals=None):
+def build_helpful_reply_prompt(soul, sector, batch, hook, whale_constraint, vision_hint, learned_signals=None, kb_hist=""):
     signals_text = ""
     if learned_signals:
         top_signals = ", ".join(learned_signals[-30:])
         signals_text = f"MINDSET: Pick the post that most strongly aligns with these high-value signals: [{top_signals}]. Ruthlessly ignore random complaints or low-effort noise.\n"
+
+    kb_text = ""
+    if kb_hist:
+        kb_text = f"KNOWLEDGE BASE FACT: If relevant to the conversation, try to organically weave this factual data point into your reply: {kb_hist}\n"
 
     return (
         f"These are live posts about '{sector}':\n\n{batch}\n"
@@ -198,6 +209,7 @@ def build_helpful_reply_prompt(soul, sector, batch, hook, whale_constraint, visi
         f"or heavily polarized, respond with action='skip'. {whale_constraint}"
         f"{vision_hint}"
         f"{signals_text}"
+        f"{kb_text}"
         f"CRITICAL RULES FOR REPLIES:\n"
         f"- EXTREMELY IMPORTANT: You MUST analyze the context of the post and act like a real, authentic human. If someone is venting, making a joke, asking to hang out, or sharing a personal update, JUST TALK TO THEM NORMALLY. DO NOT use technical frameworks, bullet points, object-oriented UX terms, or sound like a robot teaching a lesson. NEVER fall back to 'heuristics' or 'OOUX' unless they explicitly ask a technical question.\n"
         f"- NEVER print the hook name (e.g., '{hook}') directly in your reply text.\n"
