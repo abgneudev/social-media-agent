@@ -55,7 +55,8 @@ class Store:
     def __init__(self, soul):
         self.soul = soul
         es = load_json(config.ENGINE_STATE_FILE, {})
-        self.sectors = es.get("sectors", getattr(self.soul, "sectors", []))
+        saved_sectors = es.get("sectors", [])
+        self.sectors = list(set(saved_sectors) | set(getattr(self.soul, "sectors", [])))
         self.bandit = self._load_bandit(es.get("bandit", None), self.sectors)
         self.ledger = es.get("ledger", [])
         self.keyword_telemetry = es.get("keyword_telemetry", {})
@@ -76,9 +77,13 @@ class Store:
         self.research_interval = es.get("research_interval", 8)
         self.consecutive_empty_ticks = es.get("consecutive_empty_ticks", 0)
         
-        self.topic_angle_examples = es.get("topic_angle_examples", getattr(self.soul, "topic_angle_examples", []))
+        saved_topics = es.get("topic_angle_examples", [])
+        self.topic_angle_examples = list(set(saved_topics) | set(getattr(self.soul, "topic_angle_examples", [])))
+        
         self.keyword_map = es.get("keyword_map", getattr(self.soul, "keyword_map", {}))
-        self.relevance_signals = es.get("relevance_signals", getattr(self.soul, "relevance_signals", []))
+        
+        saved_signals = es.get("relevance_signals", [])
+        self.relevance_signals = list(set(saved_signals) | set(getattr(self.soul, "relevance_signals", [])))
         self._compile_relevance_re()
         
         logger.info(f"      [STATE] bandit={json.dumps(self.bandit)}")
