@@ -65,7 +65,7 @@ def _dry_run():
               for k, v in RATE_BUDGETS.items()}
     e.sector_activity = {}
     e.sector_posts = {}
-    e.persona = PERSONA
+    # Persona is now safely managed inside the soul dataclass
     result = e.dry_run_post(sector)
     print(json.dumps(result, indent=2, ensure_ascii=False))
 

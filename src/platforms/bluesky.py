@@ -30,8 +30,16 @@ class BlueskyPlatform(Platform):
         return int(getattr(prof, "followers_count", 0) or 0)
 
     def search_posts(self, keyword, limit=15) -> list:
-        resp = self.client.app.bsky.feed.search_posts({"q": keyword, "limit": limit})
+        resp = self.client.app.bsky.feed.search_posts({"q": keyword, "limit": limit, "sort": "top"})
         return list(resp.posts) if getattr(resp, "posts", None) else []
+
+    def search_actors(self, keyword, limit=15) -> list:
+        try:
+            resp = self.client.app.bsky.actor.search_actors({"term": keyword, "limit": limit})
+            return list(getattr(resp, "actors", []))
+        except exceptions.AtProtocolError as e:
+            logger.warning(f"      [FAULT] search_actors failed: {e}")
+            return []
 
     def fetch_timeline(self, limit=30) -> list:
         try:
@@ -39,6 +47,14 @@ class BlueskyPlatform(Platform):
             return [item.post for item in getattr(resp, "feed", []) if hasattr(item, "post")]
         except exceptions.AtProtocolError as e:
             logger.warning(f"      [FAULT] fetch_timeline failed: {e}")
+            return []
+
+    def get_author_feed(self, actor, limit=15) -> list:
+        try:
+            resp = self.client.get_author_feed(actor=actor, limit=limit)
+            return [item.post for item in getattr(resp, "feed", []) if hasattr(item, "post")]
+        except exceptions.AtProtocolError as e:
+            logger.warning(f"      [FAULT] get_author_feed failed: {e}")
             return []
 
     def get_profile(self, actor):

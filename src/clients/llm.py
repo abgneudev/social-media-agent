@@ -7,6 +7,9 @@ from core.config import logger
 from clients import serper
 import os
 
+class RateLimitError(Exception):
+    pass
+
 class LLMClient:
     def __init__(self, persona):
         groq_key = os.environ.get("GROQ_API_KEY")
@@ -156,9 +159,15 @@ class LLMClient:
                         ans = ans[:-3].strip()
                     return ans
             except Exception as e:
-                logger.warning(f"   [FAULT] generation failed ({model}) turn {turn}: {e}")
                 import time
-                time.sleep(5 * (turn + 1)) # More aggressive backoff
+                if "429" in str(e) or "rate limit" in str(e).lower():
+                    logger.warning(f"   [FAULT] rate limit exceeded ({model}) turn {turn}: {e}")
+                    if turn == 2:
+                        raise RateLimitError(f"Rate limit exceeded after {turn+1} retries.")
+                    time.sleep(10 * (2 ** turn)) # Exponential backoff
+                else:
+                    logger.warning(f"   [FAULT] generation failed ({model}) turn {turn}: {e}")
+                    time.sleep(5 * (turn + 1))
                 continue
         return "{}"
 

@@ -12,6 +12,8 @@ class Platform(ABC):
 
     @abstractmethod
     def search_posts(self, keyword: str, limit: int = 15) -> list: pass
+    def get_author_feed(self, actor: str, limit: int = 15) -> list: pass
+    def search_actors(self, keyword: str, limit: int = 15) -> list: pass
 
     @abstractmethod
     def fetch_timeline(self, limit: int = 30) -> list: pass

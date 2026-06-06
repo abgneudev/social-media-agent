@@ -54,9 +54,10 @@ def _research_prompt(article_text, source_link, source_title, sectors):
         f"CONTENT:\n{article_text[:8000]}\n\n"
         f"RULES FOR EXTRACTION:\n"
         f"1. ROUTING & CREDIBILITY: Determine if the article is highly credible. If it's generic fluff, spam, or low quality, set 'is_credible' to false and leave 'dynamic_schemas' empty. If credible, classify its primary value as either 'tactics' (growth, platform strategy) or 'inspiration' (content ideas to share).\n"
-        f"2. Dynamic Schemas: Instead of following a rigid schema, dynamically invent and extract whatever structured schemas are most valuable for the Strategist based on this article. You can extract macro-trends, target communities (e.g. subreddits, discords), new sociological phenomena, experimental post hooks, or actionable strategic guidance.\n"
+        f"2. Dynamic Schemas: Instead of following a rigid schema, dynamically invent and extract whatever structured schemas are most valuable for the Strategist based on this article. You can extract macro-trends, target communities (e.g. subreddits, discords), new sociological phenomena, or actionable strategic guidance. If and ONLY if the article reveals a genuinely novel structural format for posting (e.g., 'A/B Test Confession', 'Contrarian Matrix'), extract ONE 'experimental_hooks' object. DO NOT use article topics as hooks.\n"
         f"3. Curated Links: If you find an amazing article worth sharing, you MAY create a 'curated_links' array containing objects with 'url', 'title', and 'summary'.\n"
-        f"4. Factual Knowledge: If you find hard empirical facts or case studies, you MAY create a 'factual_knowledge' array of strings.\n\n"
+        f"4. High-Value Signals: If the article uses elite vocabulary, advanced mental models, or highly specific industry concepts, extract them into a 'high_value_signals' array of strings. The engine uses these signals to build its intuition for finding high-quality profiles natively on the platform.\n"
+        f"5. Factual Knowledge: If you find hard empirical facts or case studies, you MAY create a 'factual_knowledge' array of strings.\n\n"
         f"Respond STRICTLY as JSON with this exact structure, but you define the keys inside 'dynamic_schemas':\n"
         f"{{\n"
         f'  "is_credible": true,\n'
@@ -64,6 +65,7 @@ def _research_prompt(article_text, source_link, source_title, sectors):
         f'  "dynamic_schemas": {{\n'
         f'    "niche_target_communities": ["..."],\n'
         f'    "sociological_trends": ["..."],\n'
+        f'    "high_value_signals": ["system architecture", "workflow optimization", "cognitive load"],\n'
         f'    "experimental_hooks": [{{"hook_name": "...", "guidance": "..."}}],\n'
         f'    "curated_links": [{{"url": "{source_link}", "title": "{source_title}", "summary": "..."}}],\n'
         f'    "factual_knowledge": ["..."]\n'

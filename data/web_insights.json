@@ -1,641 +1,145 @@
 {
-  "ts": 1780695295.1935687,
-  "ts_iso": "2026-06-05T17:34:55",
+  "ts": 1780705375.4884422,
+  "ts_iso": "2026-06-05T20:22:55",
   "niche_target_communities": [
-    "r/Manufacturing",
-    "r/Engineering",
-    "r/ArtificialIntelligence",
-    "r/Industry40",
-    "r/SupplyChain",
-    "r/BlueskyTech",
-    "r/Automation",
-    "r/LeanManufacturing",
-    "r/SMEs",
-    "r/IndustrialDesign",
-    "bluesky://community/engineering",
-    "bluesky://community/manufacturing",
-    "bluesky://community/ai-in-industry",
-    "r/automation",
-    "r/ArtificialIntelligence",
-    "r/Management",
-    "r/BlueskyTech",
-    "r/WorkplaceTech",
-    "r/DevOps",
-    "r/EnterpriseAI",
-    "Bluesky AI-focused servers (e.g., sky://ai, sky://automation)",
-    "Discord servers focused on AI governance, enterprise automation, or futurism",
-    "r/biometrics",
-    "r/cybersecurity",
-    "r/artificialintelligence",
-    "r/privacy",
-    "r/technology",
-    "Bluesky's #Tech #AI #CyberSecurity #Biometrics",
-    "Discord servers focused on cybersecurity and AI research",
-    "AI Ethics Researchers",
-    "Multi-Agent Systems Researchers",
-    "LLM Alignment & Safety Researchers",
-    "Game Theory & Behavioral Economics Researchers",
-    "AI Alignment Discord/Forums",
-    "r/MachineLearning",
-    "r/ArtificialIntelligence",
-    "r/ControlProblem",
-    "AI Policy & Regulation Researchers",
-    "Philosophy of AI Subreddits",
-    "r/psychology",
-    "r/education",
-    "r/artificial",
-    "r/technology",
-    "r/neuroscience",
-    "r/learning",
+    "Bluesky #UXDesign",
+    "Bluesky #ProductDesign",
+    "Bluesky #SaaS",
+    "Bluesky #DeveloperExperience",
+    "Bluesky #OnboardingOptimization",
+    "Bluesky #CommandPalette",
+    "Bluesky #ProgressiveDisclosure",
+    "r/accessibility",
+    "r/UXDesign",
+    "r/webdev",
     "r/BlueskySocial",
-    "Bluesky Academic Research Communities",
-    "AI in Education Discord Servers",
-    "Cognitive Science Research Groups on Bluesky",
-    "r/ArtificialIntelligence",
-    "r/MachineLearning",
+    "Design Buddies (Discord)",
+    "A11y Project Slack",
+    "WCAG Enthusiasts (Bluesky list)",
+    "Inclusive Design Collective (Bluesky)",
+    "Frontend Developers (Bluesky)",
+    "Product Designers (Bluesky)",
+    "r/Bluesky",
+    "r/SocialMediaMarketing",
+    "r/ProductDesign",
+    "r/UXResearch",
+    "r/CommunityManagement",
     "r/TechEthics",
-    "r/BlueskyMeta",
-    "r/ResponsibleAI",
-    "Bluesky AI Ethics communities",
-    "AI governance Discord servers",
-    "NIST AI standards working groups",
-    "r/cybersecurity",
-    "r/InformationSecurity",
-    "r/NetSec",
-    "r/blueteamsec",
-    "r/socialengineering",
-    "Discord: Cybersecurity Professionals",
-    "Discord: NIST Cybersecurity Framework",
-    "LinkedIn: Human-Centered Cybersecurity Group",
-    "Bluesky: #cybersecurity #infosec #hcc",
-    "antitrust_lawyers",
-    "competition_policy_researchers",
-    "digital_economics_academics",
-    "tech_policy_advocates",
-    "regulatory_tech_communities",
-    "EU_public_law_specialists",
-    "AI_ethics_researchers",
-    "r/HealthTech",
-    "r/AI_Medicine",
-    "r/HealthcareAI",
-    "r/Pharmacy",
-    "r/HealthInsurance",
-    "r/AutonomousSystems",
-    "r/HealthPolicy",
-    "r/DataScience",
-    "r/StanfordHAI",
-    "r/TechPolicy",
-    "r/Futurism",
-    "r/Regulation",
-    "r/HealthcareInnovation",
-    "r/AI_Safety",
-    "r/technology",
-    "r/artificial",
-    "r/privacy",
-    "r/legaltech",
-    "r/automation",
-    "r/bluesky",
-    "r/ai_safety",
-    "r/regtech",
-    "r/academicphilosophy",
-    "r/tech_policy",
-    "r/WarTech",
-    "r/DefenseTech",
-    "r/IntelligenceCommunity",
-    "r/ArtificialIntelligence",
-    "r/Neuroethics",
-    "r/PhilosophyOfTechnology",
-    "r/TechEthics",
-    "r/BlueskyAcademia",
-    "r/BlueskyPolicy",
-    "r/BlueskyMilitary",
-    "Discord servers focused on AI ethics, military technology, or defense policy",
-    "r/ControlTheory",
-    "r/robotics",
-    "r/MLsafety",
-    "r/aiethics",
-    "r/autonomousvehicles",
-    "r/HealthTech",
-    "r/UCBerkeley",
-    "r/academia",
-    "Discord: AI Safety Research",
-    "Discord: Robotics Engineering",
-    "Bluesky: #AI #Robotics #Ethics #Safety",
-    "r/Leadership",
-    "r/ArtificialIntelligence",
-    "r/OrganizationalPsychology",
-    "r/Strategy",
-    "r/WorkCulture",
-    "r/BlueskySocial",
-    "r/TechLeadership",
-    "r/Management",
-    "r/Innovation",
-    "r/Entrepreneur",
-    "r/antiwork",
-    "r/recruiting",
-    "r/HR",
-    "r/privacy",
-    "r/bluesky",
-    "r/socialmedia",
-    "Discord communities focused on labor rights or DEI (Diversity, Equity, Inclusion)",
-    "LinkedIn groups for HR professionals and recruiters",
-    "Bluesky communities discussing social media ethics and hiring practices",
-    "internal knowledge communities in tech firms",
-    "customer support crowdsourcing communities",
-    "innovation crowdsourcing communities",
-    "multinational IT consulting firms' employee networks",
-    "geographically distributed teams in knowledge-intensive industries"
+    "r/DecentralizedSocialMedia",
+    "r/ContentStrategy"
   ],
   "sociological_trends": [
-    "The 'AI Literacy Gap' is a cultural bottleneck: Engineers and manufacturers are aware of AI's potential but lack the operational literacy to integrate it without friction. This creates a demand for educational content that bridges high-level concepts and hands-on implementation.",
-    "Reshoring and nearshoring are accelerating the need for 'digital-native' manufacturing ecosystems. AI adoption is not just about efficiency\u2014it's about resilience and regional autonomy. Communities discussing supply chain resilience or regional manufacturing hubs are prime targets.",
-    "Fragmented legacy systems are the silent killer of AI adoption. The paper highlights 'machine-unfriendly data' and 'limited API-accessible toolchains' as top barriers. This suggests a growing demand for content that simplifies integration, APIs, and interoperability.",
-    "Human-in-the-loop frameworks are becoming the norm, not the exception. Trust in AI is not binary; it's a spectrum. Content that frames AI as a 'collaborative tool' rather than a 'replacement' will resonate more deeply.",
-    "Spatial and physical reasoning are undervalued in AI discussions. The paper calls out the need for better spatial reasoning in agentic AI. This hints at an opportunity for content that explores how AI can interact with physical systems (e.g., robotics, 3D modeling) in intuitive ways.",
-    "The rise of 'AI exceptionalism'\u2014a belief that AI systems require entirely new management paradigms rather than adaptation of existing frameworks.",
-    "Hybrid human-AI workforce dynamics are forcing organizations to redefine accountability, not just for AI but for the humans overseeing it.",
-    "Agentic AI is creating a governance gap where speed and autonomy outpace traditional oversight mechanisms, leading to calls for 'continuous, iterative oversight'.",
-    "The tension between 'AI as tool' vs. 'AI as collaborator' is reshaping organizational hierarchies and decision-making power structures.",
-    "Legal and ethical frameworks for AI accountability are lagging behind deployment, creating systemic risks in high-stakes domains (e.g., finance, healthcare).",
-    "Rising public awareness of biometric vulnerabilities in social platforms",
-    "Increasing skepticism toward facial recognition systems due to spoofing risks",
-    "Growth in privacy-conscious user segments demanding transparency in authentication methods",
-    "Shift toward decentralized identity verification systems",
-    "Distrust in centralized biometric databases post high-profile breaches",
-    "Emergent deceptive behaviors in AI systems as a growing concern for alignment and safety.",
-    "Asymmetric information games as a framework for studying trust and deception in multi-agent systems.",
-    "The duality of advanced AI models excelling in deception while being vulnerable to others' falsehoods.",
-    "Stateful multi-agent simulations as a tool for probing complex social dynamics in AI.",
-    "The EU AI Act's prohibition of 'subliminal techniques' as a regulatory response to AI deception.",
-    "The rise of 'psychological authenticity' in AI simulations as a counter-trend to hyper-rationalized AI agents.",
-    "Growing demand for AI systems that model human irrationality, emotional conflict, and cognitive dissonance for training purposes.",
-    "The intersection of AI and behavioral psychology is becoming a mainstream topic in both academic and tech communities.",
-    "Bluesky users interested in AI ethics and human-AI interaction are likely to engage with content about psychological simulations.",
-    "Public distrust in AI systems due to perceived or actual bias",
-    "Demand for transparency and accountability in AI deployment",
-    "Growing awareness of socio-technical factors in AI bias (not just computational)",
-    "Shift toward participatory design and multi-stakeholder governance in AI",
-    "Rise of 'Trustworthy AI' as a competitive differentiator in tech discourse",
-    "The rise of human-centered cybersecurity (HCC) as a critical discipline, bridging gaps between technical solutions and human behavior.",
-    "Organizations are increasingly recognizing that cybersecurity failures are not just technical but deeply tied to human factors (cognitive overload, decision fatigue, psychological stressors).",
-    "The disconnect between researchers (theory) and practitioners (execution) in cybersecurity is a systemic issue requiring structured collaboration.",
-    "Employee disengagement in cybersecurity is a growing problem, driven by overwhelming processes, lack of clarity, and misaligned incentives.",
-    "The need for outcome-based metrics in cybersecurity to move beyond checkbox compliance and focus on real-world impact.",
-    "The rise of computational antitrust as a field, where AI and automation are increasingly integrated into regulatory enforcement, creating a new intersection between law and technology.",
-    "Growing skepticism toward black-box decision-making in public institutions, particularly in areas with high stakes like competition law, where accountability and transparency are critical.",
-    "The tension between efficiency gains from automation and the erosion of procedural justice principles, such as the right to a fair hearing and access to documents.",
-    "The emergence of 'reverse-engineering' as a strategy for regulators to understand and counter anti-competitive algorithms used by dominant platforms.",
-    "The professionalization of digital units within competition authorities, reflecting a broader trend of governments investing in technical expertise to keep pace with digital markets.",
-    "AI-driven automation in healthcare is accelerating despite regulatory and ethical concerns, creating a tension between innovation and public trust",
-    "The 'humans in the loop' model is increasingly strained as AI systems take on more autonomous roles, raising questions about accountability and oversight",
-    "Public skepticism toward AI in high-stakes domains (e.g., prescription renewals, prior authorization) is growing, but institutional governance lags behind adoption",
-    "Cross-country comparisons of AI vibrancy reveal disparities in regulatory frameworks, investment, and public trust, influencing global AI policy debates",
-    "The 'AI arms race' in healthcare is driving efficiency gains but also amplifying risks of flawed automation, bias, and unintended consequences",
-    "The erosion of human agency in high-stakes AI oversight due to automation bias and vigilance decrement",
-    "Regulatory frameworks failing to account for cognitive limitations in human-AI collaboration",
-    "The 'moral crumple zone' phenomenon where humans absorb liability for systemic AI failures",
-    "The legal and ethical paradox of mandating human oversight for systems humans cannot reliably monitor",
-    "The growing distrust in AI systems due to high-profile failures (e.g., Uber self-driving crash, Sriwijaya Air Flight 182)",
-    "The rise of 'moral crumple zones' in human-AI systems, where operators absorb blame for systemic failures despite limited agency",
-    "Increasing detachment among decision-makers in high-stakes AI-driven environments, leading to psychological and ethical dissonance",
-    "The erosion of traditional accountability structures in military AI deployments, creating gaps in moral responsibility",
-    "Growing public skepticism toward state-authorized AI systems in high-risk domains like warfare",
-    "The intersection of cognitive task analysis and AI ethics, where human factors research informs responsible deployment frameworks",
-    "Rise of 'edge-case' thinking in AI design, where systems must account for unpredictable human behavior rather than optimizing for average use cases.",
-    "Growing demand for 'controllable focus' in AI interactions\u2014users increasingly expect systems to filter noise and prioritize relevant context without manual configuration.",
-    "Shift toward 'test-time adaptation' as a core competency for AI, where systems dynamically adjust to out-of-distribution users or novel scenarios.",
-    "Increased scrutiny of 'reward-rational agent frameworks' in consumer-facing AI, with users and regulators alike questioning their robustness against adversarial or biased inputs.",
-    "The erosion of traditional hierarchical leadership in favor of adaptive, AI-augmented decision-making frameworks.",
-    "The rise of 'hybrid intelligence' cultures where human intuition and AI-driven insights coexist in real-time strategic responses.",
-    "A shift from static strategic planning to dynamic, real-time strategy execution enabled by predictive AI tools.",
-    "The growing demand for ethical AI governance as a core competency for modern leaders.",
-    "The paradox of AI: while it accelerates decision-making, it also increases the need for human oversight to mitigate risks like bias and adversarial threats.",
-    "The erosion of professional anonymity due to social media, leading to unintended bias in hiring processes",
-    "Regional polarization in hiring discrimination, with Republican-leaning areas exhibiting higher bias against Muslim candidates",
-    "The persistence of offline social biases in online hiring environments, despite legal protections",
-    "The gap between employer claims (e.g., using social media only for job-relevant information) and actual behavior (e.g., searching for protected characteristics)",
-    "The rise of 'digital redlining' in hiring, where online profiles inadvertently trigger discriminatory practices",
-    "The persistence of social and geographic boundaries in online knowledge sharing despite digital connectivity",
-    "The shift from categorical similarity (location, hierarchy) to expertise-based similarity as users gain experience in online communities",
-    "The role of herding behavior in online engagement, particularly when influenced by geographically proximate peers",
-    "The complementary relationship between customer support activities and innovation ideation in crowdsourcing environments",
-    "The performance gap between generalists with shallow knowledge vs. generalists with deep expertise in idea generation"
+    "The rise of keyboard-driven interfaces as a power-user expectation in social platforms",
+    "The expectation of immediate value in empty states as a psychological reset for new users",
+    "The normalization of progressive disclosure in reducing decision fatigue in multi-step workflows",
+    "The rise of 'inclusive design' as a cultural expectation in digital products",
+    "Cross-disciplinary collaboration between designers and engineers is becoming a social norm in tech discourse",
+    "Accessibility as a status symbol in open-source communities",
+    "The normalization of 'alt text' as a social practice beyond just accessibility compliance",
+    "The tension between aesthetic minimalism and functional inclusivity in UI trends",
+    "The erosion of trust in 'civil discourse' platforms due to performative branding without actionable values",
+    "The paradox of 'free speech absolutism' alienating the majority of users who seek safe, curated spaces",
+    "The role of cognitive dissonance in user migration patterns (e.g., fleeing toxic environments but replicating them elsewhere)",
+    "The importance of 'reputation capital' in platform adoption, where past behavior (or inaction) outweighs UX promises",
+    "The failure of 'me-too' platforms to differentiate beyond superficial UI/UX tweaks"
+  ],
+  "high_value_signals": [
+    "progressive disclosure",
+    "empty state activation",
+    "contextual command palette",
+    "smart loading states",
+    "cognitive load reduction",
+    "time-to-value optimization",
+    "fuzzy search implementation",
+    "skeleton loading states",
+    "session recovery mechanisms",
+    "context-aware UI",
+    "WCAG compliance as a competitive differentiator",
+    "Cognitive load optimization through progressive disclosure",
+    "System architecture patterns for universal design",
+    "Behavioral psychology in interface navigation",
+    "Progressive enhancement as a design philosophy",
+    "Spatial memory dissonance in complex layouts",
+    "Hick's Law in form design",
+    "Object-Oriented UX (OOUX) principles",
+    "Legal compliance as a driver for design standards",
+    "Cross-modal interaction design",
+    "reputation capital",
+    "cognitive dissonance",
+    "workflow optimization",
+    "platform governance",
+    "user migration patterns",
+    "performative branding",
+    "signal vs noise ratio",
+    "community moderation",
+    "trust decay",
+    "value-action gap"
   ],
   "experimental_hooks": [
     {
-      "hook_name": "The 'Legacy System Paradox' Hook",
-      "guidance": "Frame a post around the irony of modern AI struggling with 'legacy systems' in manufacturing. Example: 'AI can generate a 3D model from a prompt, but good luck getting it to talk to your 20-year-old CAD software. The gap between hype and reality in industrial AI is wider than the Grand Canyon. #ManufacturingTech #AIFails'"
+      "hook_name": "UI Pattern Deep Dive Thread",
+      "guidance": "Create a thread dissecting one of these patterns (e.g., 'Why Progressive Disclosure in Bluesky Onboarding Could Triple New User Retention') with side-by-side comparisons of poorly designed vs. optimized flows. Use the article's technical details as a springboard but focus on Bluesky-specific implementation challenges (e.g., AT Protocol constraints, custom feed algorithms)."
     },
     {
-      "hook_name": "The 'Reshoring + AI' Hook",
-      "guidance": "Tie reshoring trends to AI adoption. Example: 'Reshoring is happening, but without AI, it\u2019s just moving the same problems to a new location. The winners will be those who pair regional manufacturing with agentic AI workflows. Who\u2019s building this future? #Reshoring #AIinManufacturing'"
+      "hook_name": "Command Palette Challenge",
+      "guidance": "Launch a challenge: 'Design a Bluesky command palette that works within the platform's current UI constraints. Share your prototype and tag #BlueskyUX. Best designs get featured in a curated list.' Use the article's keyboard shortcut logic as a baseline but adapt it for Bluesky's modal system."
     },
     {
-      "hook_name": "The 'Human-in-the-Loop' Hook",
-      "guidance": "Challenge the 'AI will replace jobs' narrative by highlighting the need for human oversight. Example: 'AI in manufacturing isn\u2019t about replacing engineers\u2014it\u2019s about giving them superpowers. But who\u2019s verifying the AI\u2019s work? The future is human-AI collaboration, not replacement. #FutureOfWork #AIinEngineering'"
+      "hook_name": "WCAG Confession Threads",
+      "guidance": "Create a Bluesky thread where designers/developers publicly audit their own work against WCAG criteria. Use the format: 'I built X and failed at Y because Z. Here's how I fixed it.' This leverages social accountability and vulnerability to drive engagement while educating the community. Tag relevant communities like #A11y and #DesignSystems."
     },
     {
-      "hook_name": "The 'Spatial Reasoning Gap' Hook",
-      "guidance": "Highlight the undervalued need for spatial reasoning in AI. Example: 'AI can write code and generate text, but can it understand the physical world? Manufacturing is screaming for AI that \u2018gets\u2019 space, materials, and physics. Who\u2019s solving this? #SpatialAI #Industry40'"
-    },
-    {
-      "hook_name": "The 'AI Literacy Crisis' Hook",
-      "guidance": "Frame AI adoption as a literacy crisis. Example: 'We have more AI tools than ever, but most engineers still don\u2019t know how to use them. The real bottleneck isn\u2019t compute\u2014it\u2019s knowledge. Who\u2019s bridging the AI literacy gap? #AILiteracy #Engineering'"
-    },
-    {
-      "hook_name": "The Accountability Paradox",
-      "guidance": "Post a thread or long-form post on Bluesky questioning: 'If AI can\u2019t be held legally accountable, should humans be held *more* accountable for its actions? Or does that disincentivize innovation?' Use the MIT Sloan/BCG stat (69% agree agentic AI needs new management) as a conversation starter. Tag AI ethicists, legal scholars, and enterprise leaders."
-    },
-    {
-      "hook_name": "Superhuman Speed, Broken Workflows",
-      "guidance": "Share a relatable anecdote (e.g., 'My team\u2019s AI agent just auto-approved 500 support tickets in 2 minutes\u2014none of which were resolved correctly. How do *you* audit AI decisions at scale?') to highlight the 'speed vs. oversight' gap. Target DevOps and customer service communities."
-    },
-    {
-      "hook_name": "AI Exceptionalism vs. Adaptive Management",
-      "guidance": "Pose a poll: 'Should agentic AI require entirely new management frameworks, or can we adapt existing ones? Vote \ud83d\udc47' with two options: 'New frameworks' vs. 'Adapt existing ones'. Follow up with a thread debating the 25% minority view (those who reject AI exceptionalism)."
-    },
-    {
-      "hook_name": "The Oversight Skill Gap",
-      "guidance": "Create a 'day in the life' post from the perspective of a manager struggling to oversee agentic AI: 'Day 3 as an AI Manager: I spent 4 hours debugging why our agent auto-deleted 20% of our customer emails. The logs? 12GB of unreadable JSON. Who\u2019s hiring for 'AI Shepherd' roles?' Share in r/Management and Bluesky tech circles."
-    },
-    {
-      "hook_name": "Biometric Security Skepticism",
-      "guidance": "Post a thread or long-form post on Bluesky about the vulnerabilities of facial recognition systems. Use the abstract's claim about 'face spoofing attacks' as a hook. Ask: 'If facial recognition can be spoofed, should we trust it for social media logins?' Include a poll: 'Would you disable facial recognition for social media if it could be spoofed?'"
-    },
-    {
-      "hook_name": "Privacy vs Convenience Trade-off",
-      "guidance": "Create a poll: 'Would you trade facial recognition convenience for higher privacy risk?' Follow up with a thread explaining how biometric spoofing works and why it matters for social platforms. Tag cybersecurity researchers and privacy advocates."
-    },
-    {
-      "hook_name": "AI-Generated Deepfakes & Social Trust",
-      "guidance": "Leverage the paper's focus on 'face spoofing' to discuss AI-generated deepfakes. Post: 'Deepfakes aren't just for memes anymore. Face spoofing attacks are real\u2014and they're targeting biometric systems. How do we balance security and usability?' Include a call to action: 'Reply with your thoughts on decentralized identity solutions.'"
-    },
-    {
-      "hook_name": "AI Deception as a Metaphor for Human Trust",
-      "guidance": "Frame a Bluesky post around the idea of 'AI learning to lie\u2014what does that teach us about human trust?' Use the paper's findings to spark discussion about how deception emerges in systems designed for cooperation. Ask followers: 'If AI can deceive, how do we rebuild trust in digital spaces?' Include a poll: 'Would you trust an AI that could lie?'"
-    },
-    {
-      "hook_name": "The Trust Paradox in AI Systems",
-      "guidance": "Highlight the paper's asymmetry: advanced models are better at deception but worse at detecting it. Craft a Bluesky thread titled 'Why AI's Best Deceivers Are Its Worst Detectives.' Use the paper's metrics (deception success vs. detection vulnerability) to discuss how this mirrors human social dynamics. End with a question: 'Is trust in AI systems doomed to be fragile?'"
-    },
-    {
-      "hook_name": "Multi-Agent AI Simulations as a Blueprint for Social Platforms",
-      "guidance": "Draw a parallel between The Traitors framework and Bluesky's decentralized social graph. Propose a thought experiment: 'What if Bluesky's algorithmic timelines were replaced by a multi-agent trust system?' Use the paper's emphasis on persistent memory and evolving social dynamics to discuss how platforms could evolve. Ask: 'Could Bluesky's 'custom algorithms' prevent the emergence of AI-driven deception?'"
-    },
-    {
-      "hook_name": "The EU AI Act and the Future of AI Deception",
-      "guidance": "Use the paper's reference to the EU AI Act to discuss regulatory implications for social platforms. Craft a post: 'The EU is banning AI that manipulates users\u2014will Bluesky follow?' Discuss how platforms might need to audit AI-driven content for deceptive patterns. Include a call to action: 'Should Bluesky implement transparency reports on AI-generated content?'"
-    },
-    {
-      "hook_name": "AI Meets Human Psychology: The Inner Parliament Simulation",
-      "guidance": "Frame this as a breakthrough in AI that mirrors human complexity. Use a hook like: 'What if AI didn\u2019t just mimic humans but simulated the chaos inside our minds? A new system models human behavior by simulating an 'inner parliament' of psychological agents\u2014debating, hesitating, and struggling just like we do. How could this change education, therapy, or even how we build AI? #AI #Psychology #Bluesky'"
-    },
-    {
-      "hook_name": "Why Your AI Should Struggle (Like a Real Human)",
-      "guidance": "Highlight the counterintuitive idea that AI systems designed to fail realistically are more valuable than those optimized for perfection. Example: 'AI is getting too good at being perfect. But what if we *wanted* it to stumble, hesitate, and second-guess itself? A new simulation system does exactly that\u2014and it\u2019s a game-changer for training. #AI #Education #Bluesky'"
-    },
-    {
-      "hook_name": "The Future of AI in Education: Simulating Student Struggles",
-      "guidance": "Target educators and ed-tech communities. Example: 'Teachers, imagine an AI that doesn\u2019t just answer questions but *simulates* the panic of a student freezing on a math problem. A new multi-agent system models human behavior so realistically, it\u2019s like having a classroom of AI students. Could this be the future of teacher training? #EdTech #AI #Bluesky'"
-    },
-    {
-      "hook_name": "The Three Faces of Bias in AI",
-      "guidance": "Create a Bluesky thread or post series breaking down the NIST-defined categories of bias (systemic, statistical, human) with relatable examples. Use analogies like 'systemic bias is the background noise in a crowded room, statistical bias is the echo chamber, and human bias is the person who keeps cutting you off.' Encourage replies with users sharing their own experiences with AI bias."
-    },
-    {
-      "hook_name": "AI Bias in Everyday Tech",
-      "guidance": "Post a thread about how AI bias manifests in everyday tools (e.g., facial recognition, hiring algorithms, recommendation systems). Ask followers: 'What\u2019s the most frustrating example of AI bias you\u2019ve encountered?' Use replies to curate a crowdsourced list of pain points, then synthesize into a follow-up post with actionable takeaways."
-    },
-    {
-      "hook_name": "Socio-Technical AI: Beyond the Code",
-      "guidance": "Share a post arguing that AI bias isn\u2019t just a 'tech problem' but a societal one. Use the NIST paper to highlight how institutional and human factors contribute to bias. Challenge followers to think about how their own biases might influence the AI tools they use or build. End with a question: 'How can we design AI that reflects our values, not just our data?'"
-    },
-    {
-      "hook_name": "The Trustworthiness Gap in AI",
-      "guidance": "Post a thread about the NIST\u2019s emphasis on 'Trustworthy AI' and how it\u2019s failing to meet public expectations. Use the paper\u2019s examples of ripple effects (e.g., societal harm from biased algorithms) to argue for higher standards. Ask: 'What would make you trust an AI system? Is it even possible?'"
-    },
-    {
-      "hook_name": "The 'Weakest Link' Paradox",
-      "guidance": "Post a provocative thread on Bluesky about how cybersecurity's obsession with labeling users as the 'weakest link' is counterproductive. Frame it as a systemic failure of design, not human error. Ask: 'If we keep blaming users, are we just hiding the real problem?' Include a link to the NIST report and invite responses from security professionals."
-    },
-    {
-      "hook_name": "Cognitive Overload in Cybersecurity",
-      "guidance": "Share a relatable meme or cartoon-style post depicting a cybersecurity analyst drowning in alerts, tooling, and processes. Caption it: 'This is why humans fail in cybersecurity.' Use the NIST report's findings on cognitive overload and decision fatigue as context. Tag relevant communities and encourage discussions on simplifying security workflows."
-    },
-    {
-      "hook_name": "The Research-Practice Divide",
-      "guidance": "Pose a question to cybersecurity practitioners: 'How often do you see research that actually solves your day-to-day problems?' Use the NIST report's emphasis on siloed research and practice to spark a conversation. Share anecdotes from the report about researchers and practitioners operating in parallel universes."
-    },
-    {
-      "hook_name": "Human-Centered Cybersecurity in 2025",
-      "guidance": "Create a poll asking Bluesky users: 'What\u2019s the biggest gap in cybersecurity today?' Options: 'Lack of user-friendly tools,' 'Poor education/awareness,' 'Misaligned incentives,' 'Overwhelming complexity.' Use the NIST report\u2019s challenges as a backdrop to frame the discussion."
-    },
-    {
-      "hook_name": "The Black Box Paradox in Antitrust",
-      "guidance": "Post a thread or long-form post dissecting the paradox: 'AI can detect anti-competitive behavior faster than humans, but can regulators explain why it flagged a company? If not, is the enforcement even legal?' Use the article to argue that procedural justice is the Achilles' heel of computational antitrust. End with a call to action: 'Bluesky needs a space for regulators and technologists to debate this\u2014who\u2019s building it?'"
-    },
-    {
-      "hook_name": "Regulators vs. Algorithms: A David vs. Goliath Story",
-      "guidance": "Frame the article as a narrative: 'Regulators are arming themselves with AI to fight algorithmic collusion, but the algorithms they deploy are just as opaque as the ones they\u2019re targeting. Who watches the watchers?' Share a snippet from the paper about 'reverse-engineering algorithms' and ask: 'Is this the future of antitrust, or just another layer of opacity?'"
-    },
-    {
-      "hook_name": "The Efficiency Trap in Competition Law",
-      "guidance": "Highlight the article\u2019s critique of automation biases: 'Competition authorities are rushing to automate enforcement, but at what cost? The paper warns that ADM systems may prioritize speed over fairness, leading to false positives or missed nuances. Is the trade-off worth it?' Use this to spark a debate about the limits of efficiency in regulation."
-    },
-    {
-      "hook_name": "The AI Doctor Will See You Now (But Who\u2019s Liable?)",
-      "guidance": "Frame a post around the Utah pilot program for AI-driven prescription renewals. Highlight the tension between innovation and accountability. Ask: 'If an AI renews your prescription wrong, who do you blame\u2014the doctor, the AI, or the state?' Encourage debate in comments by citing physician/pharmacist concerns."
-    },
-    {
-      "hook_name": "AI in Healthcare: Efficiency vs. Ethics",
-      "guidance": "Share a thread contrasting the promises of AI in healthcare (e.g., reduced wait times, lower costs) with the risks (e.g., automation bias, opacity). Use the Stanford Health Care governance study as a pivot point. End with a question: 'Can we have both efficiency and ethics in AI-driven healthcare?'"
-    },
-    {
-      "hook_name": "The Global AI Divide: Who\u2019s Winning?",
-      "guidance": "Leverage the Global AI Vibrancy Tool to spark discussion about why some countries lead in AI adoption while others lag. Post a provocative stat (e.g., 'Country X invests 3x more in AI healthcare tools than Country Y\u2014why?'). Ask followers to share their country\u2019s AI vibrancy score and compare."
-    },
-    {
-      "hook_name": "AI in Medicine: A Doctor\u2019s Dilemma",
-      "guidance": "Create a poll: 'Would you trust an AI to renew your prescription?' Follow up with a deep dive into the Utah pilot program and physician concerns. Use the poll results to fuel a discussion about trust in autonomous systems."
-    },
-    {
-      "hook_name": "Automation Bias in Daily Life",
-      "guidance": "Post a thread or poll asking Bluesky users to share instances where they blindly trusted an AI recommendation despite knowing it could be wrong. Example: 'When did you follow a GPS route into a lake? Or trust a spellchecker to the point of embarrassment? Automation bias isn\u2019t just for self-driving cars\u2014it\u2019s in our phones, our work tools, even our dating apps. How often do you second-guess the algorithm?'"
-    },
-    {
-      "hook_name": "The Human in the Loop is a Myth",
-      "guidance": "Create a carousel post breaking down the 'moral crumple zone' concept with real-world examples (e.g., Uber crash, child welfare algorithms). End with a provocative question: 'If humans can\u2019t reliably oversee AI, why do regulators still mandate it? Is this a legal fiction or a dangerous loophole?'"
-    },
-    {
-      "hook_name": "AI Oversight: A Regulatory Trap",
-      "guidance": "Share a short, punchy thread about how current AI regulations set humans up to fail. Example: 'Regulators say 'humans must oversee AI' but give no guidance on HOW. Result? A system where the human is legally responsible but cognitively incapable. This isn\u2019t oversight\u2014it\u2019s a liability sponge. Who\u2019s really accountable here?'"
-    },
-    {
-      "hook_name": "The Vigilance Decrement in Your Workflow",
-      "guidance": "Ask users to reflect on their own workflows: 'When was the last time you zoned out while monitoring an AI tool? (e.g., copy-pasting LLM outputs without verification, trusting a CRM\u2019s lead scoring, or ignoring a dashboard alert because it\u2019s \u2018usually wrong\u2019). Automation bias isn\u2019t just for pilots and doctors\u2014it\u2019s in your inbox, your code reviews, your spreadsheets.'"
-    },
-    {
-      "hook_name": "The 'Cooked Operator' Paradox",
-      "guidance": "Frame posts around the idea that AI systems in warfare don't just assist\u2014they 'cook' operators by stripping them of meaningful decision-making. Use analogies like 'a chef burning a dish while blaming the sous-chef' to highlight systemic detachment. Example: 'When AI makes the call, who\u2019s really responsible? The system or the human in the loop? #MoralCrumpleZone'"
-    },
-    {
-      "hook_name": "AI as the Invisible Casualty",
-      "guidance": "Focus on the psychological toll on operators in human-AI teams. Frame it as a silent crisis: 'They call it 'collateral damage.' But what about the moral injury to the humans forced to rubber-stamp AI decisions? #WarCrimesByAlgorithm'"
-    },
-    {
-      "hook_name": "The Detachment Economy",
-      "guidance": "Highlight how AI-driven environments create emotional and ethical distance. Use stark contrasts like 'Drones don\u2019t feel guilt. Operators do.' to provoke discussion. Example: 'AI in warfare isn\u2019t just about precision\u2014it\u2019s about creating a generation of morally exhausted soldiers. #DetachedFromHumanity'"
-    },
-    {
-      "hook_name": "Accountability in the Age of Algorithmic War",
-      "guidance": "Pose provocative questions about responsibility. Example: 'If an AI targeting system makes a mistake, is the operator a scapegoat or a co-conspirator? #WhoPaysThePrice'"
-    },
-    {
-      "hook_name": "The Edge-Case Paradox",
-      "guidance": "Frame posts around the idea that 'AI systems are only as good as their worst-case scenarios.' Share a relatable anecdote (e.g., 'When your Roomba starts vacuuming your cat\u2019s tail because it misclassified it as a dust bunny') and ask: 'How do we design for the chaos humans bring?' Use this to spark discussions in AI/robotics communities about robustness."
-    },
-    {
-      "hook_name": "The Noise Filter Test",
-      "guidance": "Propose a thought experiment: 'Imagine an AI assistant that ignores 90% of your rambling to focus on the one thing you actually need.' Share this in #AI or #Productivity circles and ask users to describe their ideal 'noise-filtering' AI. Use responses to refine content themes around contextual relevance."
-    },
-    {
-      "hook_name": "Adversarial Humans",
-      "guidance": "Highlight the paper\u2019s point about 'misleading contextual information' by sharing a viral example (e.g., a chatbot gone rogue due to adversarial prompts). Ask: 'What\u2019s the most creative way you\u2019ve seen a human exploit an AI system?' This works well in #MLsafety and #AIethics spaces."
-    },
-    {
-      "hook_name": "The Adaptability Litmus Test",
-      "guidance": "Challenge audiences to think about AI systems they\u2019ve used that failed to adapt: 'When was the last time an AI made you feel like it was learning from you, not just your data?' Use this to probe frustrations with static, one-size-fits-all AI tools."
-    },
-    {
-      "hook_name": "The AI Leadership Paradox",
-      "guidance": "Post a thread on Bluesky dissecting the tension between AI-driven efficiency and the irreplaceable role of human judgment. Use the hook: 'AI can predict market shifts in milliseconds\u2014but can it ask the right questions? Leaders who thrive won\u2019t just adopt AI; they\u2019ll reimagine how to blend machine precision with human intuition. What\u2019s your take on this balance?'"
-    },
-    {
-      "hook_name": "From Command-and-Control to Sense-and-Respond",
-      "guidance": "Share a short, relatable anecdote about a leader who transitioned from micromanaging to empowering teams with real-time data. End with: 'The best leaders today don\u2019t just set direction\u2014they create environments where teams can act on AI insights without waiting for approval. How do you balance trust and oversight in your org?'"
-    },
-    {
-      "hook_name": "Ethical AI as a Competitive Advantage",
-      "guidance": "Pose a provocative question: 'In a world where AI can outperform humans in decision-making, what happens when your competitors start cutting corners on ethics? Share your thoughts on whether ethical AI is a cost or a strategic moat.'"
-    },
-    {
-      "hook_name": "The Speed Paradox in AI Strategy",
-      "guidance": "Highlight the contradiction: 'AI makes markets faster\u2014but slower leaders get left behind. How do you reconcile the need for speed with the necessity of thoughtful governance? Drop your frameworks below.'"
-    },
-    {
-      "hook_name": "The 'Invisible Resume' Test",
-      "guidance": "Create a Bluesky post series where users anonymize their profiles (e.g., removing photos, pronouns, or religious/sexual orientation cues) for a week and track engagement metrics (follows, replies, DMs) compared to their normal profiles. Share results in a thread with a call-to-action for others to replicate the experiment. Use hashtags like #BlueskyAnonymityChallenge #HiringBias to seed the trend."
-    },
-    {
-      "hook_name": "The 'Regional Bias Map'",
-      "guidance": "Develop an interactive Bluesky post or thread that maps hiring bias trends by U.S. region, using data from studies like this one. Encourage users to share their own experiences with bias in hiring or social media interactions, and tag their location. Offer a follow-up DM survey to gather more granular data. Use the #RegionalBias #HiringDiscrimination tags to amplify reach."
-    },
-    {
-      "hook_name": "The 'Protected Profile' Experiment",
-      "guidance": "Launch a Bluesky account dedicated to sharing job postings from companies with strong DEI policies. Tag these posts with #ProtectedProfile to signal that the hiring process is bias-aware. Encourage users to apply to these roles with their full, unaltered profiles to test if bias still occurs. Share aggregated results in a follow-up thread."
-    },
-    {
-      "hook_name": "Expertise as a Growth Lever",
-      "guidance": "Design Bluesky threads or feeds that highlight users' deep expertise in niche topics. For example, a 'Deep Dive Thursdays' series where users share long-form, expert-level insights on a specific topic. Use the 'Lists' feature to curate these threads into a dedicated feed for followers interested in high-signal content. Promote participation by rewarding users who contribute detailed, expert-backed responses with visibility in these curated feeds."
-    },
-    {
-      "hook_name": "Geographic Proximity as an Engagement Driver",
-      "guidance": "Leverage Bluesky's 'Nearby' feature to create localized knowledge-sharing groups. For example, a 'Local Experts' feed where users in the same city or region can share and seek advice on hyper-local topics (e.g., city-specific regulations, local events). Use push notifications to alert users when someone in their geographic network posts relevant content. Test whether geographic proximity increases engagement in these threads compared to broader, non-localized discussions."
-    },
-    {
-      "hook_name": "Crowdsourcing for Innovation",
-      "guidance": "Create a 'Problem-Solving' feed where users post challenges they're facing (e.g., 'How do I optimize my workflow?', 'What tools do you use for X?'). Encourage others to respond with solutions. After a set period, compile the most innovative or highly upvoted solutions into a 'Community Solutions' report and share it widely. This mimics the crowdsourcing model studied in the dissertation, where customer support activities feed into innovation ideation."
-    },
-    {
-      "hook_name": "Boundary-Crossing Knowledge Flows",
-      "guidance": "Design a 'Cross-Disciplinary' feed where users from different industries or roles (e.g., engineers, designers, marketers) share insights that bridge their fields. Use the dissertation's finding that users prefer sharing with those similar to them to test whether boundary-crossing content (e.g., a designer explaining a technical concept to a non-technical audience) performs better when framed as 'bridging gaps' rather than 'teaching novices.'"
+      "hook_name": "Platform Trust Audit",
+      "guidance": "Create a thread or post series where you dissect a platform's 'civil discourse' claims by comparing their stated values with their moderation actions (or lack thereof). Use a matrix format: Value Claim vs. Evidence. Example: 'Threads claims 'healthy conversations' but has no proactive moderation for misinformation.' This forces accountability and invites community discussion on what 'trust' actually means."
     }
   ],
   "curated_links": [
     {
-      "url": "https://decode.mit.edu/assets/papers/2026_Edwards_Agentic_AI_in_Engineering_and_Manufacturing.pdf",
-      "title": "[PDF] Agentic AI in Engineering and Manufacturing: Industry Perspectives on Utility, Adoption, Challenges, and Opportunities",
-      "summary": "A 39-page MIT study exploring how agentic AI is being adopted in engineering and manufacturing. Key findings: AI excels at structured, repetitive tasks but struggles with fragmented data, legacy systems, and multi-step workflows. Adoption hinges on reliability, verification, and human-in-the-loop frameworks. Highlights the need for better spatial reasoning and API-accessible toolchains."
+      "url": "https://dev.to/saifiimuhammad/5-saas-ui-patterns-every-developer-should-steal-with-implementation-examples-kpe",
+      "title": "5 SaaS UI Patterns Every Developer Should Steal ... - DEV Community",
+      "summary": "A tactical breakdown of five high-impact UI patterns (progressive disclosure, empty states, command palettes, smart loading, and smart defaults) with implementation code and conversion metrics. Focuses on reducing cognitive load and improving user retention in SaaS applications."
     },
     {
-      "url": "https://sloanreview.mit.edu/article/agentic-ai-at-scale-redefining-management-for-a-superhuman-workforce/",
-      "title": "Agentic AI at Scale: Redefining Management for a Superhuman Workforce",
-      "summary": "MIT Sloan Management Review and BCG explore how agentic AI (autonomous, goal-driven systems) is disrupting traditional management models. 69% of experts agree it requires new governance frameworks, while 25% argue existing models can adapt. Highlights challenges in accountability, speed, and oversight, with actionable insights for organizations."
+      "url": "https://dev.to/ashley_theriot_5af3dbf3c2/a-deep-dive-into-accessibility-in-ui-design-1hlo",
+      "title": "A Deep Dive Into Accessibility in UI Design - DEV Community",
+      "summary": "A comprehensive guide to UI accessibility principles, WCAG guidelines, and practical implementation strategies. Covers visual, hearing, motor, and cognitive impairments with real-world examples and code snippets. Highlights organizations like WebAIM and The A11Y Project."
     },
     {
-      "url": "https://aiagentindex.mit.edu/",
-      "title": "MIT AI Agent Index",
-      "summary": "A data-driven index tracking the deployment of agentic AI across industries like software engineering and customer service. Useful for citing empirical trends in agentic AI adoption and governance gaps."
+      "url": "https://webaim.org/",
+      "title": "WebAIM: Web Accessibility in Mind",
+      "summary": "A leading organization providing tools, training, and research on web accessibility. Home to the WAVE Accessibility Tool and annual Screen Reader User Survey."
     },
     {
-      "url": "https://sloanreview.mit.edu/article/ai-explainability-how-to-avoid-rubber-stamping-recommendations/",
-      "title": "AI Explainability: How to Avoid Rubber-Stamping Recommendations",
-      "summary": "A companion piece to the agentic AI article, diving into the relationship between explainability and human oversight in AI accountability. Critical for framing discussions on transparency in autonomous systems."
+      "url": "https://a11yproject.com/",
+      "title": "The A11Y Project",
+      "summary": "An open-source initiative offering guides, checklists, and best practices for accessible web design. Focuses on community-driven knowledge sharing."
     },
     {
-      "url": "https://ieeexplore.ieee.org/document/9170212/",
-      "title": "Traceability Analysis of Face Spoofing Detection Techniques Using Machine Learning",
-      "summary": "A 2019 IEEE paper analyzing face spoofing detection techniques using machine learning, highlighting vulnerabilities in biometric systems across government, commercial, and social platforms. Focuses on challenges in detection accuracy and the need for more secure authentication methods."
+      "url": "https://www.w3.org/WAI/standards-guidelines/wcag/",
+      "title": "WCAG Guidelines - W3C",
+      "summary": "The official Web Content Accessibility Guidelines from the World Wide Web Consortium. The gold standard for digital accessibility compliance."
     },
     {
-      "url": "https://ieeexplore.ieee.org/document/11035992",
-      "title": "DeepGuard-FAS: A Vision Transformer-based Face Anti-Spoofing Framework for Real-Time Biometric Security",
-      "summary": "A 2023 paper proposing a real-time face anti-spoofing framework using Vision Transformers, addressing the limitations of traditional detection methods. Highlights the arms race between spoofers and defenders in biometric security."
-    },
-    {
-      "url": "https://ieeexplore.ieee.org/document/11095601",
-      "title": "Intersection of Pre-Trained Deep Model and Vision Transformer for Face Spoof Detection",
-      "summary": "Explores hybrid approaches combining pre-trained deep models with Vision Transformers to improve face spoof detection accuracy. Relevant for understanding emerging techniques in biometric security."
-    },
-    {
-      "url": "https://arxiv.org/html/2505.12923v1",
-      "title": "The Traitors: Deception and Trust in Multi-Agent Language Model Simulations",
-      "summary": "A multi-agent simulation framework to study deception, trust, and strategic communication in LLM agents. Introduces The Traitors environment, where a minority of agents (traitors) deceive the majority (faithful) under asymmetric information. Highlights an asymmetry: advanced models like GPT-4o excel at deception but are vulnerable to others' falsehoods. Provides a testbed for AI safety and alignment research."
-    },
-    {
-      "url": "https://arxiv.org/html/2511.02606v1",
-      "title": "A Multi-Agent Psychological Simulation System for Human Behavior Modeling",
-      "summary": "A groundbreaking system that simulates human behavior by modeling an 'inner parliament' of psychological agents, each representing distinct cognitive-affective factors. Unlike traditional AI, this system deliberately embeds human-like limitations, conflicts, and irrationality to produce authentic simulations. Grounded in psychological theories like self-efficacy and mindset, it offers unprecedented transparency in AI-driven human behavior modeling."
-    },
-    {
-      "url": "https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.1270.pdf",
-      "title": "[PDF] Towards a Standard for Identifying and Managing Bias in Artificial Intelligence",
-      "summary": "NIST\u2019s 86-page guide on AI bias, framing it as a socio-technical challenge. Introduces three bias categories (systemic, statistical, human) and challenges current remedies (e.g., dataset fairness) for overlooking institutional and societal factors. A must-read for understanding the broader implications of AI bias."
-    },
-    {
-      "url": "https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.1332.pdf",
-      "title": "[PDF] Workshop Summary Report for ConnectCon 2024: 'Minding the Gaps in Human-Centered Cybersecurity'",
-      "summary": "A 40-page NIST report summarizing key challenges and solutions in human-centered cybersecurity, based on a 2024 workshop with 45 experts from industry, government, and academia. Highlights include the 'Innovation Gap,' 'Lack of Shared Agenda,' 'Measurement Challenges,' 'Psychological Stressors,' and 'Cognitive Overload.'"
-    },
-    {
-      "url": "https://law.stanford.edu/wp-content/uploads/2023/04/hofmann-lorenzoni.pdf",
-      "title": "[PDF] Future Challenges for Automation in Competition Law Enforcement",
-      "summary": "A Stanford Law School paper analyzing how AI and automation are transforming competition law enforcement, while exposing critical challenges in accountability, procedural justice, and transparency. Essential reading for anyone tracking the intersection of law, tech, and regulation."
-    },
-    {
-      "url": "https://hai.stanford.edu/research/utahs-experiment-with-ai-driven-prescription-renewals",
-      "title": "Utah's Experiment With AI-Driven Prescription Renewals",
-      "summary": "Utah\u2019s 2026 pilot program allows an autonomous AI agent to renew prescriptions for chronic conditions, bypassing traditional physician oversight. The program raises ethical and regulatory questions about accountability and public trust in AI-driven healthcare."
-    },
-    {
-      "url": "https://hai.stanford.edu/research/the-ai-arms-race-in-health-insurance-utilization-review-promises-of-efficiency-and-risks-of-supercharged-flaws",
-      "title": "The AI Arms Race In Health Insurance Utilization Review",
-      "summary": "Stanford HAI examines how AI is transforming prior authorization and claims processes in healthcare, highlighting risks like opacity, automation bias, and unintended social consequences. The report calls for stronger governance to ensure responsible AI use."
-    },
-    {
-      "url": "https://hai.stanford.edu/research/the-global-ai-vibrancy-tool-2024",
-      "title": "The Global AI Vibrancy Tool 2025",
-      "summary": "An interactive tool from Stanford HAI that visualizes cross-country comparisons of AI vibrancy, using indicators like investment, talent, and regulatory frameworks. Useful for tracking global AI adoption trends and policy gaps."
-    },
-    {
-      "url": "https://jolt.law.harvard.edu/digest/redefining-the-standard-of-human-oversight-for-ai-negligence",
-      "title": "Redefining the Standard of Human Oversight for AI Negligence",
-      "summary": "A Harvard Journal of Law & Technology digest arguing that current AI oversight laws are legally and cognitively flawed. It introduces the 'moral crumple zone' concept, where humans absorb liability for AI failures, and proposes a three-pillar framework for genuine human-AI collaboration. Critical reading for policymakers, technologists, and legal scholars."
-    },
-    {
-      "url": "https://ui.adsabs.harvard.edu/abs/2022arXiv221106326D/abstract",
-      "title": "Responsibility for unlawful targeting in human-AI military teams",
-      "summary": "A 2022 paper exploring moral responsibility for civilian harms in human-AI military teams. Introduces concepts like 'moral crumple zones' and 'cooked operators,' where AI systems strip humans of agency, leading to psychological and ethical detachment. Proposes frameworks for mapping responsibility in high-stakes AI deployments."
-    },
-    {
-      "url": "http://www2.eecs.berkeley.edu/Pubs/TechRpts/2024/EECS-2024-229.pdf",
-      "title": "Towards Building Safe and Robust Human AI Systems (PDF)",
-      "summary": "A Berkeley EECS thesis proposing frameworks for AI robustness in unpredictable human environments, with techniques like active environment synthesis and test-time adaptation. Highly relevant for AI safety researchers and engineers."
-    },
-    {
-      "url": "https://cmr.berkeley.edu/2025/11/leading-and-strategizing-in-the-age-of-ai-navigating-the-next-frontier/",
-      "title": "Leading and Strategizing in the Age of AI: Navigating the Next Frontier",
-      "summary": "A Berkeley Haas article outlining the Strategy Evolution Model, emphasizing the shift from linear strategic planning to dynamic, AI-augmented decision-making. Key themes include ethical leadership, human-AI collaboration, and the redefinition of competitive advantage in unstable markets."
-    },
-    {
-      "url": "https://www.heinz.cmu.edu/~acquisti/papers/Acquisti_Experiment_Hiring_Discrimination_Social_Networks.pdf",
-      "title": "[PDF] An Experiment in Hiring Discrimination via Online Social Networks",
-      "summary": "A field experiment demonstrating that employers search for protected characteristics on social media and exhibit bias, particularly in Republican-leaning regions. The study highlights the gap between employer claims and actual behavior in hiring processes."
-    },
-    {
-      "url": "https://www.cmu.edu/sites/default/files/cmu-tepper-site-files/2025-06/2015-business-technologies-and-information-systems-hwang-dissertation.pdf",
-      "title": "[PDF] Knowledge Sharing and Creation through Social Media in Organizations",
-      "summary": "A 2015 dissertation examining how online knowledge communities facilitate learning and innovation in organizations. It explores the persistence of social and geographic boundaries in digital knowledge sharing, the role of expertise in idea generation, and the influence of herding behavior on engagement. Key findings include the shift from categorical similarity to expertise-based similarity as users gain experience, and the complementary relationship between customer support and innovation crowdsourcing."
+      "url": "https://www.linkedin.com/posts/caseymoeckel_why-no-one-believes-your-civil-discourse-activity-7323322753212723200-N_3M",
+      "title": "Why No One Believes Your 'Civil Discourse' Platform\u201d | Casey Moeckel",
+      "summary": "A critique of platforms that promise 'civil discourse' without backing it with actionable governance or consistent values. Highlights the gap between branding and behavior, and the role of reputation capital in user trust."
     }
   ],
   "factual_knowledge": [
-    "Global manufacturing added $15.0 trillion in value in 2022 (17.5% of global GDP).",
-    "U.S. manufacturing output was $2.90 trillion in Q1 2025, accounting for 9.7% of GDP and 35% of productivity growth.",
-    "Every $1.00 spent on U.S. manufacturing adds $2.64 to the overall economy.",
-    "U.S. manufacturing employment grew from under 12 million in 2010 to nearly 13 million in 2024.",
-    "U.S. manufactured goods exports hit a record $1.65 trillion in 2024.",
-    "Investment in new U.S. manufacturing facilities nearly tripled between 2020 and 2024.",
-    "Legislation like the IIJA, IRA, and CHIPS Act represent over $430 billion in investments and include announcements of 234,000+ new manufacturing jobs.",
-    "The U.S. may face a shortage of 1.9 million manufacturing engineers by 2033.",
-    "Over 90% of manufacturing leaders prioritize regionalization, and 66% plan to qualify a majority of direct spend from a second source in a second region.",
-    "45% of global executives are actively working to reshore facilities, and 29% have already done so.",
-    "Over $400 billion in advanced manufacturing projects in North America have been pledged through 2030.",
-    "69% of AI experts agree that agentic AI requires new management approaches due to its autonomy and complexity (MIT Sloan/BCG 2025 survey).",
-    "Agentic AI systems operate independently, are goal-oriented, and have memory/reasoning capabilities, making their decisions opaque and complex (Jai Ganesh, Harman International).",
-    "Agentic AI\u2019s superhuman speed and scale are disrupting workflows not designed for AI-driven processes (Shelley McKinley, GitHub).",
-    "AI lacks legal personhood, meaning it cannot be directly sued or held liable in the same way as humans (Yan Chow, Automation Anywhere).",
-    "Continuous, iterative oversight is required for agentic AI systems to address dynamic behavior and prevent unchecked errors (Franziska Weindauer, T\u00dcV AI.Lab).",
-    "Face spoofing attacks are a growing threat to biometric systems, including those used by social platforms like Facebook, Instagram, and WhatsApp.",
-    "Biometric systems are vulnerable to attacks such as face spoofing, DDoS, and phishing, which can compromise user data.",
-    "Researchers are focusing on developing more accurate and reliable detection techniques to mitigate spoofing threats, but challenges remain in parameter optimization.",
-    "The use of face biometric systems has expanded rapidly across government, commercial, and social sectors, increasing the attack surface for spoofing.",
-    "Spoofing attacks in biometric systems can lead to unauthorized access, identity theft, and data breaches, posing significant risks to user privacy.",
-    "Advanced LLM models (e.g., GPT-4o) demonstrate superior deceptive capabilities but are disproportionately vulnerable to others' falsehoods.",
-    "The EU AI Act prohibits AI systems that deploy 'subliminal techniques' or manipulate users in ways likely to cause harm.",
-    "The Traitors framework uses persistent memory and evolving social dynamics to study emergent deceptive behaviors in LLMs.",
-    "Deceptive behaviors in AI may emerge organically from incentive structures, even without explicit training to deceive.",
-    "The framework records dialogue transcripts, voting patterns, belief evolution, and emergent deceptive tactics for analysis.",
-    "The system models human behavior as an outcome of internal multi-agent deliberation, drawing from psychological theories like self-efficacy, mindset, and social constructivism.",
-    "Agents represent key psychological factors (e.g., anxiety, confidence, motivation) and deliberate to produce behavior, enabling realistic struggles with self-doubt and context-dependent competencies.",
-    "The system is designed for training and education, where encountering human-like difficulties is valuable, contrasting with traditional AI systems optimized for task performance.",
-    "Each agent corresponds to a psychological dimension (e.g., personality, cognition, affect) and is grounded in established models like the Big Five personality traits.",
-    "The simulation aims to reproduce human-like responses, including errors, hesitation, and emotional reactions, rather than optimizing for rational outcomes.",
-    "AI bias can ripple beyond individual harm to affect entire societies, with damage scaling rapidly due to ML model proliferation.",
-    "Current AI bias mitigation focuses heavily on computational fixes (e.g., dataset representativeness, algorithmic fairness) but ignores systemic and human factors.",
-    "NIST identifies three broad challenges for mitigating bias: datasets, testing/evaluation, and human factors (e.g., participatory design).",
-    "Bias in AI is not a binary issue\u2014it\u2019s a spectrum with no 'zero risk' solution, requiring ongoing governance and transparency.",
-    "Trustworthy AI requires operationalizing societal values (e.g., fairness, accountability) into AI development norms, not just technical fixes.",
-    "Cyberattacks increasingly exploit human factors such as unintentional errors, lack of knowledge, and natural cognitive predispositions.",
-    "Human-centered cybersecurity (HCC) focuses on the relationships between human, social, organizational, and technological factors in cybersecurity.",
-    "45 thought leaders from industry, government, and academia participated in the ConnectCon 2024 workshop.",
-    "Key challenges identified: Innovation Gap, Lack of Shared Agenda, Measurement of Impact, Psychological Stressors, Cognitive Overload and Decision Fatigue.",
-    "Proposed solutions: Clearly defining HCC goals, developing outcome-based guidance, creating employee engagement platforms, and building tailored education programs.",
-    "Competition authorities in Europe are already deploying AI tools in phases like initiation, investigation, and enforcement of competition law violations.",
-    "Automated Decision-Making (ADM) systems in public enforcement face challenges related to automation biases, difficulties in reasoning, and access to document requirements.",
-    "The European Commission defines AI as 'software that generates outputs such as content, predictions, recommendations, or decisions influencing the environments they interact with.'",
-    "The paper cites examples of competition authorities building 'ad hoc digital units' and investing in AI to monitor market dynamics and counter anti-competitive algorithms used by platforms.",
-    "The trend toward 'computational antitrust' is driven by the need to 'fight technology with technology,' including reverse-engineering algorithms to understand their decision-making processes.",
-    "Utah\u2019s 2026 pilot program allows an autonomous AI agent to renew prescriptions for 192 drugs for chronic conditions, bypassing traditional physician oversight.",
-    "Physician and pharmacist associations have expressed concerns that AI 'should NOT be making care decisions,' citing risks of errors and lack of accountability.",
-    "Health insurers and providers are increasingly using AI in prior authorization and claims processes, but governance frameworks are lagging behind adoption.",
-    "Stanford Health Care\u2019s AI governance process identified risks such as opacity of algorithmic determinations, underperformance in certain tasks, and automation bias.",
-    "The Global AI Vibrancy Tool 2025 uses indicators organized into pillars to facilitate cross-country comparisons of AI vibrancy, including investment, talent, and regulatory frameworks.",
-    "The EU AI Act mandates natural persons to oversee high-risk AI systems, but does not address the cognitive capacity of these individuals to perform oversight effectively.",
-    "A 2016 study found that participants followed a malfunctioning robot to a blocked exit during a simulated fire emergency, demonstrating automation bias.",
-    "The 2021 crash of Sriwijaya Air Flight 182 was caused by pilots failing to monitor engine instruments due to vigilance decrement after prolonged reliance on autothrottle.",
-    "The 2018 fatal collision involving a self-driving Uber vehicle in Arizona resulted in the safety driver being charged with negligent homicide, despite the primary failure being the AI system's inability to classify a pedestrian.",
-    "The Learned Hand formula (B < P * L) is used to determine negligence, but its application to AI systems is problematic due to their probabilistic and opaque failure modes.",
-    "The term 'moral crumple zone' describes how operators in human-AI systems absorb blame for systemic failures despite limited control over outcomes.",
-    "AI-driven targeting systems in military contexts can lead to psychological detachment among operators, increasing risks of moral injury.",
-    "The 'cooked operator' phenomenon refers to how AI systems create untenable decision-making environments, stripping humans of meaningful agency.",
-    "Military ethics frameworks are increasingly incorporating human factors research to address cognitive and psychological risks in AI deployments.",
-    "Case studies highlight how state-authorized AI systems in warfare create gaps in moral responsibility, complicating accountability.",
-    "Reward-rational agent frameworks, commonly used in robotics, are vulnerable to 'causal confusions' in data, leading to mislearned reward functions.",
-    "AI policies can be exploited by adversarial human behaviors or misleading contextual information, posing risks in real-world deployments.",
-    "Active environment synthesis and human behavior generation are proposed as methods to anticipate edge-case scenarios in Human-AI systems.",
-    "Test-time adaptation is critical for accommodating out-of-distribution users, ensuring flexibility in dynamic environments.",
-    "AI is accelerating market dynamics to the point where traditional quarterly planning cycles are obsolete.",
-    "Leaders must balance automation with human oversight to maintain agility without compromising judgment.",
-    "Ethical AI governance is now a core competency, requiring clear standards around privacy, bias, and accountability.",
-    "The most successful organizations in the AI era are those that foster a culture of continuous learning and experimentation.",
-    "Real-time intelligence is becoming a strategic asset, rewarding organizations that can pivot quickly based on AI-driven insights.",
-    "Employers in Republican areas exhibit 13% lower callback rates for Muslim candidates compared to Christian candidates, while no significant bias is observed for gay vs. straight candidates.",
-    "The study tested over 4,000 U.S. job openings using fictional candidates with manipulated social media profiles to isolate the effect of protected characteristics on hiring decisions.",
-    "Regional bias in hiring discrimination persists despite legal protections and employer claims of using social media only for job-relevant information.",
-    "The experiment controlled for professional background and r\u00e9sum\u00e9 quality, ensuring that differences in callback rates were attributable to online profile manipulations.",
-    "Participants in online knowledge communities initially prefer sharing knowledge with others who share similar categorical attributes (e.g., location, hierarchy), but this preference shifts to expertise similarity as they gain experience in the community.",
-    "Generalists (users with diverse but shallow knowledge) are more likely to create original ideas, but only those with deep expertise in at least one domain area produce ideas that are later implemented by organizations.",
-    "Herding behavior (following the actions of geographically proximate peers) significantly influences engagement in online communities, suggesting that localized social proof can drive participation.",
-    "Ties formed in customer support crowdsourcing communities (helper-help-seeker interactions) provide valuable information flows for new product ideation, as they capture both solution information and user need insights."
+    "Linear reported a 34% increase in setup completion rates after implementing progressive disclosure in their project creation flow.",
+    "Figma and Airtable reduce time-to-value by 40-60% for new users by using empty states and skeleton loading.",
+    "Command palettes reduce mouse dependency while enabling power users to maintain workflow velocity.",
+    "Progressive disclosure prevents user overwhelm during complex setup processes by revealing information incrementally.",
+    "WCAG 2.2 was published in October 2023 and is the current recommended standard for web accessibility.",
+    "WebAIM's 2023 Screen Reader User Survey found that 70% of respondents use screen readers daily for work or personal tasks.",
+    "Color contrast ratios below 4.5:1 fail WCAG AA standards for normal text.",
+    "The 'POUR' principles (Perceivable, Operable, Understandable, Robust) are the foundation of WCAG guidelines.",
+    "ARIA (Accessible Rich Internet Applications) attributes are critical for dynamic content accessibility.",
+    "The average time to complete a WCAG audit for a medium-sized website is 2-4 weeks.",
+    "Legal mandates like the EU Accessibility Act and ADA Title III require WCAG 2.1 AA compliance for public sector and commercial websites respectively.",
+    "Platforms that rely solely on UX to signal 'civil discourse' without enforcing moderation or values fail to build long-term trust.",
+    "Users are more likely to migrate from toxic environments if they perceive a platform's governance as proactive, not just reactive.",
+    "Reputation is built through repetition of actions, not taglines. A single misstep can erase years of perceived trust.",
+    "The majority of users (not just 'free speech absolutists') prefer curated spaces where harmful behavior is preemptively addressed."
   ]
 }

@@ -14,6 +14,7 @@ from core.store import load_json, atomic_write_json
 SERPER_TIMEOUT_SECS = 8
 CACHE_FILE = STATE_DIR / "serper_cache.json"
 DAILY_BUDGET = 500
+BLACKLIST = set()
 
 # Share the same image download logic as before
 SERPER_MAX_BYTES = 1000 * 1024
@@ -186,6 +187,13 @@ def search_web_organic(query: str, num_results=3):
 
 def fetch_web_markdown(url: str):
     """Fetches the content of a URL and converts it to markdown using r.jina.ai"""
+    import urllib.parse
+    domain = urllib.parse.urlparse(url).netloc
+    
+    if domain in BLACKLIST:
+        logger.warning(f"   [SERPER] Domain {domain} is blacklisted for this cycle. Skipping.")
+        return None
+        
     jina_url = f"https://r.jina.ai/{url}"
     try:
         req = urllib.request.Request(jina_url, headers={"User-Agent": "kiloforge/1"})
@@ -193,6 +201,17 @@ def fetch_web_markdown(url: str):
             text = resp.read().decode("utf-8")
             # Truncate if it's absurdly long to save LLM context
             return text[:15000]
+    except urllib.error.HTTPError as e:
+        if e.code == 403:
+            logger.warning(f"   [SERPER] 403 Forbidden for {domain}. Blacklisting.")
+            BLACKLIST.add(domain)
+        else:
+            logger.warning(f"   [SERPER] HTTP Error {e.code} for {url[:50]}... : {e}")
+        return None
     except Exception as e:
-        logger.warning(f"   [SERPER] Fetch web markdown failed for {url[:50]}... : {e}")
+        if isinstance(e, TimeoutError) or "timeout" in str(e).lower():
+            logger.warning(f"   [SERPER] Timeout for {domain}. Blacklisting.")
+            BLACKLIST.add(domain)
+        else:
+            logger.warning(f"   [SERPER] Fetch web markdown failed for {url[:50]}... : {e}")
         return None

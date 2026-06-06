@@ -97,7 +97,7 @@ def _classify_prompt(store, samples, topic_angle_examples):
     a paste-back."""
     archetypes = ", ".join(store.soul.post_hooks)
     body = "\n".join(f"[{i}] {t}" for i, (_, t, _) in enumerate(samples))
-    examples_str = ", ".join(repr(ex) for ex in topic_angle_examples) if topic_angle_examples else "'design architecture', 'heuristic breakdown'"
+    examples_str = ", ".join(repr(ex) for ex in topic_angle_examples) if topic_angle_examples else "'domain concept analysis', 'workflow heuristic'"
     return (
         f"You are classifying recent high-engagement posts from a niche to "
         f"learn what shapes and topic ideas are getting traction RIGHT NOW. "
@@ -155,7 +155,7 @@ def _classify(store, ai_generate, samples, topic_angle_examples):
     return out
 
 
-def run(net, ai_generate,  topic_angle_examples, sectors):
+def run(store, net, ai_generate):
     """One analyzer pass. ai_generate is a callable that takes a prompt
     string and returns a JSON string (the engine's _generate wrapper, with
     its existing fault handling). Writes the niche_insights blob atomically.
@@ -168,7 +168,7 @@ def run(net, ai_generate,  topic_angle_examples, sectors):
     if not samples:
         logger.info("[ANALYZER] no samples to classify; leaving prior insights.")
         return None
-    classifications = _classify(store, llm.generate, samples, store.topic_angle_examples)
+    classifications = _classify(store, ai_generate, samples, store.topic_angle_examples)
     if not classifications:
         logger.info("[ANALYZER] no classifications; leaving prior insights.")
         return None

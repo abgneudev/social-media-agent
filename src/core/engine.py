@@ -37,6 +37,8 @@ from intelligence import memory
 from intelligence import strategy
 from intelligence import prompts
 import threading
+from clients.llm import RateLimitError
+from atproto import exceptions
 
 
 # ==========================================
@@ -208,7 +210,7 @@ class FollowerEngine:
                 f"3. Exactly 10 'topic_angle_examples' (very specific post concepts).\n\n"
                 f"CRITICAL RULES:\n"
                 f"- Format strictly as JSON.\n"
-                f"- Keep sectors simple (e.g. 'ux_design', 'frontend_architecture').\n\n"
+                f"- Keep sectors simple and representative of your domain.\n\n"
                 f"JSON Response:\n"
                 f'{{\n  "sectors": ["..."],\n  "relevance_signals": ["..."],\n  "topic_angle_examples": ["..."]\n}}'
             )
@@ -247,10 +249,10 @@ class FollowerEngine:
                     f"Generate exactly 10 highly specific, modern, and discoverable search keywords "
                     f"that intersect our persona with the topic of '{sector}'.\n\n"
                     f"CRITICAL RULES FOR KEYWORDS:\n"
-                    f"1. LENGTH: 1 to 3 words MAXIMUM. If you generate 4 words, you fail. (e.g., 'Stripe UX', 'latency', 'from:anthropic.com').\n"
+                    f"1. LENGTH: 1 to 3 words MAXIMUM. If you generate 4 words, you fail. (e.g., specific brand names, core concepts, or author searches like 'from:some_company').\n"
                     f"2. FORMAT: Use normal spaces. DO NOT use snake_case, DO NOT mash words together, NO hashtags.\n"
-                    f"3. BRAND TARGETING: At least 3 keywords must explicitly target a top organization or brand.\n"
-                    f"4. DIVERSITY: Do not anchor on obvious examples. Explore the entire tech ecosystem (Linear, NN/g, OpenAI, etc).\n\n"
+                    f"3. BRAND TARGETING: At least 3 keywords must explicitly target a top organization or brand in your domain.\n"
+                    f"4. DIVERSITY: Do not anchor on obvious examples. Explore the entire ecosystem relevant to your persona.\n\n"
                     f"Respond strictly as JSON:\n"
                     f'{{"keywords": ["kw1", "kw2", "kw3", "kw4", "kw5", "kw6", "kw7", "kw8", "kw9", "kw10"]}}'
                 )
@@ -409,7 +411,7 @@ class FollowerEngine:
             for p in engager_profiles
         )
 
-        prompt = prompts.build_curation_prompt(existing_lists_desc, engager_desc, velocity_desc)
+        prompt = prompts.build_curation_prompt(self.soul, existing_lists_desc, engager_desc, velocity_desc)
 
         raw = self._generate(prompt, dedup=False)
         if not raw:
@@ -662,7 +664,7 @@ class FollowerEngine:
         if self._halted() or self.breaker.is_open():
             return
         local_net = BlueskyAdapter(self._handle, self._password)
-        blob = analyzer.run(local_net, lambda prompt: self._generate(prompt, dedup=False), self.store.keyword_map, self.store.topic_angle_examples, self.store.sectors)
+        blob = analyzer.run(self.store, local_net, lambda prompt: self._generate(prompt, dedup=False))
         if blob is not None:
             self._insights = blob
 
@@ -687,16 +689,9 @@ class FollowerEngine:
             return
         if getattr(self, "_tick_actions", 0) == 0:
             self.store.consecutive_empty_ticks += 1
-            logger.warning(f"   [STALL] empty tick "
-                           f"{self.store.consecutive_empty_ticks}/{STALL_THRESHOLD}")
-            if self.store.consecutive_empty_ticks >= STALL_THRESHOLD:
-                logger.error(f"[STALL] {STALL_THRESHOLD} consecutive empty ticks; "
-                             f"tripping breaker to surface the problem")
-                self.breaker.trip_open(reason=f"stall ({STALL_THRESHOLD} empty ticks)")
+            if self.store.consecutive_empty_ticks % 10 == 0:
+                logger.info(f"   [PACING] Intent queue is pacing. RCPSP Algorithm cooling down (cycle {self.store.consecutive_empty_ticks}).")
         else:
-            if self.store.consecutive_empty_ticks:
-                logger.info(f"   [STALL] action observed, resetting empty counter "
-                            f"(was {self.store.consecutive_empty_ticks})")
             self.store.consecutive_empty_ticks = 0
         self.store.save_engine()
 
@@ -770,7 +765,7 @@ class FollowerEngine:
         if not texts:
             return
         batch = "\n---\n".join(texts)
-        prompt = prompts.build_sense_trends_prompt(hottest, batch)
+        prompt = prompts.build_sense_trends_prompt(self.soul, hottest, batch)
         raw = self._generate(prompt, dedup=False, model_purpose="fast")
         if not raw:
             return
@@ -1117,20 +1112,30 @@ class FollowerEngine:
                 self._spray_likes(candidates)
 
     def _candidates_for(self, sector, allow_whales=False):
-        trend_kw = (random.choice(self.store.trends[sector])
-                    if sector in self.store.trends and self.store.trends[sector] else None)
-        if trend_kw:
-            keyword = trend_kw
-            try:
-                posts = self.net.search_posts(keyword)
-                self.breaker.record_success()
-            except exceptions.AtProtocolError as e:
-                logger.warning(f"   [FAULT] market scan failed: {e}")
-                self.breaker.record_failure()
-                posts = []
-        else:
-            keyword = self.sector_activity.get(sector, {}).get("keyword", sector)
-            posts = self.sector_posts.get(sector, [])
+        posts = []
+        keyword = "authority_feed"
+        authorities = list(self.store.authorities.keys())
+        # SOURCING: 50% of the time, try to pull from our mapped Hit List instead of searching
+        if authorities and random.random() < 0.5:
+            target_did = random.choice(authorities)
+            logger.info(f"   [SOURCING] Pulling candidates from mapped authority feed...")
+            posts = self.net.get_author_feed(target_did, limit=10)
+            
+        if not posts:
+            trend_kw = (random.choice(self.store.trends[sector])
+                        if sector in self.store.trends and self.store.trends[sector] else None)
+            if trend_kw:
+                keyword = trend_kw
+                try:
+                    posts = self.net.search_posts(keyword)
+                    self.breaker.record_success()
+                except exceptions.AtProtocolError as e:
+                    logger.warning(f"   [FAULT] market scan failed: {e}")
+                    self.breaker.record_failure()
+                    posts = []
+            else:
+                keyword = self.sector_activity.get(sector, {}).get("keyword", sector)
+                posts = self.sector_posts.get(sector, [])
         cands = []
         for c in posts:
             did = getattr(c.author, "did", None)
@@ -1160,7 +1165,22 @@ class FollowerEngine:
             filtered_cands = []
             for c in cands:
                 cid = getattr(c, "cid", "")
-                action = results.get(cid, "drop")
+                grade_data = results.get(cid, "drop")
+                
+                action = grade_data
+                if isinstance(grade_data, dict):
+                    action = grade_data.get("action", "drop")
+                    signals = grade_data.get("high_value_signals", [])
+                    if isinstance(signals, list) and signals:
+                        added_signal = False
+                        for s in signals:
+                            if isinstance(s, str) and 3 < len(s) < 40 and s not in self.store.relevance_signals:
+                                self.store.relevance_signals.append(s)
+                                added_signal = True
+                        if added_signal:
+                            logger.info(f"   [LEARNING] Learned new high-value signals: {signals}")
+                            self.store._compile_relevance_re()
+                            
                 if action == "mute":
                     self.net.mute_actor(c.author.did)
                     self.store.log_action("mute", "n/a", "n/a", target_did=c.author.did, learnable=False)
@@ -1170,9 +1190,16 @@ class FollowerEngine:
                     pass
                 elif action == "more":
                     self.net.send_interaction(c.uri, "app.bsky.feed.defs#requestMore")
+                    # DYNAMIC TARGET MAPPING:
+                    if c.author.did not in self.store.authorities:
+                        logger.info(f"   [MAPPER] Mapped new highly credible target: @{getattr(c.author, 'handle', c.author.did)}")
+                        self.store.authorities[c.author.did] = True
+                        self.store.save_engine()
                     filtered_cands.append(c)
-                elif action == "keep":
+                elif action in ("keep", "interact", "like", "reply", "quote", True):
                     filtered_cands.append(c)
+                else:
+                    self.store.log_action("skip", "n/a", "n/a", target_did=c.author.did, learnable=False)
             cands = filtered_cands
             
         return cands, keyword
@@ -1217,45 +1244,47 @@ class FollowerEngine:
         src = (best.record.text or "")[:200]
         constraint = (
             "If the hook is 'amplify_and_praise', you must act as an enthusiastic curator. "
-            "Highlight a specific strength of the quoted post (e.g., typography, layout). "
+            "Highlight a specific strength of the quoted post (e.g., a specific insight or structural detail). "
             "You are strictly forbidden from adding any unsolicited critiques or technical friction. "
         ) if hook == "amplify_and_praise" else ""
 
         # Vision pipeline: extract image from the target post
         image_b64 = self.net.get_post_image_b64(best)
         vision_hint = (
-            "An image is attached to this post. Analyze its structural design "
-            "(e.g., layout, typography, code architecture, algorithmic patterns) "
+            "An image is attached to this post. Analyze its structural details "
             "and synthesize that into your response. Do not explicitly say "
             "'In this image', just integrate the analysis naturally. "
         ) if image_b64 else ""
         if campaign_context:
             vision_hint += f"\nCAMPAIGN STRATEGY: {campaign_context}\n"
 
-        prompt = prompts.build_quote_best_prompt(self.soul, sector, src, hook, constraint, vision_hint)
+        prompt = prompts.build_quote_best_prompt(self.soul, sector, src, hook, constraint, vision_hint, learned_signals=self.store.relevance_signals)
         raw = self._generate(prompt, dedup=True, image_b64=image_b64)
         quote_text = None
         if raw:
             quote_text = self.llm.parse_json(raw, fallback_dict={}).get("comment", None)
         handle = getattr(best.author, "handle", "unknown")
-        if quote_text and self._passes_gates(quote_text):
-            with self.breaker.guard():
-
-                intent_id, uri = self._publish_with_reconcile(
-                    kind="quote", text=quote_text, sector=sector, hook=hook,
-                    write_fn=lambda t: self.net.quote_post(t, best.uri, best.cid),
-                    target_handle=handle, keyword=keyword
-                )
-
+        if quote_text and self._passes_gates(quote_text, context="QUOTE GATE"):
+            try:
+                with self.breaker.guard():
+                    intent_id, uri = self._publish_with_reconcile(
+                        kind="quote", text=quote_text, sector=sector, hook=hook,
+                        write_fn=lambda t: self.net.quote_post(t, best.uri, best.cid),
+                        target_handle=handle, keyword=keyword
+                    )
+                if intent_id and uri:
+                    self.store.mark_seen(f"quote:{best.uri}")
+                    self.store.mark_seen(content_hash(quote_text))
+                    self.store.log_action("quote", sector, hook, uri=uri,
+                                          target_handle=handle, text=quote_text, learnable=True, keyword=keyword)
+                    self.store.remove_pending(intent_id)
+                    self._mark_action("quote", target_handle=handle, uri=uri)
+                    logger.info(f"   [QUOTE] @{handle}: {quote_text[:70]}...")
                 return
-            self.store.mark_seen(f"quote:{best.uri}")
-            self.store.mark_seen(content_hash(quote_text))
-            self.store.log_action("quote", sector, hook, uri=uri,
-                                  target_handle=handle, text=quote_text, learnable=True, keyword=keyword)
-            self.store.remove_pending(intent_id)
-            self._mark_action("quote", target_handle=handle, uri=uri)
-            logger.info(f"   [QUOTE] @{handle}: {quote_text[:70]}...")
-            return
+            except Exception as e:
+                logger.warning(f"   [QUOTE] exception during publish: {e}")
+                # Fall through to repost on failure if desired, or just return
+                pass
         # Fallback: plain repost as goodwill, NOT learnable (no attributable reward).
         try:
             self.net.repost(best.uri, best.cid)
@@ -1270,8 +1299,8 @@ class FollowerEngine:
             self.breaker.record_failure()
 
     def _verify_posts_batch(self, posts):
-        """Pass a batch of posts through the warden to drop unaligned noise."""
-        return warden.verify_posts_batch(self.soul, self.llm, posts)
+        """Passes candidates to Warden for LLM evaluation."""
+        return warden.verify_posts_batch(self.soul, self.llm, posts, learned_signals=self.store.relevance_signals)
 
     def _verify_profiles_batch(self, profiles):
         if not profiles:
@@ -1284,7 +1313,7 @@ class FollowerEngine:
             display = getattr(p, "display_name", "") or ""
             profiles_context += f"- Handle: {handle}\n  Name: {display}\n  Bio: {bio}\n\n"
             
-        prompt = prompts.build_verify_profiles_prompt(self.soul, profiles_context)
+        prompt = prompts.build_verify_profiles_prompt(self.soul, profiles_context, learned_signals=self.store.relevance_signals)
         raw = self._generate(prompt, dedup=False)
         return self.llm.parse_json(raw, fallback_dict={})
 
@@ -1343,16 +1372,10 @@ class FollowerEngine:
             self.breaker.record_failure()
 
     def _is_bot(self, profile):
-        """Returns True if the profile looks like an automated account or engagement farmer."""
-        followers = int(getattr(profile, "followers_count", 0) or 0)
-        following = int(getattr(profile, "follows_count", 0) or 0)
+        """Returns True only if the profile matches extremely obvious spam/bot text markers. Leaves nuanced credibility checks to the LLM."""
         bio = getattr(profile, "description", "") or ""
         handle = getattr(profile, "handle", "") or ""
         display = getattr(profile, "display_name", "") or ""
-
-        # Engagement farming ratio (follows massive numbers, nobody follows back)
-        if following > 5000 and followers < 500:
-            return True
 
         bot_markers = [
             "brid.gy", ".ap.", "activitypub", "awakari", "job-alert", "-bot", "trending", "job-",
@@ -1605,7 +1628,7 @@ class FollowerEngine:
             trends_info += f"\nCAMPAIGN STRATEGY:\n{campaign_context}\nEnsure the variants strongly align with this long-game plan.\n\n"
             
         prompt = prompts.build_variant_prompt(self.soul, sector, archetypes, length_slots,
-                                              opening_slots, trends_info, web_insights)
+                                              opening_slots, trends_info, web_insights, learned_signals=self.store.relevance_signals)
         raw = self._generate(prompt, dedup=True, enable_tools=False, model_purpose="versatile")
         if not raw:
             return archetypes, []
@@ -1863,7 +1886,7 @@ class FollowerEngine:
         if campaign_context:
             vision_hint += f"\nCAMPAIGN STRATEGY: {campaign_context}\n"
 
-        prompt = prompts.build_helpful_reply_prompt(self.soul, sector, batch, hook, whale_constraint, vision_hint)
+        prompt = prompts.build_helpful_reply_prompt(self.soul, sector, batch, hook, whale_constraint, vision_hint, learned_signals=self.store.relevance_signals)
         raw = self._generate(prompt, dedup=True, image_b64=top_image_b64, enable_tools=True, model_purpose="versatile")
         if not raw:
             return
@@ -1885,9 +1908,13 @@ class FollowerEngine:
             except Exception:
                 pass
             return
-        if idx < 0 or idx >= len(candidates) or not self._passes_gates(text):
-            logger.warning("   [GATE] reply skipped (sensitive/range/quality).")
+        if idx < 0 or idx >= len(candidates):
+            logger.warning(f"   [GATE] reply skipped (index {idx} out of range).")
             return
+            
+        if not self._passes_gates(text, context="REPLY GATE"):
+            return
+            
         target = candidates[idx]
         try:
             if self.rate["like"].try_consume():
@@ -1922,20 +1949,26 @@ class FollowerEngine:
         dedup_texts = self.store.recent_content_texts(5) if dedup else None
         return self.llm.generate(prompt, dedup_texts=dedup_texts, image_b64=image_b64, enable_tools=enable_tools, model_purpose=model_purpose)
 
-    def _passes_gates(self, text) -> bool:
+    def _passes_gates(self, text, context="GATE") -> bool:
         if not text or not text.strip() or len(text) > 300:
+            logger.warning(f"   [{context}] skipped: empty or exceeded 300 chars")
             return False
         if self.store.already_acted_on(content_hash(text)):
+            logger.warning(f"   [{context}] skipped: duplicate content")
             return False
         low = text.lower()
         if any(p in low for p in self.soul.get_spam_phrases(config.SPAM_PHRASES_FLOOR)):
+            logger.warning(f"   [{context}] skipped: spam phrase detected")
             return False
         if any(p in low for p in self.soul.get_sensitive_phrases(config.SENSITIVE_PHRASES_FLOOR)):
+            logger.warning(f"   [{context}] skipped: sensitive phrase detected")
             return False
         # word-boundary check for short risky tokens (avoids domain-term collisions)
         if any(re.search(r"\b" + re.escape(w) + r"\b", low) for w in self.soul.get_sensitive_words(config.SENSITIVE_WORDS_FLOOR)):
+            logger.warning(f"   [{context}] skipped: sensitive word detected")
             return False
         if any(ch in text for ch in ("\U0001F300", "\u2014")):  # emoji / em dash
+            logger.warning(f"   [{context}] skipped: emoji or em-dash detected")
             return False
         return True
 
@@ -2036,6 +2069,56 @@ class FollowerEngine:
                 self.intent_queue.push(intent)
                 logger.info(f"   [INTENT] Scheduled: {intent.get('type')} (Priority: {intent.get('priority')}) - {intent.get('reason')}")
 
+    def _process_high_value_signals(self, signals):
+        if not isinstance(signals, list): return
+        added = 0
+        for sig in signals:
+            if not isinstance(sig, str) or not sig.strip(): continue
+            clean_sig = sig.strip()
+            # Prevent exploding the list, max 200 signals
+            if clean_sig not in self.store.relevance_signals and len(self.store.relevance_signals) < 200:
+                self.store.relevance_signals.append(clean_sig)
+                added += 1
+        if added > 0:
+            logger.info(f"   [INTUITION] Added {added} high-value signals from web research.")
+            self.store._compile_relevance_re()
+            self.store.save_engine()
+
+    def _map_graph(self):
+        """Intelligent tool for the Strategist: Crawl followers/likers of top authorities to expand hit list."""
+        authorities = list(self.store.authorities.keys())
+        if not authorities:
+            logger.warning("   [MAPPER] No authorities to map. Skipping.")
+            return
+            
+        target_did = random.choice(authorities)
+        logger.info(f"   [MAPPER] Running Graph Traversal on {target_did}...")
+        posts = self.net.get_author_feed(target_did, limit=5)
+        if not posts: return
+        
+        # Sort by engagement to find a high-signal post
+        posts.sort(key=utils.get_total_engagement, reverse=True)
+        top_post = posts[0]
+        
+        likers = self.net.get_likers(top_post.uri, limit=20)
+        reposters = self.net.get_reposters(top_post.uri, limit=10)
+        
+        candidates = list(set(likers + reposters))
+        added = 0
+        for user in candidates:
+            if self._is_bot(user): continue
+            
+            followers = getattr(user, "followers_count", 0) or 0
+            if followers > 500:
+                did = getattr(user, "did", None)
+                if did and did not in self.store.authorities:
+                    self.store.authorities[did] = True
+                    added += 1
+                    
+        if added > 0:
+            logger.info(f"   [MAPPER] Graph Traversal mapped {added} new mid-tier authorities.")
+            self.store.save_engine()
+
     def orchestrate(self) -> int:
         """The OS Kernel. Pops intents, maps to resources, executes or yields, returns sleep time."""
         self._tick_actions = 0
@@ -2048,12 +2131,9 @@ class FollowerEngine:
         if not self._sense():
             return 30 # Backoff if network is dead
             
-        # 2. Check if queue is empty. If so, call Strategist.
-        if len(self.intent_queue) == 0:
-            if "strategy_plan" not in self.rate or self.rate["strategy_plan"].try_consume():
-                self._run_strategist()
-            else:
-                logger.info("   [OS KERNEL] Queue empty but Strategist is on cooldown. Yielding.")
+        # 2. Run Strategist asynchronously on its natural cadence or if the queue is fully resolved
+        if len(self.intent_queue) == 0 or ("strategy_plan" not in self.rate or self.rate["strategy_plan"].try_consume()):
+            self._run_strategist()
             
         if len(self.intent_queue) == 0:
             # Strategist failed or generated nothing.
@@ -2074,7 +2154,7 @@ class FollowerEngine:
                 max(post_wait, post_cooldown_remaining)
             )))
             budget_summary = ", ".join(f"{k}: {v.tokens:.1f}" for k,v in self.rate.items())
-            logger.info(f"   [OS KERNEL] Queue empty. Budgets: {budget_summary}. Sleeping {sleep_time}s.")
+            logger.info(f"   [OS KERNEL] Action execution complete. Pacing next cycle to abide by RCPSP capacity limits. Sleeping {sleep_time}s.")
             return min(sleep_time, 300)
             
         # 3. Pop and Execute via Resource-Constrained Priority Scheduler
@@ -2142,58 +2222,73 @@ class FollowerEngine:
         # Route execution based on resource availability
         executed = False
         
-        if action == "post" and self.rate["post"].try_consume() and self.rate.get("llm_api", self.rate["post"]).try_consume():
-            self._original_post(sector, keyword=sector, campaign_context=intent.get("reason"))
-            executed = True
-        elif action == "reply" and self.rate["reply"].try_consume() and self.rate.get("llm_api", self.rate["reply"]).try_consume():
-            candidates, keyword = self._candidates_for(sector)
-            if candidates:
-                self._helpful_reply(sector, reply_hook, candidates, keyword, campaign_context=intent.get("reason"))
+        try:
+            if action == "post" and self.rate["post"].try_consume() and self.rate.get("llm_api", self.rate["post"]).try_consume():
+                self._original_post(sector, keyword=sector, campaign_context=intent.get("reason"))
                 executed = True
-        elif action == "follow" and self.rate["follow"].try_consume():
-            candidates, keyword = self._candidates_for(sector)
-            if candidates:
-                self._strategic_follow(sector, post_hook, candidates, keyword, campaign_context=intent.get("reason"))
+            elif action == "reply":
+                candidates, keyword = self._candidates_for(sector)
+                if candidates and self.rate["reply"].try_consume() and self.rate.get("llm_api", self.rate["reply"]).try_consume():
+                    self._helpful_reply(sector, reply_hook, candidates, keyword, campaign_context=intent.get("reason"))
+                    executed = True
+            elif action == "follow":
+                candidates, keyword = self._candidates_for(sector)
+                if candidates and self.rate["follow"].try_consume():
+                    self._strategic_follow(sector, post_hook, candidates, keyword, campaign_context=intent.get("reason"))
+                    executed = True
+            elif action == "like":
+                candidates, keyword = self._candidates_for(sector)
+                if candidates and self.rate["like"].try_consume():
+                    self._spray_likes(candidates)
+                    executed = True
+            elif action == "quote":
+                candidates, keyword = self._candidates_for(sector)
+                if candidates and self.rate["quote"].try_consume() and self.rate.get("llm_api", self.rate["quote"]).try_consume():
+                    self._quote_best(sector, post_hook, candidates, keyword, campaign_context=intent.get("reason"))
+                    executed = True
+            elif action == "research" and self.rate["research"].try_consume() and self.rate.get("llm_api", self.rate["research"]).try_consume():
+                empirical_data = {
+                    "bandit": self.store.bandit, 
+                    "trends": self.store.trends,
+                    "followers_to_anchor_posts_ratio": round(self.store.snapshots[-1]["followers"] / max(1, self.store.anchor_posts), 2) if self.store.snapshots else 0.0
+                }
+                try:
+                    blob = web_research.run_daily_research(lambda p: self._generate(p, dedup=False), empirical_data, intent.get("reason", ""))
+                    if blob and blob.get("high_value_signals"):
+                        self._process_high_value_signals(blob["high_value_signals"])
+                    executed = True
+                except Exception as e:
+                    logger.warning(f"   [RESEARCH] failed: {e}")
+            elif action == "meta_critic" and self.rate["meta_critic"].try_consume() and self.rate.get("llm_api", self.rate["meta_critic"]).try_consume():
+                self._run_evolution()
                 executed = True
-        elif action == "like" and self.rate["like"].try_consume():
-            candidates, keyword = self._candidates_for(sector)
-            if candidates:
-                self._spray_likes(candidates)
-                executed = True
-        elif action == "quote" and self.rate["quote"].try_consume() and self.rate.get("llm_api", self.rate["quote"]).try_consume():
-            candidates, keyword = self._candidates_for(sector)
-            if candidates:
-                self._quote_best(sector, post_hook, candidates, keyword, campaign_context=intent.get("reason"))
-                executed = True
-        elif action == "research" and self.rate["research"].try_consume() and self.rate.get("llm_api", self.rate["research"]).try_consume():
-            empirical_data = {
-                "bandit": self.store.bandit, 
-                "trends": self.store.trends,
-                "followers_to_anchor_posts_ratio": round(self.store.snapshots[-1]["followers"] / max(1, self.store.anchor_posts), 2) if self.store.snapshots else 0.0
-            }
-            try:
-                web_research.run_daily_research(lambda p: self._generate(p, dedup=False), empirical_data, intent.get("reason", ""))
-                executed = True
-            except Exception as e:
-                logger.warning(f"   [RESEARCH] failed: {e}")
-        elif action == "meta_critic" and self.rate["meta_critic"].try_consume() and self.rate.get("llm_api", self.rate["meta_critic"]).try_consume():
-            self._run_evolution()
-            executed = True
-        elif action == "curate" and self.rate["curate"].try_consume() and self.rate.get("llm_api", self.rate["curate"]).try_consume():
-            try:
-                self._autonomous_curation()
-                executed = True
-            except Exception as e:
-                logger.warning(f"   [CURATE] failed: {e}")
-                
+            elif action == "curate" and self.rate["curate"].try_consume() and self.rate.get("llm_api", self.rate["curate"]).try_consume():
+                try:
+                    self._autonomous_curation()
+                    executed = True
+                except Exception as e:
+                    logger.warning(f"   [CURATE] failed: {e}")
+            elif action == "map_graph" and self.rate.get("llm_api", self.rate["curate"]).try_consume():
+                try:
+                    self._map_graph()
+                    executed = True
+                except Exception as e:
+                    logger.warning(f"   [MAPPER] map_graph failed: {e}")
+        except RateLimitError as e:
+            logger.warning(f"   [OS KERNEL] Yielding action '{action}' due to RateLimitError: {e}")
+            self.intent_queue.push(intent)
+            return 60
+            
         if executed:
             self.last_action_time[action] = time.time()
             self.store.save_engine()
-            # Yield to network
-            return 2
+            self._tick_actions += 1
+            # Yield to network with human-like pacing delta (45-120 seconds) 
+            # to prevent bursting all intents instantly
+            return random.randint(45, 120)
         else:
             logger.info(f"   [OS KERNEL] Action '{action}' dropped (Rate limited or no candidates).")
-            return 1
+            return 15
     def _run_system_maintenance(self):
         """Runs periodic background tasks like learning, decaying, and reconciling."""
         now = time.time()
@@ -2214,8 +2309,12 @@ class FollowerEngine:
                     for h in web_insights.get("experimental_hooks", []):
                         hook_name = h.get("hook_name")
                         if hook_name and hook_name not in self.soul.post_hooks:
-                            self.soul.post_hooks.append(hook_name)
-                            self.soul.post_hook_guidance[hook_name] = h.get("guidance", "Experimental hook.")
+                            # 7 core hooks + 1 curated_link + 4 experimental = 12 total hooks allowed
+                            if len(self.soul.post_hooks) < 12:
+                                self.soul.post_hooks.append(hook_name)
+                                self.soul.post_hook_guidance[hook_name] = h.get("guidance", "Experimental hook.")
+                            else:
+                                logger.info(f"   [WEB RESEARCH] Hook capacity reached (12 max). Dropping '{hook_name}'.")
                     if web_insights.get("curated_links") and "curated_link" not in self.soul.post_hooks:
                         self.soul.post_hooks.append("curated_link")
                         self.soul.post_hook_guidance["curated_link"] = "Share a highly credible curated link with your audience. Give a sharp take on it."
