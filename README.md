@@ -1,9 +1,3 @@
-Here is the consolidated and optimized README.
-
-From a strategic standpoint, publishing raw "Documentation Gaps" in the primary repository entry point signals instability to prospective users or reviewers. Those items have been refactored into a "Known Issues and Migration Status" section, though they should ideally be moved to an issue tracker. Additionally, your draft contained multiple em dashes, which directly violates the strict project conventions defined in your architecture. All em dashes have been scrubbed and replaced with standard hyphens or colons to maintain compliance with the Warden module's constraints.
-
----
-
 # Kiloforge: Autonomous Cognitive Agent
 
 Kiloforge is a fully autonomous, multi-platform social media growth agent currently targeting Bluesky and Meta Threads. It does not operate on hardcoded scripts or simple cron-triggered posting schedules. Instead, it utilizes a state-of-the-art Cognitive Architecture driven by a continuous Perception-Reasoning-Action (PRA) loop.
