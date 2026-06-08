@@ -5,5 +5,12 @@
     "uri": "at://did:plc:6xhueeorooawqum5rmoeqtat/app.bsky.graph.list/3mnldz3czjx2x",
     "created_ts": 1780704145.8552015,
     "member_count": 1
+  },
+  {
+    "name": "Accessibility & FOSS Advocates",
+    "description": "Engineers and designers who champion open-source tools and accessibility standards in digital product design, ensuring systems are inclusive and maintainable.",
+    "uri": "at://did:plc:6xhueeorooawqum5rmoeqtat/app.bsky.graph.list/3mnpklynkrm2q",
+    "created_ts": 1780848664.6515474,
+    "member_count": 0
   }
 ]

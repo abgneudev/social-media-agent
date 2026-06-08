@@ -64,6 +64,10 @@ class BlueskyPlatform(Platform):
             return None
 
     def post_engagement(self, uri) -> int:
+        if not uri or not isinstance(uri, str):
+            logger.warning("      [TELEMETRY] cannot inspect post: URI is None or invalid type.")
+            return 0
+
         try:
             resp = self.client.app.bsky.feed.get_post_thread({"uri": uri, "depth": 0})
             post = getattr(resp.thread, "post", None)
@@ -72,8 +76,10 @@ class BlueskyPlatform(Platform):
             return ((getattr(post, "like_count", 0) or 0)
                     + (getattr(post, "repost_count", 0) or 0)
                     + (getattr(post, "reply_count", 0) or 0))
-        except exceptions.AtProtocolError as e:
-            logger.warning(f"      [TELEMETRY] cannot inspect {uri[:40]}: {e}")
+        except (exceptions.AtProtocolError, Exception) as e:
+            # Safely slice the string representation to prevent subscription errors
+            safe_uri = str(uri)[:40]
+            logger.warning(f"      [TELEMETRY] cannot inspect {safe_uri}: {e}")
             return 0
 
     def followed_back_by(self, actor) -> bool:
@@ -105,6 +111,40 @@ class BlueskyPlatform(Platform):
         except exceptions.AtProtocolError as e:
             logger.warning(f"      [FAULT] get_all_follows failed: {e}")
         return follows
+
+    def _extract_facets(self, text: str) -> list | None:
+        """Parses @mentions from raw text, resolves them to DIDs, and builds ATProto facets."""
+        import re
+        from atproto import models
+        
+        facets = []
+        # Regex to find standard AT Protocol handles (e.g., @user.bsky.social)
+        mention_pattern = re.compile(r"(?<![a-zA-Z0-9])@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})")
+        
+        for match in mention_pattern.finditer(text):
+            handle = match.group(1)
+            
+            # ATProto requires strict UTF-8 byte indices, not Python string character indices
+            byte_start = len(text[:match.start()].encode("utf-8"))
+            byte_end = len(text[:match.end()].encode("utf-8"))
+            
+            try:
+                # Resolve the handle to a DID via network call
+                profile = self.client.get_profile(actor=handle)
+                if getattr(profile, "did", None):
+                    facets.append(
+                        models.AppBskyRichtextFacet.Main(
+                            index=models.AppBskyRichtextFacet.ByteSlice(
+                                byte_start=byte_start, 
+                                byte_end=byte_end
+                            ),
+                            features=[models.AppBskyRichtextFacet.Mention(did=profile.did)]
+                        )
+                    )
+            except Exception as e:
+                logger.warning(f"      [FACET] failed to resolve mention @{handle}: {e}")
+                
+        return facets if facets else None
 
     def get_post_image_b64(self, post) -> str | None:
         """Extract the first image from a post's embed and return as base64.
@@ -171,11 +211,13 @@ class BlueskyPlatform(Platform):
                 if getattr(target.record, "reply", None)
                 else {"uri": target.uri, "cid": target.cid})
         parent = {"uri": target.uri, "cid": target.cid}
-        ref = self.client.send_post(text=text, reply_to={"root": root, "parent": parent})
+        facets = self._extract_facets(text)
+        ref = self.client.send_post(text=text, reply_to={"root": root, "parent": parent}, facets=facets)
         return ref.uri if hasattr(ref, "uri") else str(ref)
 
     def post(self, text) -> str:
-        ref = self.client.send_post(text=text)
+        facets = self._extract_facets(text)
+        ref = self.client.send_post(text=text, facets=facets)
         return ref.uri if hasattr(ref, "uri") else str(ref)
 
     def post_with_image(self, text, image_bytes, alt_text="") -> str:
@@ -211,7 +253,8 @@ class BlueskyPlatform(Platform):
         part of the thread, parent is the immediately preceding part."""
         root = {"uri": root_uri, "cid": root_cid}
         parent = {"uri": parent_uri, "cid": parent_cid}
-        ref = self.client.send_post(text=text, reply_to={"root": root, "parent": parent})
+        facets = self._extract_facets(text)
+        ref = self.client.send_post(text=text, reply_to={"root": root, "parent": parent}, facets=facets)
         return ref.uri if hasattr(ref, "uri") else str(ref)
 
     def get_post_cid(self, uri):
@@ -231,7 +274,8 @@ class BlueskyPlatform(Platform):
         embed = models.AppBskyEmbedRecord.Main(
             record=models.ComAtprotoRepoStrongRef.Main(uri=quote_uri, cid=quote_cid)
         )
-        ref = self.client.send_post(text=text, embed=embed)
+        facets = self._extract_facets(text)
+        ref = self.client.send_post(text=text, embed=embed, facets=facets)
         return ref.uri if hasattr(ref, "uri") else str(ref)
 
     def find_post(self, target_hash, limit=50):

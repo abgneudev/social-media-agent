@@ -540,135 +540,24 @@ class FollowerEngine:
                             f"({int(time.time() - p.get('ts', 0))}s old, never landed)")
                 self.store.remove_pending(p["intent_id"])
 
-    # ---- main tick ----
-    def tick(self):
-        self.store.tick += 1
-        t = self.store.tick
-        # Reset per-tick state up front so update_stall_counter (which runs in
-        # the runtime loop even when tick() raises) sees consistent values.
-        # _last_action carries across ticks so status.json keeps showing the
-        # last meaningful action; it is only overwritten when something new
-        # actually happens.
-        self._tick_actions = 0
-        self._tick_active = False
-        if not hasattr(self, "_last_action"):
-            self._last_action = None
-        logger.info(f"\n{'='*60}\n[TICK {t}] {time.strftime('%Y-%m-%d %X')}\n{'='*60}")
-
-        if self._halted():
-            logger.info("[HALTED] kill switch on. No network calls.")
-            return
-        if self.breaker.is_open():
-            logger.info("[BREAKER] open. Skipping tick.")
-            return
-        # Past the gates: this tick is genuinely trying to do work, so the
-        # stall counter should evaluate it.
-        self._tick_active = True
-
-        # Resolve any pending intents from a prior tick or process before we
-        # start generating new content, so the dedup gates see the right state.
-        self._reconcile_pending()
-
-        # Web Research: Load daily insights and inject experimental hooks
-        try:
-            web_insights = web_research.load_insights()
-            if web_insights:
-                for h in web_insights.get("experimental_hooks", []):
-                    hook_name = h.get("hook_name")
-                    if hook_name and hook_name not in self.soul.self.soul.post_hooks:
-                        self.soul.self.soul.post_hooks.append(hook_name)
-                        self.soul.post_hook_guidance[hook_name] = h.get("guidance", "Experimental hook.")
-                if web_insights.get("curated_links") and "curated_link" not in self.soul.self.soul.post_hooks:
-                    self.soul.self.soul.post_hooks.append("curated_link")
-                    self.soul.post_hook_guidance["curated_link"] = "Share a highly credible curated link with your audience. Give a sharp take on it."
-                
-                # Make sure the store knows about dynamic hooks
-                for h in self.soul.post_hooks:
-                    if h not in self.store.bandit["post_hook"]:
-                        self.store.bandit["post_hook"][h] = {"alpha": 1.0, "beta": 1.0}
-        except Exception as e:
-            logger.warning(f"   [WEB RESEARCH] Failed to load/inject insights: {e}")
-
-        # Niche insights are a cheap atomic read; refresh once per tick so
-        # any in-flight analyzer write is picked up by the next pass without
-        # racing the read.
-        self._insights = analyzer.load_insights()
-        # Network telemetry from the firehose daemon (background thread).
-        self._network_telemetry = self._read_network_telemetry()
-
-        if not self._sense():
-            return
-        if t % 5 == 1:
-            self._sense_trends()
-
-        self._learn()
-        self.store.decay()
-        self._maybe_optimize_profile()
-
-        # Analyzer pass on cadence. Runs late in the tick (after sense and
-        # learn) so it has fresh search results to work with. First pass
-        # fires early so we are not flying blind for ANALYZER_CADENCE_TICKS.
-        if t == 1 or t % ANALYZER_CADENCE_TICKS == 0:
-            threading.Thread(target=self._run_analyzer, daemon=True).start()
-
-        # Web research pass: Exponential backoff
-        # Runs frequently early on (e.g., 8, 64 ticks) and scales up to 500 max.
-        if t - self.store.last_research_tick >= self.store.research_interval:
-            try:
-                empirical_data = {
-                    "bandit": self.store.bandit,
-                    "trends": self.store.trends,
-                    "followers": self.store.snapshots[-1]["followers"] if self.store.snapshots else 0
-                }
-                def _do_research():
-                    try:
-                        web_research.run_daily_research(lambda prompt: self._generate(prompt, dedup=False), empirical_data, "", self.store.sectors)
-                    except Exception as e:
-                        logger.warning(f"   [WEB RESEARCH] thread raised: {e}")
-                self.store.last_research_tick = t
-                self.store.research_interval = min(500, int(self.store.research_interval * 1.5))
-                threading.Thread(target=_do_research, daemon=True).start()
-            except Exception as e:
-                logger.warning(f"   [WEB RESEARCH] setup raised: {e}")
-
-        sector, post_hook, reply_hook = self._decide()
-        self._act(sector, post_hook, reply_hook)
-
-        if t % 4 == 0:
-            self._courtesy_follow_back()
-            
-        if t % 15 == 0:
-            self._run_evolution()
-            
-        if t % 150 == 0:
-            try:
-                from intelligence import meta_critic
-                if meta_critic.evaluate_strategy(lambda prompt: self._generate(prompt, dedup=False), self.store.bandit):
-                    from core.soul import load_soul; self.soul = load_soul(config.SOUL_FILE)
-                    self.persona = self.soul.persona
-                    self.llm.persona = self.soul.persona
-            except Exception as e:
-                logger.warning(f"   [META-CRITIC] run raised: {e}")
-
-        # Autonomous list curation every 10 ticks (LLM-driven)
-        if t % 10 == 0:
-            try:
-                self._autonomous_curation()
-            except Exception as e:
-                logger.warning(f"   [CURATE] autonomous curation failed: {e}")
-            
-        self.store.save_engine()
-
     def _run_analyzer(self):
         """One analyzer pass guarded by the same kill switch and breaker
         checks as the main tick. Failures are logged and swallowed: the
         analyzer is a luxury, never load-bearing for posting."""
         if self._halted() or self.breaker.is_open():
             return
-        local_net = BlueskyAdapter(self._handle, self._password)
-        blob = analyzer.run(self.store, local_net, lambda prompt: self._generate(prompt, dedup=False))
-        if blob is not None:
-            self._insights = blob
+            
+        try:
+            # Instantiate an isolated LLM client for the background thread to prevent race conditions
+            from clients import llm
+            thread_llm = llm.LLMClient(self.soul.persona)
+            
+            # Use self.net instead of trying to re-authenticate with missing credentials
+            blob = analyzer.run(self.store, self.net, lambda prompt: thread_llm.generate(prompt, dedup=False))
+            if blob is not None:
+                self._insights = blob
+        except Exception as e:
+            logger.warning(f"   [ANALYZER] Background thread raised: {e}")
 
     def _mark_action(self, kind, **details):
         """Single touch-point for every successful network action: bumps the
@@ -712,6 +601,10 @@ class FollowerEngine:
         self.store.ewma_growth = 0.5 * delta + 0.5 * self.store.ewma_growth
         self.store.snapshots.append({"ts": time.time(), "tick": self.store.tick,
                                      "followers": followers, "delta": delta})
+        
+        # Cap the array at 1000 items to prevent infinite JSON bloat
+        self.store.snapshots = self.store.snapshots[-1000:]
+        
         self.store.save_snapshots()
         self.store.save_engine()
         logger.info(f"[SENSE] followers={followers} (delta {delta:+d}) ewma={self.store.ewma_growth:+.2f}")
@@ -796,9 +689,17 @@ class FollowerEngine:
                 else:
                     # Content actions use binary reward for bandit math (Beta-Binomial invariant),
                     # but we extract EXACT engagement for reporting and Wilson lower bounds.
-                    eng = float(self.net.post_engagement(a["uri"]))
-                    reward = 1.0 if eng > 0 else 0.0
-                    label = f"engagement={eng} (reward={reward})"
+                    
+                    # GUARD: Prevent None or empty URIs from crashing the validator
+                    if not a.get("uri"):
+                        logger.warning(f"   [LEARN] Action missing URI, assigning 0 engagement. Action details: {a.get('id')}")
+                        eng = 0.0
+                        reward = 0.0
+                        label = "missing_uri (reward=0.0)"
+                    else:
+                        eng = float(self.net.post_engagement(a["uri"]))
+                        reward = 1.0 if eng > 0 else 0.0
+                        label = f"engagement={eng} (reward={reward})"
                 self.breaker.record_success()
             except exceptions.AtProtocolError as e:
                 logger.warning(f"   [FAULT] scoring failed, retry next tick: {e}")
@@ -909,8 +810,8 @@ class FollowerEngine:
                     best_post = p
             
             if best_post:
-                self.net.pin_post(best_post.uri, best_post.cid)
-                logger.info(f"   [OPT] Pinned best performing post (engagement={max_eng})")
+                self.net.pin_post(best_post.uri, best_post.cid, self.soul.name, self.soul.bio)
+                logger.info(f"   [OPT] Pinned best performing post (engagement={max_eng})")    
         except Exception as e:
             logger.warning(f"   [OPT] failed to pin post: {e}")
 
@@ -1266,7 +1167,15 @@ class FollowerEngine:
                 best_eng, best = eng, c
         if not best:
             return
-        src = (best.record.text or "")[:200]
+            
+        # 1. Extract handle early
+        handle = getattr(best.author, "handle", "unknown")
+        target_did = getattr(best.author, "did", None)
+        
+        # 2. Inject the handle into the source text so the LLM has author context
+        raw_text = (best.record.text or "")[:200]
+        src = f"@{handle}: {raw_text}"
+        
         constraint = (
             "If the hook is 'amplify_and_praise', you must act as an enthusiastic curator. "
             "Highlight a specific strength of the quoted post (e.g., a specific insight or structural detail). "
@@ -1296,15 +1205,17 @@ class FollowerEngine:
                     intent_id, uri = self._publish_with_reconcile(
                         kind="quote", text=quote_text, sector=sector, hook=hook,
                         write_fn=lambda t: self.net.quote_post(t, best.uri, best.cid),
+                        target_did=target_did,        # <-- FIX: Add missing DID tracking
                         target_handle=handle, keyword=keyword
                     )
                 if intent_id and uri:
                     self.store.mark_seen(f"quote:{best.uri}")
                     self.store.mark_seen(content_hash(quote_text))
                     self.store.log_action("quote", sector, hook, uri=uri,
+                                          target_did=target_did,  # <-- FIX: Add missing DID tracking
                                           target_handle=handle, text=quote_text, learnable=True, keyword=keyword)
                     self.store.remove_pending(intent_id)
-                    self._mark_action("quote", target_handle=handle, uri=uri)
+                    self._mark_action("quote", target_handle=handle, target_did=target_did, uri=uri)
                     logger.info(f"   [QUOTE] @{handle}: {quote_text[:70]}...")
                 return
             except Exception as e:
@@ -1409,13 +1320,13 @@ class FollowerEngine:
         ]
         farming_markers = ["giveaway", "airdrop", "crypto", "web3", "nft", "follow back", "follow-back"]
         
-        handle_lower = handle.lower()
-        bio_lower = bio.lower()
-        display_lower = display.lower()
+        text_to_check = f"{handle.lower()} {bio.lower()} {display.lower()}"
         
-        text_to_check = f"{handle_lower} {bio_lower} {display_lower}"
+        # Use regex \b (word boundaries) to prevent matching "robotics" or "feedback"
+        combined_markers = bot_markers + farming_markers
+        pattern = r"\b(" + "|".join(re.escape(m) for m in combined_markers) + r")\b"
         
-        if any(m in text_to_check for m in bot_markers + farming_markers):
+        if re.search(pattern, text_to_check):
             return True
             
         return False
@@ -1684,8 +1595,15 @@ class FollowerEngine:
             text = v.get("content") or v.get("text") or ""
             media_type = v.get("media_type", "gif")
             media_query = v.get("media_query") or v.get("gifQuery") or ""
+            
+            # Extract and validate thread_parts from the LLM's response
+            raw_threads = v.get("thread_parts", [])
+            thread_parts = raw_threads if isinstance(raw_threads, list) else []
+
             cleaned.append({
-                "archetype": arch, "text": text, "thread_parts": [],
+                "archetype": arch, 
+                "text": text, 
+                "thread_parts": thread_parts,
                 "media_type": media_type,
                 "media_query": media_query,
             })
@@ -1863,7 +1781,7 @@ class FollowerEngine:
         if winner.get("thread_parts") and cid:
             self._publish_thread_continuations(uri, cid, winner["thread_parts"])
         if not self.store.pinned and cid:
-            self.net.pin_post(uri, cid)
+            self.net.pin_post(uri, cid, self.soul.name, self.soul.bio)
             self.store.pinned = True
         self.store.save_engine()
 
@@ -2310,11 +2228,16 @@ class FollowerEngine:
             self.last_action_time[action] = time.time()
             self.store.save_engine()
             self._tick_actions += 1
-            # Yield to network with human-like pacing delta (45-120 seconds) 
-            # to prevent bursting all intents instantly
             return random.randint(45, 120)
         else:
-            logger.info(f"   [OS KERNEL] Action '{action}' dropped (Rate limited or no candidates).")
+            # Re-queue the intent up to 3 times if it fails to find candidates
+            retries = intent.get("retries", 0) + 1
+            if retries < 3:
+                intent["retries"] = retries
+                self.intent_queue.push(intent)
+                logger.info(f"   [OS KERNEL] Action '{action}' delayed (no candidates). Re-queued (Attempt {retries}/3).")
+            else:
+                logger.info(f"   [OS KERNEL] Action '{action}' dropped permanently after 3 failed attempts.")
             return 2
     def _run_system_maintenance(self):
         """Runs periodic background tasks like learning, decaying, and reconciling."""
