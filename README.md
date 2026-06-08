@@ -1,112 +1,211 @@
-# Kiloforge: Autonomous Cognitive Agent Architecture
+Here is the consolidated and optimized README.
 
-Kiloforge is an autonomous, multi-platform AI agent (currently supporting Bluesky and Threads). It does not operate on hardcoded scripts or simple cron jobs. Instead, it utilizes a state-of-the-art **Cognitive Architecture** driven by a continuous **Perception–Reasoning–Action (PRA) loop**. 
-
-The agent learns autonomously using a Reinforcement Learning algorithm (Thompson Sampling) to discover which content angles and niche sectors actually convert to real engagement, dynamically adjusting its future strategies without human intervention.
-
-**North star:** Real followers, measured directly from the platform. The AI only learns from outcomes mathematically attributable to its own actions.
-
-**Niche (current soul):** UX design, frontend engineering, design systems, explained in plain language. Identity, voice, and persona are entirely decoupled into [`soul.yaml`](soul.yaml); the underlying cognitive engine applies to any domain.
+From a strategic standpoint, publishing raw "Documentation Gaps" in the primary repository entry point signals instability to prospective users or reviewers. Those items have been refactored into a "Known Issues and Migration Status" section, though they should ideally be moved to an issue tracker. Additionally, your draft contained multiple em dashes, which directly violates the strict project conventions defined in your architecture. All em dashes have been scrubbed and replaced with standard hyphens or colons to maintain compliance with the Warden module's constraints.
 
 ---
 
-## The Cognitive Architecture (The PRA Loop)
+# Kiloforge: Autonomous Cognitive Agent
 
-Kiloforge is built on the industry-standard design patterns for autonomous agents, strictly separating *Thinking* from *Doing*.
+Kiloforge is a fully autonomous, multi-platform social media growth agent currently targeting Bluesky and Meta Threads. It does not operate on hardcoded scripts or simple cron-triggered posting schedules. Instead, it utilizes a state-of-the-art Cognitive Architecture driven by a continuous Perception-Reasoning-Action (PRA) loop.
 
-### 1. Perception (The Eyes)
-The agent continuously ingests and interprets signals from its environment to build context:
-- **Telemetry:** It polls the live network for real follower metrics and engagement stats.
-- **Semantic Scanning:** It queries the platform firehose using keyword parameters defined in `soul.yaml` to build a real-time activity heatmap (e.g., determining if "frontend engineering" is currently trending).
-- **Target Curation:** It identifies potential human targets, scoring them heuristically based on bio quality, reciprocity, and contextual relevance.
+The agent learns autonomously using a Thompson Sampling reinforcement learning algorithm to discover which content angles and niche sectors convert to real engagement, dynamically adjusting its future strategies without human intervention.
 
-### 2. Reasoning Engine (The Brain)
-Kiloforge utilizes a **Plan-and-Act** design pattern powered by its `Strategist` module.
-- The OS Kernel wakes up the Strategist when its execution queue is depleted (subject to a cooldown).
-- The Brain evaluates short-term context (Token Buckets defining current rate limits for follows/posts/likes) and retrieves semantic context from its Long-Term Memory (`memory.py`).
-- It outputs an `active_plan` (a multi-step strategic narrative) and schedules an `IntentQueue` of up to 15 prioritized micro-actions (e.g., `curate`, `quote`, `like`) designed to exhaust the available budget and maximize network velocity.
+**North Star:** Real followers, measured directly from the platform API. The AI only learns from outcomes mathematically attributable to its own actions.
+**Identity and Niche:** Fully decoupled into `soul.yaml`. The current configuration targets UX Design, Frontend Engineering, and Design Systems. Swap the file to retarget any domain.
 
-### 3. Action Module (The Hands)
-The **OS Kernel** functions as the execution orchestrator, completely devoid of strategic decision-making. 
-- It uses a Resource-Constrained Priority Scheduling (RCPSP) algorithm to pop intents from the queue.
-- If content generation is required, it calls the LLM with strict formatting rules based on the `soul.yaml` persona and the highest-performing psychological "hook."
-- **Omni-Broadcasting:** The Action Module executes through the `OmniPlatform` interface, safely broadcasting payloads to all connected networks (Bluesky & Threads) simultaneously while persisting intent IDs to prevent double-posting in case of network failure.
+## Table of Contents
 
-### 4. Learning & Evolution (Thompson Sampling)
-Kiloforge possesses a mathematical feedback loop:
-- Actions are recorded to an immutable ledger.
-- The system waits for actions to "mature" (e.g., 9 minutes for a post, 25 minutes for a follow).
-- Matured actions are graded against real follower growth. The agent uses a **Thompson Sampling Bandit** to update Beta distribution posteriors for specific Topics and Hooks. The agent mathematically evolves toward what works and abandons what doesn't.
-
-### 5. Guardrails (The Shield)
-To ensure safety and brand alignment, the **Warden** module intercepts all generated content before it touches the network. It enforces hardcoded `SPAM_PHRASES_FLOOR` and `SENSITIVE_PHRASES_FLOOR` arrays, overriding the LLM and rejecting the intent if safety constraints are breached.
+1. [System Architecture](https://www.google.com/search?q=%23system-architecture)
+2. [Directory Structure](https://www.google.com/search?q=%23directory-structure)
+3. [Core Modules](https://www.google.com/search?q=%23core-modules)
+4. [Data Flow and State Management](https://www.google.com/search?q=%23data-flow-and-state-management)
+5. [External Dependencies](https://www.google.com/search?q=%23external-dependencies)
+6. [Setup and Deployment](https://www.google.com/search?q=%23setup-and-deployment)
+7. [Known Issues and Migration Status](https://www.google.com/search?q=%23known-issues-and-migration-status)
 
 ---
 
-## Repo Map
+## System Architecture
+
+Kiloforge follows a Plan-and-Act Cognitive Architecture, strictly separating perception, reasoning, and execution.
+
+```text
+┌──────────────────────────────────────────────────────────────────────┐
+│                          KILOFORGE ENGINE                            │
+│                                                                      │
+│  ┌──────────┐    ┌─────────────┐    ┌──────────────┐                 │
+│  │ PERCEIVE │───▶│    REASON   │───▶│     ACT      │                 │
+│  │          │    │  (Strategist│    │  (OS Kernel) │                 │
+│  │ Telemetry│    │  + Bandit)  │    │  Intent Queue│                 │
+│  │ Firehose │    │             │    │  Rate Budgets│                 │
+│  │ Trends   │    │  sector +   │    │  Platforms   │                 │
+│  └──────────┘    │  hook select│    └──────────────┘                 │
+│        ▲         └─────────────┘           │                         │
+│        │               ▲                   │                         │
+│        │               │                   ▼                         │
+│        │         ┌──────────────┐  ┌──────────────┐                  │
+│        │         │    LEARN     │  │  SAFETY GATE │                  │
+│        └─────────│  Thompson    │  │  Warden +    │                  │
+│  Platform API    │  Sampling    │  │  Hard Floors │                  │
+│  Follower Diff   │  Bandit      │  └──────────────┘                  │
+│                  └──────────────┘                                    │
+└──────────────────────────────────────────────────────────────────────┘
 
 ```
-run.py              Entry point. Wires config + logging, loads Soul, detects
-                    environment variables to build OmniPlatform, and boots
-                    the FollowerEngine.
-soul.yaml           Persona, niche keywords, hooks, creative mediums. Swap
-                    to retarget voice and domain.
 
-src/core/
-  engine.py         FollowerEngine (the OS Kernel). Manages the main PRA loop,
-                    Token Buckets, the intent queue, and calls the Brain.
-  config.py         Constants, logger setup, rate limit definitions, and 
-                    safety floor definitions.
-  soul.py           Parses soul.yaml, generates regex signals, dynamic getters.
-  store.py          atomic_write_json + the Store class. Holds the bandit,
-                    ledger, seen-sets, and engine scratch state.
+### Multi-Platform Broadcasting
 
-src/intelligence/
-  strategist.py     The Brain wrapper (Reasoning Engine).
-  prompts.py        LLM Prompt builders for the Strategist, Warden, and hooks.
-  analyzer.py       Calculates Thompson Sampling posteriors for the bandit.
-  web_research.py   Serper integration for pulling live industry trends.
-  memory.py         Long-term vector-like semantic memory.
+The `OmniPlatform` adapter delegates all read operations to Bluesky (the primary signal source) and fans out write operations to every initialized platform simultaneously. Platform errors on secondary platforms fail gracefully as no-ops, ensuring the primary Bluesky path is never blocked.
 
-src/platforms/
-  platform.py       Abstract base class defining the network interface.
-  bluesky.py        Concrete adapter for ATProto (Bluesky).
-  threads.py        Concrete adapter for Meta Graph API (Threads).
-  omni.py           Broadcaster wrapper. Defers sensing to Bluesky, broadcasts
-                    writes to all initialized platforms.
+### Persistence Model
 
-src/utils/
-  warden.py         Content safety and verification.
-  breaker.py        CircuitBreaker logic to halt execution on rapid failure.
+All mutable state is JSON, written atomically via a temporary file replacement pattern. This guarantees no partial writes are visible to readers, process restarts recover without data corruption, and state survives dyno rotation on cloud hosts.
+
+---
+
+## Directory Structure
+
+```text
+/
+├── run.py                       # Entry point: wires config, boots engine, runs main loop
+├── soul.yaml                    # Identity, persona, hooks, sectors, niche keywords
+├── requirements.txt             # Python dependencies
+├── kiloforge.env.example        # Environment variable template
+├── render.yaml                  # Deployment configuration
+├── runtime.txt                  # Python version pin
+├── src/
+│   ├── core/                    # Engine loop, state storage, governance, soul parsing
+│   ├── intelligence/            # Bandit analyzer, LLM prompts, semantic memory
+│   ├── platforms/               # API adapters (Bluesky, Threads, Omni)
+│   ├── clients/                 # Unified LLM wrapper, web search integration
+│   ├── utils/                   # Warden safety gate, utilities, circuit breakers
+│   └── daemons/                 # Real-time AT Protocol firehose consumption
+├── data/                        # Persistent JSON state and ChromaDB vector store
+├── tests/                       # Test suite for legacy implementation
+└── newagent/                    # Parallel modernized implementation (SQLite-backed)
+
 ```
 
 ---
 
-## Running It
+## Core Modules
 
-### Local Environment
+### FollowerEngine (The OS Kernel)
+
+Located in `src/core/engine.py`. The central orchestrator that manages the PRA loop, the intent queue, and token budgets. It delegates strategic reasoning entirely to the Bandit and Analyzer.
+
+### Soul and Identity
+
+Located in `src/core/soul.py`. Parses `soul.yaml` into a typed dataclass. Validates all required fields at load time and compiles relevance signals into pre-built regex for fast content filtering.
+
+### Persistent State Store
+
+Located in `src/core/store.py`. Manages all durable engine state using atomic JSON writes. Key states include the bandit posteriors, action ledger, follower snapshots, deduplication sets, and the active tick counter.
+
+### Governance and Safety
+
+* **Rate Budgets:** Limits per-action-type throughput using independent token buckets.
+* **Circuit Breaker:** Halts execution for a cooldown period after consecutive network failures.
+* **Warden:** A strict two-phase safety gate. Enforces hard-floor blocking (rejecting em dashes, URLs, and hardcoded sensitive phrases) followed by LLM-driven safeguard moderation.
+
+### Intelligence
+
+* **Niche Analyzer:** Samples high-engagement posts, classifies archetypes, and applies exploration nudges to bandit alpha values.
+* **Semantic Memory:** Uses ChromaDB for episodic and knowledge-base memory, preventing repetitive interactions and maintaining narrative continuity.
+
+---
+
+## Data Flow and State Management
+
+### Content Generation Lifecycle
+
+1. **Sense:** Read follower counts and poll sector keywords.
+2. **Learn:** Mature actions from the ledger and update Beta-Binomial posteriors based on follower delta.
+3. **Decide:** Sample sectors and hooks using Thompson sampling.
+4. **Act:** Consume token budgets, generate content variants, pass through Warden safety checks, and execute network writes.
+5. **Persist:** Atomically save engine state.
+
+### Crash-Safe Write Protocol
+
+All network writes use a pending-intent queue to prevent double-posting during unpredictable failures.
+
+```text
+1. Generate content.
+2. Atomic write to pending_writes.json.
+3. Attempt network platform write.
+4. On restart: Scan pending_writes.json. If content hash exists on timeline, drop intent. If missing, re-execute.
+5. Atomic remove from pending_writes.json upon success.
+
+```
+
+---
+
+## External Dependencies
+
+| Package / Service | Role | Credentials Required |
+| --- | --- | --- |
+| **AT Protocol (Bluesky)** | Primary platform for reads, writes, and firehose telemetry. | `BLUESKY_HANDLE`, `BLUESKY_PASSWORD` |
+| **Groq** | Fast LLM inference for content generation and safeguard moderation. | `GROQ_API_KEY` |
+| **Google Gemini** | Versatile fallback LLM for complex reasoning tasks. | `GEMINI_API_KEY` |
+| **Meta Graph API** | Secondary broadcast platform for Threads. | `THREADS_USER_ID`, `THREADS_ACCESS_TOKEN` |
+| **ChromaDB** | Local persistent vector store for semantic memory. | None |
+
+---
+
+## Setup and Deployment
+
+### Local Installation
 
 ```bash
+git clone <repo-url>
+cd kiloforge
 python -m venv venv
-venv/Scripts/pip install -r requirements.txt
 
-# Bluesky Keys (Required)
-export BLUESKY_HANDLE=yourhandle.bsky.social
-export BLUESKY_PASSWORD=xxxx-xxxx-xxxx-xxxx
+# Windows
+venv\Scripts\activate
+# macOS / Linux
+source venv/bin/activate
 
-# Groq (Required for Reasoning Engine)
-export GROQ_API_KEY=gsk_...
+pip install -r requirements.txt
+pip install websockets
 
-# Threads Keys (Optional for OmniPlatform Broadcast)
-export THREADS_USER_ID=123456789
-export THREADS_ACCESS_TOKEN=EAAGxxxx...
-
-python run.py --live
 ```
 
-## Code Conventions
+### Environment Configuration
 
-- **State Decoupling:** Global variables are prohibited. The `Soul` object and State representations must be passed down the call stack to maintain modularity.
-- **No Em Dashes:** Em dashes are strictly forbidden in code, comments, docs, or generated content. The Warden will refuse to publish text containing an em dash.
-- **Atomic Operations:** State must only be updated via atomic writes. Never write JSON state in place.
-- **Graceful Degradation:** All platform adapters inherit from the `Platform` interface. Unsupported API actions (e.g., list curation on Threads) must fail gracefully as no-ops rather than crashing the Kernel.
+Copy `kiloforge.env.example` to `.env` and populate the required keys.
+
+* `BLUESKY_HANDLE`: Handle without the `@` symbol.
+* `BLUESKY_PASSWORD`: App Password, not the account login password.
+* `KF_STATE_DIR`: Directory for state files (defaults to `./data`).
+
+### Execution Commands
+
+```bash
+# Dry run: Generates content variants without network writes
+python run.py --dry-run
+
+# Live run: Full autonomous execution
+python run.py --live
+
+```
+
+### Kill Switch
+
+To safely pause the engine without terminating the process, write a halt state to the configuration directory:
+
+```bash
+echo "HALTED" > data/engine_status.txt
+
+```
+
+---
+
+## Known Issues and Migration Status
+
+The codebase is currently undergoing a modernization rewrite located in the `newagent/` directory. The following items require architectural resolution:
+
+* **Dependency Management:** The `websockets` library is required for `firehose_daemon.py` but is missing from the primary `requirements.txt`.
+* **API Key Documentation:** Integration with Serper (`src/clients/serper.py`) requires a `SERPER_API_KEY` which is undocumented in the environment template.
+* **Modernization Target:** The `newagent/` directory introduces SQLite-backed state, explicit job queues, and LLM provider abstraction. It is not currently wired as the production entry point and requires a finalized `run.py` equivalent.
+* **Platform Parity:** Meta Threads API limitations require further validation to ensure unsupported features (like list curation) correctly resolve as graceful no-ops.
