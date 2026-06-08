@@ -192,14 +192,3 @@ To safely pause the engine without terminating the process, write a halt state t
 echo "HALTED" > data/engine_status.txt
 
 ```
-
----
-
-## Known Issues and Migration Status
-
-The codebase is currently undergoing a modernization rewrite located in the `newagent/` directory. The following items require architectural resolution:
-
-* **Dependency Management:** The `websockets` library is required for `firehose_daemon.py` but is missing from the primary `requirements.txt`.
-* **API Key Documentation:** Integration with Serper (`src/clients/serper.py`) requires a `SERPER_API_KEY` which is undocumented in the environment template.
-* **Modernization Target:** The `newagent/` directory introduces SQLite-backed state, explicit job queues, and LLM provider abstraction. It is not currently wired as the production entry point and requires a finalized `run.py` equivalent.
-* **Platform Parity:** Meta Threads API limitations require further validation to ensure unsupported features (like list curation) correctly resolve as graceful no-ops.
