@@ -9,13 +9,13 @@ The agent learns autonomously using a Thompson Sampling reinforcement learning a
 
 ## Table of Contents
 
-1. [System Architecture](https://www.google.com/search?q=%23system-architecture)
-2. [Directory Structure](https://www.google.com/search?q=%23directory-structure)
-3. [Core Modules](https://www.google.com/search?q=%23core-modules)
-4. [Data Flow and State Management](https://www.google.com/search?q=%23data-flow-and-state-management)
-5. [External Dependencies](https://www.google.com/search?q=%23external-dependencies)
-6. [Setup and Deployment](https://www.google.com/search?q=%23setup-and-deployment)
-7. [Known Issues and Migration Status](https://www.google.com/search?q=%23known-issues-and-migration-status)
+1. System Architecture
+2. Directory Structure
+3. Core Modules
+4. Data Flow and State Management
+5. External Dependencies
+6. Setup and Deployment
+7. Known Issues and Migration Status
 
 ---
 
