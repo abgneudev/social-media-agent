@@ -50,7 +50,7 @@ def _generate_queries(ai_generate, empirical_data, strategist_direction, sectors
 def _research_prompt(article_text, source_link, source_title, sectors):
     return (
         f"You are a strict, high-standard Social Strategist and Researcher managing a portfolio in these sectors: {', '.join(sectors)}.\n"
-        f"Your ultimate goal is to extract insights that directly drive audience growth, engagement, and follower acquisition on the Bluesky social network. Ignore anything that does not serve this purpose.\n\n"
+        f"Your ultimate goal is to extract latest state-of-the-art insights that directly drive audience growth, engagement, and follower acquisition on the Bluesky social network. Ignore anything that does not serve this purpose.\n\n"
         f"Analyze the following article.\n\n"
         f"ARTICLE: {source_title}\nURL: {source_link}\n\n"
         f"CONTENT:\n{article_text[:8000]}\n\n"

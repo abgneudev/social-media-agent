@@ -76,6 +76,12 @@ class Store:
         self.last_research_tick = es.get("last_research_tick", -999)
         self.research_interval = es.get("research_interval", 8)
         self.consecutive_empty_ticks = es.get("consecutive_empty_ticks", 0)
+        self.command_start_followers = es.get("command_start_followers", None)
+        self.command_start_time = es.get("command_start_time", None)
+        self.command_target_gain = es.get("command_target_gain", None)
+        self.resource_plan = es.get("resource_plan", None)
+        self.daily_action_counts = es.get("daily_action_counts", {})
+        self.last_daily_reset_date = es.get("last_daily_reset_date", time.strftime("%Y-%m-%d"))
         
         saved_topics = es.get("topic_angle_examples", [])
         self.topic_angle_examples = list(set(saved_topics) | set(getattr(self.soul, "topic_angle_examples", [])))
@@ -159,7 +165,13 @@ class Store:
             "relevance_signals": self.relevance_signals,
             "sectors": self.sectors,
             "topic_angle_examples": self.topic_angle_examples,
-            "authorities": self.authorities
+            "authorities": self.authorities,
+            "resource_plan": self.resource_plan,
+            "daily_action_counts": self.daily_action_counts,
+            "last_daily_reset_date": self.last_daily_reset_date,
+            "command_start_followers": self.command_start_followers,
+            "command_start_time": self.command_start_time,
+            "command_target_gain": self.command_target_gain,
         })
 
     def _compile_relevance_re(self):

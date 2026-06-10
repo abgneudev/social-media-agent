@@ -948,15 +948,6 @@ class FollowerEngine:
         phase_name, weights = self._current_phase()
         logger.info(f"[ACT] phase={phase_name} weights={ {k: round(v,2) for k,v in weights.items()} }")
 
-        # 1. Seed anchor posts up front; keep posting in later phases.
-        should_post = (self.store.anchor_posts < ANCHOR_POST_TARGET
-                       or phase_name in ("compound", "community", "scaling")
-                       or self.store.tick % 6 == 0)
-        if should_post and self.rate["post"].try_consume():
-            # _original_post samples its own distinct archetypes per variant;
-            # the _decide-level post_hook is only used by _quote_best below.
-            self._original_post(sector, keyword=sector)
-
         # 2. Candidates: reuse the sense-stage cache when possible; only search when
         #    a trend keyword overrides the cached sector keyword.
         candidates, keyword = self._candidates_for(sector)
@@ -1940,11 +1931,66 @@ class FollowerEngine:
                 mean_eng = (eng / trials) if trials > 0 else 0.0
                 logger.info(f"   {dim}/{v}: Beta({a:.1f},{b:.1f}) MeanEng={mean_eng:.2f} "
                             f"Wilson_lb={wlb:.3f} n={trials:.0f} TotalEng={eng:.0f}")
-    # ---- OS SCHEDULER ----
+        # ---- OS SCHEDULER ----
     def _run_strategist(self):
         """The Brain. Wakes up, looks at the environment, and populates the IntentQueue."""
         logger.info("[STRATEGIST] Waking up to plan next moves...")
+
+        # ---------- early data needed for command tracking ----------
         now = time.time()
+        followers_count = self.store.snapshots[-1]["followers"] if self.store.snapshots else 0
+        # ------------------------------------------------------------
+
+        # --- Command override check ---
+        import json, re
+        command_file = config.STATE_DIR / "command.json"
+        command = None
+        if command_file.exists():
+            try:
+                command = json.loads(command_file.read_text(encoding="utf-8"))
+                logger.info(f"   [STRATEGIST] Command file found: {command}")
+            except Exception as e:
+                logger.warning(f"   [STRATEGIST] Failed to read command file: {e}")
+
+        # If a command exists, track its start state the first time we see it
+        if command and self.store.command_start_followers is None:
+            # Extract target gain from the goal text
+            goal_text = command.get("goal", "")
+            target_gain = 0
+            match = re.search(r'(\d+)\s*(?:new\s+)?(?:real\s*)?followers?', goal_text, re.IGNORECASE)
+            if match:
+                target_gain = int(match.group(1))
+            self.store.command_start_followers = followers_count
+            self.store.command_start_time = now
+            self.store.command_target_gain = target_gain
+            self.store.save_engine()
+            logger.info(f"   [STRATEGIST] Command tracking started: start={followers_count}, target_gain={target_gain}")
+
+        # Check if the goal has been achieved or timed out
+        if command and self.store.command_start_followers is not None:
+            followers_gained = followers_count - self.store.command_start_followers
+            target_met = self.store.command_target_gain > 0 and followers_gained >= self.store.command_target_gain
+            within_hours = command.get("within_hours", command.get("time_limit_hours"))
+            timed_out = within_hours and (now - self.store.command_start_time) > within_hours * 3600
+
+            if target_met:
+                logger.info(f"   [STRATEGIST] Command target achieved (+{followers_gained} followers). Removing command.")
+                command_file.unlink()
+                command = None
+                self.store.command_start_followers = None
+                self.store.command_start_time = None
+                self.store.command_target_gain = None
+                self.store.save_engine()
+            elif timed_out:
+                logger.info(f"   [STRATEGIST] Command time limit ({within_hours}h) expired. Removing command.")
+                command_file.unlink()
+                command = None
+                self.store.command_start_followers = None
+                self.store.command_start_time = None
+                self.store.command_target_gain = None
+                self.store.save_engine()
+        # --- End command override check ---
+
         time_since_actions = {}
         for action_type in ["post", "reply", "follow", "like", "quote", "research", "meta_critic", "curate"]:
             last = self.last_action_time.get(action_type, 0)
@@ -1963,7 +2009,6 @@ class FollowerEngine:
         synthesized_knowledge = memory.recall_knowledge(query_context, limit=3)
         logger.info(f"   [DEBUG] recall_knowledge raw result: {repr(synthesized_knowledge)}")
 
-        followers_count = self.store.snapshots[-1]["followers"] if self.store.snapshots else 0
         ratio = followers_count / max(1, self.store.anchor_posts)
 
         active_plan_raw = self.store.active_plan
@@ -2001,6 +2046,22 @@ class FollowerEngine:
         
 
         prompt = prompts.build_strategist_prompt(empirical_data, budgets)
+
+        # --- Prepend command override if present ---
+        if command:
+            goal_text = command.get("goal", command.get("command", str(command)))
+            time_limit = command.get("within_hours", command.get("time_limit_hours", None))
+            time_str = f" within the next {time_limit} hours" if time_limit else ""
+            override = (
+                f"URGENT OVERRIDE – HIGHEST PRIORITY: {goal_text}{time_str}. "
+                f"You MUST achieve this goal by any safe means. You are authorized to temporarily increase daily limits "
+                f"(e.g., max_per_day for follow, like, reply, quote, post) beyond your usual conservative numbers, "
+                f"but never exceed the provided rate budgets (tokens). Treat this as an emergency – the entire strategy "
+                f"should bend to accomplish this single objective.\n\n"
+            )
+            prompt = override + prompt
+        # --- End command override prepend ---
+
         if synthesized_knowledge:
             facts = [f for f in synthesized_knowledge.split('\n') if f.strip()]
             if facts:
@@ -2015,6 +2076,13 @@ class FollowerEngine:
             
         parsed = self.llm.parse_json(raw, fallback_dict=None)
         if isinstance(parsed, dict):
+            # --- extract and store resource plan ---
+            resource_plan = parsed.get("resource_plan")
+            if resource_plan:
+                self.store.resource_plan = resource_plan
+                self.store.save_engine()
+                logger.info(f"   [STRATEGIST] Resource plan updated: {resource_plan}")
+            
             new_plan = parsed.get("active_plan")
             if new_plan:
                 self.store.active_plan = new_plan
@@ -2048,16 +2116,29 @@ class FollowerEngine:
 
     def _process_high_value_signals(self, signals):
         if not isinstance(signals, list): return
+        # Build a set of trusted words from the soul's original signals and sectors
+        trusted_words = set()
+        for sig in self.soul.relevance_signals:
+            trusted_words.update(sig.lower().split())
+        for sector in self.store.sectors:
+            trusted_words.update(sector.lower().split('_'))
+    
         added = 0
         for sig in signals:
             if not isinstance(sig, str) or not sig.strip(): continue
             clean_sig = sig.strip()
-            # Prevent exploding the list, max 200 signals
-            if clean_sig not in self.store.relevance_signals and len(self.store.relevance_signals) < 200:
-                self.store.relevance_signals.append(clean_sig)
-                added += 1
+            if len(self.store.relevance_signals) >= 200:
+                break
+            if clean_sig in self.store.relevance_signals:
+                continue
+            # Only accept if the signal shares at least one word with our trusted vocabulary
+            sig_words = set(clean_sig.lower().split())
+            if not sig_words & trusted_words:
+                continue
+            self.store.relevance_signals.append(clean_sig)
+            added += 1
         if added > 0:
-            logger.info(f"   [INTUITION] Added {added} high-value signals from web research.")
+            logger.info(f"   [INTUITION] Added {added} design‑relevant signals from web research.")
             self.store._compile_relevance_re()
             self.store.save_engine()
 
@@ -2100,6 +2181,7 @@ class FollowerEngine:
         """The OS Kernel. Pops intents, maps to resources, executes or yields, returns sleep time."""
         self._tick_actions = 0
         self._tick_active = True
+        self._maybe_reset_daily_counts()
         
         # 0. Maintenance checks
         self._run_system_maintenance()
@@ -2145,24 +2227,35 @@ class FollowerEngine:
                 if algo_locked:
                     return False
                     
-            # Platform & LLM constraints
-            # We peek at the budgets so we don't consume them during the check
+            # Platform & LLM constraints + strategist daily cap
             if act == "post":
-                return self.rate["post"].peek() and self.rate.get("llm_api", self.rate["post"]).peek()
+                return (self.rate["post"].peek() and
+                        self.rate.get("llm_api", self.rate["post"]).peek() and
+                        self._within_daily_limit(act))
             elif act == "reply":
-                return self.rate["reply"].peek() and self.rate.get("llm_api", self.rate["reply"]).peek()
+                return (self.rate["reply"].peek() and
+                        self.rate.get("llm_api", self.rate["reply"]).peek() and
+                        self._within_daily_limit(act))
             elif act == "follow":
-                return self.rate["follow"].peek()
+                return self.rate["follow"].peek() and self._within_daily_limit(act)
             elif act == "like":
-                return self.rate["like"].peek()
+                return self.rate["like"].peek() and self._within_daily_limit(act)
             elif act == "quote":
-                return self.rate["quote"].peek() and self.rate.get("llm_api", self.rate["quote"]).peek()
+                return (self.rate["quote"].peek() and
+                        self.rate.get("llm_api", self.rate["quote"]).peek() and
+                        self._within_daily_limit(act))
             elif act == "research":
-                return self.rate["research"].peek() and self.rate.get("llm_api", self.rate["research"]).peek()
+                return (self.rate["research"].peek() and
+                        self.rate.get("llm_api", self.rate["research"]).peek() and
+                        self._within_daily_limit(act))
             elif act == "meta_critic":
-                return self.rate["meta_critic"].peek() and self.rate.get("llm_api", self.rate["meta_critic"]).peek()
+                return (self.rate["meta_critic"].peek() and
+                        self.rate.get("llm_api", self.rate["meta_critic"]).peek() and
+                        self._within_daily_limit(act))
             elif act == "curate":
-                return self.rate["curate"].peek() and self.rate.get("llm_api", self.rate["curate"]).peek()
+                return (self.rate["curate"].peek() and
+                        self.rate.get("llm_api", self.rate["curate"]).peek() and
+                        self._within_daily_limit(act))
             return False
 
         intent = self.intent_queue.pop_next_executable(is_executable)
@@ -2262,6 +2355,7 @@ class FollowerEngine:
             return 60
             
         if executed:
+            self._increment_daily_count(action) 
             self.last_action_time[action] = time.time()
             self.store.save_engine()
             self._tick_actions += 1
@@ -2276,6 +2370,7 @@ class FollowerEngine:
             else:
                 logger.info(f"   [OS KERNEL] Action '{action}' dropped permanently after 3 failed attempts.")
             return 2
+
     def _run_system_maintenance(self):
         """Runs periodic background tasks like learning, decaying, and reconciling."""
         now = time.time()
@@ -2326,3 +2421,27 @@ class FollowerEngine:
                 self._courtesy_follow_back()
             
             self.store.save_engine()
+
+    def _maybe_reset_daily_counts(self):
+        """Reset daily action counters when the calendar day changes."""
+        today = time.strftime("%Y-%m-%d")
+        if self.store.last_daily_reset_date != today:
+            self.store.daily_action_counts = {}
+            self.store.last_daily_reset_date = today
+            self.store.save_engine()
+
+    def _within_daily_limit(self, action_type: str) -> bool:
+        """Return True if the action is allowed under the strategist's resource plan.
+        Falls back to allowed if no plan is set or the action is not listed."""
+        plan = self.store.resource_plan
+        if not plan or action_type not in plan:
+            return True   # no plan => no limit (still governed by rate budgets)
+        max_per_day = plan[action_type].get("max_per_day", 9999)
+        used = self.store.daily_action_counts.get(action_type, 0)
+        return used < max_per_day
+
+    def _increment_daily_count(self, action_type: str):
+        """Record that an action was executed today."""
+        self.store.daily_action_counts[action_type] = \
+            self.store.daily_action_counts.get(action_type, 0) + 1
+        self.store.save_engine()
