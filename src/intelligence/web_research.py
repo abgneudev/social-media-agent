@@ -16,7 +16,7 @@ from intelligence import memory
 
 WEB_INSIGHTS_FILE = STATE_DIR / "web_insights.json"
 
-def _generate_queries(ai_generate, empirical_data, strategist_direction, sectors):
+def _generate_queries(ai_generate, empirical_data, strategist_direction, sectors, platform):
     """Generates dynamic search queries based on the agent's current empirical state."""
     
     direction_prompt = ""
@@ -25,11 +25,13 @@ def _generate_queries(ai_generate, empirical_data, strategist_direction, sectors
         
     prompt = (
         f"You are the Lead Researcher for an autonomous social media engine operating in these sectors: {', '.join(sectors)}.\n"
+        f"The engine runs on the **{platform}** social network. Its primary goal is audience growth and engagement on that platform.\n"
         f"Your overarching objective is to conduct web research exactly as requested by the Strategist.\n\n"
         f"{direction_prompt}"
         f"AGENT'S EMPIRICAL DATA:\n"
         f"{json.dumps(empirical_data, indent=2)}\n\n"
         f"CRITICAL RULE ON CREDIBILITY: Generally, you MUST append `site:` operators to your queries to restrict the search ONLY to highly credible known organizations relevant to the agent's sectors. HOWEVER, if the Strategist's directive explicitly requires searching for algorithmic growth, distribution tactics, or topics outside these sectors, you MUST bypass this restriction and search the open web as needed to fulfill the Strategist's exact intent.\n\n"
+        f"Additionally, ALWAYS generate at least ONE query that directly targets **growth tactics on {platform}** (e.g., how to gain followers, algorithm tips, engagement patterns). Do NOT restrict that query with `site:` operators – it must search the open web to find current, actionable growth advice.\n\n"
         f"Respond STRICTLY as JSON with exactly two keys:\n"
         f"{{\n"
         f'  "research_direction": "Brief explanation of your strategy for this research cycle",\n'
@@ -57,8 +59,15 @@ def _research_prompt(article_text, source_link, source_title, sectors):
         f"2. Dynamic Schemas: Instead of following a rigid schema, dynamically invent and extract whatever structured schemas are most valuable for the Strategist based on this article. You can extract macro-trends, target communities (e.g. subreddits, discords), new sociological phenomena, or actionable strategic guidance. If and ONLY if the article reveals a genuinely novel structural format for posting (e.g., 'A/B Test Confession', 'Contrarian Matrix'), extract ONE 'experimental_hooks' object. DO NOT use article topics as hooks.\n"
         f"3. Curated Links: If you find an amazing article worth sharing, you MAY create a 'curated_links' array containing objects with 'url', 'title', and 'summary'.\n"
         f"4. High-Value Signals: If the article uses elite vocabulary, advanced mental models, or highly specific industry concepts, extract them into a 'high_value_signals' array of strings. The engine uses these signals to build its intuition for finding high-quality profiles natively on the platform.\n"
-        f"5. Factual Knowledge: If you find hard empirical facts or case studies, you MAY create a 'factual_knowledge' array of strings.\n\n"
+        f"5. Factual Knowledge (CRITICAL – single sentences only):\n"
+            f"   - Look for **hard numbers, cause‑effect relationships, or platform‑specific insights** that can directly influence WHAT we post, HOW we phrase it, or WHICH audience to target.\n"
+            f"   - Each fact must be a **standalone sentence** of **15 words or fewer**. No bullet points, no explanations.\n"
+            f"   - Good: 'Tool‑comparison threads receive 2x more likes than tip threads.'\n"
+            f"   - Bad: 'We should maybe write about tools because they seem to get more engagement and people like them.'\n"
+            f"   - If you find nothing concrete, leave the array empty.\n"
+            f"   - Store them in the `factual_knowledge` key as an array of strings.\n\n"
         f"Respond STRICTLY as JSON with this exact structure, but you define the keys inside 'dynamic_schemas':\n"
+        f"CRITICAL: Be concise. Use short sentences. Return ONLY the JSON, no extra text.\n\n"
         f"{{\n"
         f'  "is_credible": true,\n'
         f'  "category": "tactics",\n'
@@ -73,7 +82,7 @@ def _research_prompt(article_text, source_link, source_title, sectors):
         f"}}"
     )
 
-def run_daily_research(ai_generate, empirical_data, strategist_direction="", sectors=[]):
+def run_daily_research(ai_generate, empirical_data, strategist_direction="", sectors=[], platform="Bluesky"):
     """Main entry point for daily research. Fetches queries and extracts insights."""
     logger.info("[WEB RESEARCH] Generating dynamic search queries based on empirical data...")
     
@@ -81,7 +90,7 @@ def run_daily_research(ai_generate, empirical_data, strategist_direction="", sec
     if recent_queries:
         empirical_data["RECENTLY SEARCHED QUERIES"] = recent_queries
 
-    queries_obj = _generate_queries(ai_generate, empirical_data, strategist_direction, sectors)
+    queries_obj = _generate_queries(ai_generate, empirical_data, strategist_direction, sectors, platform)
     
     if not queries_obj:
         logger.warning("[WEB RESEARCH] Failed to generate queries.")
@@ -96,7 +105,6 @@ def run_daily_research(ai_generate, empirical_data, strategist_direction="", sec
     for q in queries:
         if q:
             logger.info(f"   [WEB RESEARCH] Searching: {q}")
-            memory.save_knowledge("past_query", q)
             r = serper.search_web_organic(q, num_results=2)
             if r:
                 results.extend(r)

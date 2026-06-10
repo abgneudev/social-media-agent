@@ -242,6 +242,7 @@ def build_strategist_prompt(empirical_data, budgets):
         f"BUDGETS:\n{budgets}\n\n"
         f"TOOLS: 'post', 'reply', 'follow', 'quote', 'like', 'research', 'meta_critic', 'curate', 'map_graph'.\n\n"
         f"INSTRUCTIONS:\n"
+        f"0. KNOWN FACTS: If the prompt begins with 'KNOWN FACT' lines, these are measured data from the account. You MUST build your entire plan around them. They override any previous assumptions.\n"
         f"1. Formulate a Long Game Strategy ('active_plan'). STAGNATION RULE: If 'step_index' > 5 and 'followers' is still <= 'start_followers', or if there are multiple 'consecutive_empty_ticks', the plan is FAILING. Neutral results are BAD results. You MUST overwrite the plan with a radically different approach and reset 'step_index' to 1.\n"
         f"2. Generate as many 'intents' as possible based on what is strategically the best use of your available BUDGETS. Fully drain your budgets to maximize growth! You MUST include 'curate' (to build lists) and 'like' intents if you have budget for them. Priority (1-10).\n"
         f"3. Monitor 'followers_to_anchor_posts_ratio'. If < 1.0, prioritize distribution (follow, quote, reply) over posting.\n"

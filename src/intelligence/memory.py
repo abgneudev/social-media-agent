@@ -30,6 +30,22 @@ try:
     
     # 4. Knowledge Base (Authoritative Memory)
     collection_knowledge = client.get_or_create_collection(name="knowledge_base")
+
+        # Seed the knowledge base with one-time test facts (remove after verification)
+        # Seed the knowledge base with one‑time test facts (remove after verification)
+    if collection_knowledge and collection_knowledge.count() == 0:
+        collection_knowledge.add(
+            documents=[
+                "Posts with tool comparisons get 2x engagement.",
+                "The ux_design sector has the highest Wilson lower bound (0.18)."
+            ],
+            metadatas=[
+                {"topic": "engagement", "timestamp": time.time()},
+                {"topic": "ux_design", "timestamp": time.time()}
+            ],
+            ids=[f"seed_fact_{i}" for i in range(2)]
+        )
+        logger.info("   [MEMORY] Seeded test facts into knowledge base.")
     
 except Exception as e:
     logger.error(f"[MEMORY] Failed to initialize ChromaDB: {e}")
@@ -136,13 +152,13 @@ def save_to_swipe_file(text: str, engagement: float):
     except Exception as e:
         logger.warning(f"   [MEMORY] Failed to store swipe file: {e}")
 
-def recall_swipe_file(limit: int = 1) -> str:
+def recall_swipe_file(query: str = "", limit: int = 1) -> str:
     if not collection_swipe:
         return ""
     try:
-        # Since we just want high engagement structures, we can query for "highly engaging viral format"
+        search_text = query.strip() if query.strip() else "highly engaging viral format"
         results = collection_swipe.query(
-            query_texts=["highly engaging viral format listicle short hook"],
+            query_texts=[search_text],
             n_results=limit
         )
         if not results or not results.get("documents") or not results["documents"][0]:
@@ -166,7 +182,7 @@ def save_knowledge(topic: str, fact: str):
     except Exception as e:
         logger.warning(f"   [MEMORY] Failed to store knowledge: {e}")
 
-def recall_knowledge(topic: str, limit: int = 20, max_distance: float = 1.5) -> str:
+def recall_knowledge(topic: str, limit: int = 20, max_distance: float = 1) -> str:
     if not collection_knowledge:
         return ""
     try:

@@ -11,6 +11,41 @@
     "description": "Engineers and designers who champion open-source tools and accessibility standards in digital product design, ensuring systems are inclusive and maintainable.",
     "uri": "at://did:plc:6xhueeorooawqum5rmoeqtat/app.bsky.graph.list/3mnpklynkrm2q",
     "created_ts": 1780848664.6515474,
+    "member_count": 1
+  },
+  {
+    "name": "Behavioral Psychology in Frontend Engineering",
+    "description": "Engineers and designers who translate cognitive load, Fitts's Law, and Hick's Law into component architecture, state management, and interaction design. They rage against the machine of bloated UI but do it with spatial mathematics and DOM-level precision.",
+    "uri": "at://did:plc:6xhueeorooawqum5rmoeqtat/app.bsky.graph.list/3mnt74il7fz2r",
+    "created_ts": 1780973768.9070234,
+    "member_count": 1
+  },
+  {
+    "name": "Systems Thinkers in Blockchain UX",
+    "description": "Engineers and designers who dissect the invisible UI of on-chain interactions, translating cryptographic complexity into frictionless frontend experiences. They rage against the machine of bloated state logic in decentralized systems and champion scalable component architecture for micropayments, st",
+    "uri": "at://did:plc:6xhueeorooawqum5rmoeqtat/app.bsky.graph.list/3mntijmvmjt2r",
+    "created_ts": 1780983873.2613907,
+    "member_count": 1
+  },
+  {
+    "name": "Behavioral Psychology in Frontend Engineering",
+    "description": "Engineers and designers who translate cognitive load, Fitts's Law, Hick's Law, and Miller's Law into frontend systems that don't make users' brains crash like a tab with 500 open WebSockets.",
+    "uri": "at://did:plc:6xhueeorooawqum5rmoeqtat/app.bsky.graph.list/3mnup7xlhjd2k",
+    "created_ts": 1781025424.489371,
     "member_count": 0
+  },
+  {
+    "name": "Frontend Engineering Heretics",
+    "description": "Designers and engineers who rage against the machine of bloated UI, unmaintainable state logic, and DOM spaghetti. They dissect the structural rot in modern frontend architectures and prescribe systemic solutions rooted in behavioral psychology and spatial mathematics.",
+    "uri": "at://did:plc:6xhueeorooawqum5rmoeqtat/app.bsky.graph.list/3mnw53epyuf2d",
+    "created_ts": 1781074659.712276,
+    "member_count": 1
+  },
+  {
+    "name": "Pragmatic Design Engineers in Web3",
+    "description": "Engineers and designers who dissect the invisible UI of on-chain interactions, translating behavioral psychology into scalable component architecture for decentralized systems.",
+    "uri": "at://did:plc:6xhueeorooawqum5rmoeqtat/app.bsky.graph.list/3mnxfrl6lep2d",
+    "created_ts": 1781118353.1966507,
+    "member_count": 1
   }
 ]

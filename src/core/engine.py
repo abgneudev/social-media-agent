@@ -1193,6 +1193,7 @@ class FollowerEngine:
             vision_hint += f"\nCAMPAIGN STRATEGY: {campaign_context}\n"
 
         kb_hist = memory.recall_knowledge(sector, limit=1)
+        logger.info(f"   [MEMORY] knowledge_base for quote: {'found' if kb_hist else 'empty'}")
         prompt = prompts.build_quote_best_prompt(self.soul, sector, src, hook, constraint, vision_hint, learned_signals=self.store.relevance_signals, kb_hist=kb_hist)
         raw = self._generate(prompt, dedup=True, image_b64=image_b64)
         quote_text = None
@@ -1537,15 +1538,21 @@ class FollowerEngine:
         # Inject Phase 3.5 Long-Term Brain Memory
         try:
             self_hist = memory.recall_self_threads(sector, limit=1)
-            swipe_hist = memory.recall_swipe_file(limit=1)
+            swipe_query = sector.replace('_', ' ')
+            if sector in self.store.trends and self.store.trends[sector]:
+                swipe_query += " " + " ".join(self.store.trends[sector][:2])
+            swipe_hist = memory.recall_swipe_file(query=swipe_query, limit=1)
             kb_hist = memory.recall_knowledge(sector, limit=1)
             
             if self_hist:
                 trends_info += f"\n<SELF_MEMORY>\nYou previously wrote this about {sector}:\n{self_hist}\nDO NOT repeat this. Build on it and advance the narrative.\n</SELF_MEMORY>\n"
+                logger.info(f"   [MEMORY] self_threads recall: {self_hist[:80]}...")
             if swipe_hist:
                 trends_info += f"\n<SWIPE_FILE>\nHere is a highly successful viral format. You may mimic its pacing and structure, but use entirely original content:\n{swipe_hist}\n</SWIPE_FILE>\n"
+                logger.info(f"   [MEMORY] swipe_file recall: {swipe_hist[:80]}...")
             if kb_hist:
                 trends_info += f"\n<KNOWLEDGE_BASE>\nHere is a factual data point to organically weave into your post to build authority:\n{kb_hist}\n</KNOWLEDGE_BASE>\n"
+                logger.info(f"   [MEMORY] knowledge_base recall: {kb_hist[:80]}...")
         except Exception as e:
             logger.warning(f"   [MEMORY] Failed to inject Long-Term Brain: {e}")
 
@@ -1950,17 +1957,35 @@ class FollowerEngine:
         from intelligence import web_research, memory
         latest_insights = web_research.load_insights() or "No recent insights available."
         
-        # Pull deep, long-term synthesized knowledge based on current hot sectors and trends
-        query_context = " ".join(self.sector_activity.keys())
-        if self.store.trends:
-            query_context += " " + " ".join([kw for kws in self.store.trends.values() for kw in kws])
+        # Pull deep, long‑term synthesized knowledge – ask for EVERYTHING we know
+        query_context = "all actionable insights, engagement data, platform tactics, and recent facts"
             
         synthesized_knowledge = memory.recall_knowledge(query_context, limit=3)
+        logger.info(f"   [DEBUG] recall_knowledge raw result: {repr(synthesized_knowledge)}")
 
         followers_count = self.store.snapshots[-1]["followers"] if self.store.snapshots else 0
         ratio = followers_count / max(1, self.store.anchor_posts)
+
+        active_plan_raw = self.store.active_plan
+        plan_summary = None
+        if active_plan_raw:
+            plan_summary = {
+                "goal": active_plan_raw.get("goal", ""),
+                "step_index": active_plan_raw.get("step_index", 1),
+                "total_steps": active_plan_raw.get("total_steps", 1),
+                "start_followers": active_plan_raw.get("start_followers", followers_count),
+                "status": active_plan_raw.get("status", "in_progress"),
+            }
+
+        # Break the old looping plan – discard any goal that contains the
+        # hallucinated "Reciprocal Cognitive Loop" or "cognitive desert" language
+        if plan_summary and "Reciprocal" in plan_summary.get("goal", "") and "cognitive" in plan_summary.get("goal", ""):
+            logger.info("   [STRATEGIST] Detected stale looping plan. Forcing fresh strategy.")
+            plan_summary = None
+            self.store.active_plan = None
+
         empirical_data = {
-            "active_plan": self.store.active_plan,
+            "active_plan": plan_summary,
             "followers": followers_count,
             "anchor_posts": self.store.anchor_posts,
             "followers_to_anchor_posts_ratio": round(ratio, 2),
@@ -1973,8 +1998,15 @@ class FollowerEngine:
         budgets = {}
         for k, v in self.rate.items():
             budgets[k] = f"{v.tokens:.1f}/{v.capacity}"
-            
+        
+
         prompt = prompts.build_strategist_prompt(empirical_data, budgets)
+        if synthesized_knowledge:
+            facts = [f for f in synthesized_knowledge.split('\n') if f.strip()]
+            if facts:
+                logger.info(f"   [STRATEGIST] Retrieved {len(facts)} knowledge facts: {facts[0][:80]}...")
+                kb_block = "\n".join([f"KNOWN FACT: {fact}" for fact in facts])
+                prompt = f"{kb_block}\n\n{prompt}"
         raw = self._generate(prompt, dedup=False, model_purpose="fast")
         if not raw:
             return
@@ -2198,7 +2230,12 @@ class FollowerEngine:
                     "followers_to_anchor_posts_ratio": round(self.store.snapshots[-1]["followers"] / max(1, self.store.anchor_posts), 2) if self.store.snapshots else 0.0
                 }
                 try:
-                    blob = web_research.run_daily_research(lambda p: self._generate(p, dedup=False), empirical_data, intent.get("reason", ""))
+                    blob = web_research.run_daily_research(
+                        lambda p: self._generate(p, dedup=False),
+                        empirical_data,
+                        intent.get("reason", ""),
+                        platform="Bluesky"  # or self.net.platform_name
+                    )
                     if blob and blob.get("high_value_signals"):
                         self._process_high_value_signals(blob["high_value_signals"])
                     executed = True
