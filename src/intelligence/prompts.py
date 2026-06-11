@@ -98,11 +98,20 @@ def build_verify_profiles_prompt(soul, profiles_context, learned_signals=None):
 
 def build_bio_prompt(soul, best_sector, trends_info=""):
     return (
-        f"Write a bio (max 160 chars) for {soul.name}. Our strongest content is "
-        f"in '{best_sector}'. {trends_info}Use clear keywords for that area, "
-        f"explain complex things simply, warm and approachable. "
-        f"CRITICAL DIVERSITY: Find a completely fresh angle. Do not reuse the exact same phrasing as your previous bios. "
-        f"Must end with 'Boston based. https://abgneudev.github.io/Portfolio/ Automated account.' No hashtags. "
+        f"You are updating the Bluesky profile of a Product Design Engineer.\n"
+        f"Their core identity is:\n{soul.persona}\n\n"
+        f"Write a bio (max 160 characters) for this account. Our most successful "
+        f"content lives in the sector '{best_sector}', so the bio should naturally "
+        f"include one or two keywords from that area.\n\n"
+        f"Voice rules:\n"
+        f"- Plain, everyday language. No design jargon, no engineering buzzwords.\n"
+        f"- Warm, approachable, and human. Sound like a real person describing what they care about.\n"
+        f"- Show the design‑first mindset: lead with how you think about products, not what tools you use.\n"
+        f"- Do NOT say 'Automated account.' or anything that breaks the human voice.\n\n"
+        f"{trends_info}\n"
+        f"CRITICAL DIVERSITY: Invent a completely fresh angle. Never reuse phrasing "
+        f"from previous bios. The bio must end with the exact string: "
+        f"'Boston based. https://abgneudev.github.io/Portfolio/' No hashtags, no emoji.\n\n"
         f'Respond strictly as JSON: {{"bio": "..."}}'
     )
 

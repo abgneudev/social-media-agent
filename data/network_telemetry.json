@@ -1,128 +1,64 @@
 {
-  "ts": 1781167613.3101525,
-  "ts_iso": "2026-06-11T04:46:53",
+  "ts": 1781168046.0077887,
+  "ts_iso": "2026-06-11T04:54:06",
   "velocity_posts": [
     {
-      "uri": "at://did:plc:erlxz4sppc5uv7m4efmcvpsf/app.bsky.feed.post/3mnyt4o5u5j2d",
-      "text": "Ah, I see it's \"Cops call for kill switch\" day again. It rolls round so fast these days I actually forgot to hang out the bunting www.bbc.co.uk/news/article...",
-      "author_did": "did:plc:erlxz4sppc5uv7m4efmcvpsf",
+      "uri": "at://did:plc:4n72fslf3e53fsjgcgwsoyjp/app.bsky.feed.post/3mnytstgyds2a",
+      "text": "Throwback to when my outfit reviews were stronger than my performance reviews. \n#TBT #SchoolDays \ud83d\udc68\ud83c\udffd\u200d\ud83c\udfeb",
+      "author_did": "did:plc:4n72fslf3e53fsjgcgwsoyjp",
       "likes_in_window": 3,
-      "window_seconds": 20,
-      "ts": 1781167064.3364685
+      "window_seconds": 57,
+      "ts": 1781167847.915183
     },
     {
-      "uri": "at://did:plc:axuvbckddrg7lwlpjs44o7rg/app.bsky.feed.post/3mnytdf4osc2p",
-      "text": "Mobile phone crime won\u2019t be solved by policing alone. It also needs coordinated action from industry. \n\nHaving already seen the advanced security features introduced by Google and Samsung, I welcome the new agreement between Apple and the Met to protect mobile phone users.",
-      "author_did": "did:plc:axuvbckddrg7lwlpjs44o7rg",
+      "uri": "at://did:plc:2qauo67ubtqi7wxodkclk6um/app.bsky.feed.post/3mnytr6bx742u",
+      "text": "Dal\u00ed's post-war imagination absorbed nuclear-age headlines. His Three Sphinxes of Bikini\u00a0(1947, oil on canvas) surrealistically integrates the \"Bikini\" name into enigmatic sphinx-like forms with mushroom clouds.",
+      "author_did": "did:plc:2qauo67ubtqi7wxodkclk6um",
       "likes_in_window": 3,
-      "window_seconds": 107,
-      "ts": 1781167379.4832604
+      "window_seconds": 130,
+      "ts": 1781167862.500996
     },
     {
-      "uri": "at://did:plc:uyqz2nkbli6otogvabjw46rn/app.bsky.feed.post/3mnytdsitxs2o",
-      "text": "This is actually incredible and quite humbling. \n\nIt has barely been 2 hours and I've raised nearly \u00a32k. Most of it has come from Bluesky.\n\nI can't thank everyone enough, whether you have given or just shared. \n\nLet's smash the target - you're making JD Vance, Putin, and all the other Vatniks sad.",
-      "author_did": "did:plc:uyqz2nkbli6otogvabjw46rn",
+      "uri": "at://did:plc:5c6xsduqi3rogy55c6dnqosh/app.bsky.feed.post/3mnytumv6mc2j",
+      "text": "I don't have the same love for the BBC as an institution as most other people on Bluesky have. Hell, I wrote about the bias in its news output for my A-Levels in 2003. \n\nHowever, two decades later, it's obvious that things are far worse and the rot is far more pervasive. A massive reset is required.",
+      "author_did": "did:plc:5c6xsduqi3rogy55c6dnqosh",
       "likes_in_window": 3,
-      "window_seconds": 113,
-      "ts": 1781167395.4995515
+      "window_seconds": 24,
+      "ts": 1781167873.3920403
     },
     {
-      "uri": "at://did:plc:7gyt7nd3kkuakmanckayk2px/app.bsky.feed.post/3mnytfeqvy22r",
-      "text": "'Anand Menon, founding director of the European Research Institute at the University of Birmingham, said the issue was an example of the \u201cabsurdities\u201d of government policy that institutions are having to deal with.' 2/3",
-      "author_did": "did:plc:7gyt7nd3kkuakmanckayk2px",
+      "uri": "at://did:plc:wdla6w4lqbqqdatzg6e42tz6/app.bsky.feed.post/3mnytsfrxxs2v",
+      "text": "And don't tell me this is a typical lefty attack on free speech. Free speech absolutist Donald Trump threatened to ban tiktok last year. \n\nThis is about democracy and security, both of which we will lose if we don't do something.\n\nIt's time for an ultimatum. Be legal. Or be banned.",
+      "author_did": "did:plc:wdla6w4lqbqqdatzg6e42tz6",
       "likes_in_window": 3,
-      "window_seconds": 63,
-      "ts": 1781167398.8331125
+      "window_seconds": 124,
+      "ts": 1781167896.909423
     },
     {
-      "uri": "at://did:plc:mf5gdi3kydj3atvcn22c7t2l/app.bsky.feed.post/3mnyte7kk6k2a",
-      "text": "I love how many people that were literally two years old when The Context happened keep liking this one.",
-      "author_did": "did:plc:mf5gdi3kydj3atvcn22c7t2l",
+      "uri": "at://did:plc:fke7i7n4ffiras2be2tt3wvy/app.bsky.feed.post/3mnytqbltts2n",
+      "text": "Heute steht unter dem Motto \"Papierkram w\u00e4lzen & vorbereiten\".\n\n1. To-Do erledigt.\n\nNext: Anruf bei Agentur f\u00fcr Arbeit als Reaktion auf deren.. suboptimalen Antwortbrief, d. eher nicht auf meine Terminanfrage eingeht.\n\nProkrastiniere auch nur seit 20 Minuten & versuche Panikattacke zu unterdr\u00fccken",
+      "author_did": "did:plc:fke7i7n4ffiras2be2tt3wvy",
       "likes_in_window": 3,
-      "window_seconds": 166,
-      "ts": 1781167463.6241193
+      "window_seconds": 208,
+      "ts": 1781167910.5895452
     },
     {
-      "uri": "at://did:plc:vikvvruuhasgumt24ul646vx/app.bsky.feed.post/3mnyti54djc2i",
-      "text": "Hmm if only there was a way for the Government to immediately deminish X as a Social Media platform in UK politics \ud83e\udd14\n\nLike say closing all their accounts, all Labour MPs a/cs & Govt agency a/cs etc & moving over to a platform that moderates against extremism like #BlueSky\u2757\ufe0f\n\nHow hard can it be FGS\u2753\ud83e\udd37",
-      "author_did": "did:plc:vikvvruuhasgumt24ul646vx",
+      "uri": "at://did:plc:wdla6w4lqbqqdatzg6e42tz6/app.bsky.feed.post/3mnytsfrvzc2v",
+      "text": "Guns are so 20th century.\n\nToday's warfare is sophisticated attacks on our defence and other vital infrastructure.\n\nBut a huge part of it is a propaganda war, designed to destabilise enemies with misinformation.\n\nAnd it's working.\n\nBecause we're doing nothing to stop it.",
+      "author_did": "did:plc:wdla6w4lqbqqdatzg6e42tz6",
       "likes_in_window": 3,
-      "window_seconds": 38,
-      "ts": 1781167466.709035
+      "window_seconds": 167,
+      "ts": 1781167939.099937
     },
     {
-      "uri": "at://did:plc:movn6xzezospl7lnkhy7nzpt/app.bsky.feed.post/3mnytfqaqic2e",
-      "text": "Another war crime from the US. NYT analysis of satellite imagery shows America targeted civilian water drinking infrastructure.",
-      "author_did": "did:plc:movn6xzezospl7lnkhy7nzpt",
+      "uri": "at://did:plc:2l6seozmjsqc4kfukjejat77/app.bsky.feed.post/3mnytrlzqxs2o",
+      "text": "We really need to have a talk about the BBC.\n\nMostly about who goes on trial in public and who gets the deprogramming treatment, while every brick is removed from site.",
+      "author_did": "did:plc:2l6seozmjsqc4kfukjejat77",
       "likes_in_window": 3,
-      "window_seconds": 117,
-      "ts": 1781167467.3356686
-    },
-    {
-      "uri": "at://did:plc:jbxngtvotioldz54mve7tnow/app.bsky.feed.post/3mnytaldblc2n",
-      "text": "Good morning #BlueSky & welcome to the Queens garden (Fi\u2019s Mum \ud83d\udc78\ud83c\udffc) and one of her many beautiful roses. Have a colourful day friends \u263a\ufe0f #ECK\n#PalacesAndGardens #Photography #QueenOfFlowers #FloralPhotography\n#PhotographyOfBlueSky #Roses \n#PhotographersOfBlueSky #Pink\n#Summer #Nature #Ireland #Flower",
-      "author_did": "did:plc:jbxngtvotioldz54mve7tnow",
-      "likes_in_window": 3,
-      "window_seconds": 315,
-      "ts": 1781167494.8296225
-    },
-    {
-      "uri": "at://did:plc:c7ymsxkw6rk4iypmbjsdeoq3/app.bsky.feed.post/3mnytagg6ac2n",
-      "text": "#BirdoftheDay #Nesting #birds with nesting materials #ECK @robcrank68.bsky.social #photo #photography #birdphotography #nature #wildlife #mygardenwatch\nOnly 25998 now needed for that duvet @alan678.bsky.social (why did you have to pick such an odd number, my brain hurt working that out)",
-      "author_did": "did:plc:c7ymsxkw6rk4iypmbjsdeoq3",
-      "likes_in_window": 3,
-      "window_seconds": 279,
-      "ts": 1781167504.890351
-    },
-    {
-      "uri": "at://did:plc:a6qvfkbrohedqy3dt6k5mdv6/app.bsky.feed.post/3mnyt4oj7z22b",
-      "text": "\u201c6.3 \uc9c0\ubc29\uc120\uac70 \ucd9c\uad6c\uc870\uc0ac, \uc11c\uc6b8\u00b7\ub300\uad6c \ub4f1 4\uacf3 \ubd84\uc11d \ub370\uc774\ud130 \uc624\ub958 \uc788\uc5c8\ub2e4\u201d\nwww.khan.co.kr/article/2026...\n\uc7ac\uacc4\uc0b0 \ub550 \u2018\uc11c\uc6b8 30\ub300 \uc5ec\uc131 \uc9c0\uc9c0, \uc624\uc138\ud6c8\uc11c \uc815\uc6d0\uc624\ub85c\u2019\n(20\ub300 \uc5ec\uc131\ub3c4 \ubbfc\uc8fc\ub2f9 \uc9c0\uc9c0\uc728\uc774 +25% \uc774\uc0c1 \ub192\uc74c) \n\uc131, \uc5f0\ub839 \ub370\uc774\ud130 \ub204\ub77d \ub4a4\ub2a6\uac8c \ud655\uc778\n\n\ud55c\uad6d\ubc29\uc1a1\ud611\ud68c \uc0ac\uacfc.",
-      "author_did": "did:plc:a6qvfkbrohedqy3dt6k5mdv6",
-      "likes_in_window": 3,
-      "window_seconds": 462,
-      "ts": 1781167512.727382
-    },
-    {
-      "uri": "at://did:plc:5hwy5afvfhonj6mrpcxm3rfy/app.bsky.feed.post/3mnytbykvsc2p",
-      "text": "Isaiah failed to account for computer numerical control",
-      "author_did": "did:plc:5hwy5afvfhonj6mrpcxm3rfy",
-      "likes_in_window": 3,
-      "window_seconds": 328,
-      "ts": 1781167550.9850292
-    },
-    {
-      "uri": "at://did:plc:iz2zabr2aflqxtqcn26vis4c/app.bsky.feed.post/3mnytg4cm5c22",
-      "text": "i haven't touched my kofi in forever, got a notification that someone had tipped me $50 with no note or context,, i just wanted to say thank you so very much and i am so grateful for you if u see this \ud83d\ude4f\ud83e\udde1",
-      "author_did": "did:plc:iz2zabr2aflqxtqcn26vis4c",
-      "likes_in_window": 3,
-      "window_seconds": 189,
-      "ts": 1781167553.4258854
-    },
-    {
-      "uri": "at://did:plc:2qwpeisxhznwdjfylihurdp4/app.bsky.feed.post/3mnyth2x72c27",
-      "text": "Consider the reverse-imperial boomerang: a paranoid fantasy of the oppressive methods of empire being imposed on the imperial core, not by empire, but by those they oppressed. While the imperial boomerang occurred, there\u2019s never been a reverse-imperial boomerang\u2014they must conjure it into existence",
-      "author_did": "did:plc:2qwpeisxhznwdjfylihurdp4",
-      "likes_in_window": 3,
-      "window_seconds": 166,
-      "ts": 1781167559.3745708
-    },
-    {
-      "uri": "at://did:plc:m2yuqynl2cttvi4k5453yegh/app.bsky.feed.post/3mnyt5asjhv22",
-      "text": "\ud83d\udc27 **Proton-CachyOS update brings automatic HDR, Wayland improvements and more bug fixes**\n\nThe community-made compatibility layer Proton-CachyOS has a new release out with more advancements for running Windows games on Linux / SteamOS.Read the full article on GamingOnLinux.\n\n\ud83d\udcf0 Source [\u2026]",
-      "author_did": "did:plc:m2yuqynl2cttvi4k5453yegh",
-      "likes_in_window": 3,
-      "window_seconds": 501,
-      "ts": 1781167571.3631194
-    },
-    {
-      "uri": "at://did:plc:c6ewrqt7oar4itxhkswbbb7a/app.bsky.feed.post/3mnytet4kfs2d",
-      "text": "fable 5 klingt bisschen wie ne boy band oder ein beschissenes computerspiel tbh",
-      "author_did": "did:plc:c6ewrqt7oar4itxhkswbbb7a",
-      "likes_in_window": 3,
-      "window_seconds": 266,
-      "ts": 1781167584.599055
+      "window_seconds": 201,
+      "ts": 1781167947.859162
     }
   ],
   "our_engagers": [],
-  "tracked_posts_count": 662
+  "tracked_posts_count": 425
 }
