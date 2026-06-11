@@ -58,7 +58,7 @@ def _research_prompt(article_text, source_link, source_title, sectors):
         f"1. ROUTING & CREDIBILITY: Determine if the article is highly credible. If it's generic fluff, spam, or low quality, set 'is_credible' to false and leave 'dynamic_schemas' empty. If credible, classify its primary value as either 'tactics' (growth, platform strategy) or 'inspiration' (content ideas to share).\n"
         f"2. Dynamic Schemas: Instead of following a rigid schema, dynamically invent and extract whatever structured schemas are most valuable for the Strategist based on this article. You can extract macro-trends, target communities (e.g. subreddits, discords), new sociological phenomena, or actionable strategic guidance. If and ONLY if the article reveals a genuinely novel structural format for posting (e.g., 'A/B Test Confession', 'Contrarian Matrix'), extract ONE 'experimental_hooks' object. DO NOT use article topics as hooks.\n"
         f"3. Curated Links: If you find an amazing article worth sharing, you MAY create a 'curated_links' array containing objects with 'url', 'title', and 'summary'.\n"
-        f"4. High-Value Signals: If the article uses elite vocabulary, advanced mental models, or highly specific industry concepts, extract them into a 'high_value_signals' array of strings. The engine uses these signals to build its intuition for finding high-quality profiles natively on the platform.\n"
+        f"4. High-Value Signals: If the article uses elite vocabulary, advanced mental models, or highly specific industry concepts, extract them into a 'high_value_signals' array of strings. The engine uses these signals to build its intuition for finding high-quality profiles natively on the platform. When extracting signals, prefer design, UX, interaction, and HCI terminology over pure engineering or code‑specific jargon\n"
         f"5. Factual Knowledge (CRITICAL – single sentences only):\n"
             f"   - Look for **hard numbers, cause‑effect relationships, or platform‑specific insights** that can directly influence WHAT we post, HOW we phrase it, or WHICH audience to target.\n"
             f"   - Each fact must be a **standalone sentence** of **15 words or fewer**. No bullet points, no explanations.\n"
@@ -74,7 +74,7 @@ def _research_prompt(article_text, source_link, source_title, sectors):
         f'  "dynamic_schemas": {{\n'
         f'    "niche_target_communities": ["..."],\n'
         f'    "sociological_trends": ["..."],\n'
-        f'    "high_value_signals": ["system architecture", "workflow optimization", "cognitive load"],\n'
+        f'    "high_value_signals": ["micro‑interaction timing", "aesthetic‑usability effect", "progressive disclosure"],\n'
         f'    "experimental_hooks": [{{"hook_name": "...", "guidance": "..."}}],\n'
         f'    "curated_links": [{{"url": "{source_link}", "title": "{source_title}", "summary": "..."}}],\n'
         f'    "factual_knowledge": ["..."]\n'

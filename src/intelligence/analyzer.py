@@ -91,13 +91,18 @@ def _sample_high_engagement_posts(store, net):
 
 
 def _classify_prompt(store, samples, topic_angle_examples):
-    """Build the classification prompt. The schema requires per-sample
-    archetype + a short noun-phrase topic_angle. We forbid copying source
-    sentences explicitly and cap angle length so the model cannot smuggle
-    a paste-back."""
     archetypes = ", ".join(store.soul.post_hooks)
     body = "\n".join(f"[{i}] {t}" for i, (_, t, _) in enumerate(samples))
-    examples_str = ", ".join(repr(ex) for ex in topic_angle_examples) if topic_angle_examples else "'domain concept analysis', 'workflow heuristic'"
+    # Design-friendly fallback examples
+    if not topic_angle_examples:
+        topic_angle_examples = [
+            "cognitive load",
+            "micro-interaction timing",
+            "accessibility checklist",
+            "design system adoption",
+            "inclusive labeling"
+        ]
+    examples_str = ", ".join(repr(ex) for ex in topic_angle_examples)
     return (
         f"You are classifying recent high-engagement posts from a niche to "
         f"learn what shapes and topic ideas are getting traction RIGHT NOW. "
@@ -107,9 +112,13 @@ def _classify_prompt(store, samples, topic_angle_examples):
         f"  archetype: ONE of these labels (closest fit): {archetypes}\n"
         f"  topic_angle: a SHORT NOUN PHRASE (max {TOPIC_ANGLE_CHAR_CAP} chars, "
         f"under 5 words, no punctuation, no full sentence) naming the topic the "
-        f"post is about. Examples of good topic_angles: {examples_str}. Examples of "
+        f"post is about. The topic MUST be clearly about design, UX, HCI, "
+        f"interaction, accessibility, design systems, or design psychology. "
+        f"Ignore topics about pure coding, frameworks, DevOps, or infrastructure.\n"
+        f"Examples of good topic_angles: {examples_str}. Examples of "
         f"BAD topic_angles (do not produce these): full sentences, direct quotes, "
-        f"first-person verbs, anything copied from the input.\n\n"
+        f"first-person verbs, anything copied from the input, or any topic outside "
+        f"the design domain.\n\n"
         f"Caveat to apply when interpreting: high-follower accounts can post "
         f"low-effort takes and still win on existing reach. Capture the "
         f"transferable archetype/topic structure, not 'post less effort'.\n\n"

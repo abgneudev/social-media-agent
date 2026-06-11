@@ -44,24 +44,29 @@ def evaluate_strategy(ai_generate, bandit):
     for sec, ev in sector_evs.items():
         math_context += f"- {sec}: {ev:.3f}\n"
 
-    prompt = (
-        f"You are the Meta-Critic for an autonomous social media agent.\n"
-        f"Your job is to review the mathematical performance of the agent's recent posts, "
-        f"and output a strategic pivot to improve growth.\n\n"
-        f"AGENT BASE PERSONA:\n{config.PERSONA}\n\n"
-        f"EMPIRICAL PERFORMANCE DATA:\n{math_context}\n\n"
-        f"INSTRUCTIONS:\n"
-        f"1. Identify the top performing hooks and the worst performing hooks.\n"
-        f"2. Generate a 'persona_override'. This is a 2-3 sentence paragraph that will be APPENDED to the agent's base persona. It should explicitly tell the agent to lean into the tone/style of the winning hooks and avoid the losing hooks.\n"
-        f"3. Generate 1 or 2 entirely new 'experimental_hooks' (with a short guidance string) inspired by the top performers.\n\n"
-        f"OUTPUT FORMAT (Strictly JSON):\n"
-        f"{{\n"
-        f'  "persona_override": "...",\n'
-        f'  "extra_hooks": [\n'
-        f'    {{"name": "...", "guidance": "..."}}\n'
-        f'  ]\n'
-        f"}}"
-    )
+        prompt = (
+            f"You are the Meta-Critic for an autonomous social media agent.\n"
+            f"Your job is to review the mathematical performance of the agent's recent posts, "
+            f"and output a strategic pivot to improve growth.\n\n"
+            f"AGENT BASE PERSONA:\n{config.PERSONA}\n\n"
+            f"EMPIRICAL PERFORMANCE DATA:\n{math_context}\n\n"
+            f"INSTRUCTIONS:\n"
+            f"1. Identify the top performing hooks and the worst performing hooks.\n"
+            f"2. Generate a 'persona_override'. This is a 2-3 sentence paragraph that will be APPENDED to the agent's base persona. It should explicitly tell the agent to lean into the tone/style of the winning hooks and avoid the losing hooks.\n"
+            f"3. Generate 1 or 2 entirely new 'experimental_hooks' (with a short guidance string) inspired by the top performers.\n\n"
+            f"CRITICAL STYLE GUARDRAILS:\n"
+            f"- The persona_override MUST preserve the agent's core voice: plain language, design-first, emotionally intelligent, and accessible. \n"
+            f"- Do NOT push the agent toward technical jargon, engineering-heavy language, or academic density.\n"
+            f"- If a top-performing hook is technical, reframe it through a design lens. Emphasize the design psychology, user feeling, or craft, not the code.\n"
+            f"- New experimental hooks must also follow this principle: they are design hooks, not engineering walkthroughs.\n\n"
+            f"OUTPUT FORMAT (Strictly JSON):\n"
+            f"{{\n"
+            f'  "persona_override": "...",\n'
+            f'  "extra_hooks": [\n'
+            f'    {{"name": "...", "guidance": "..."}}\n'
+            f'  ]\n'
+            f"}}"
+        )
     
     raw = ai_generate(prompt)
     if not raw:

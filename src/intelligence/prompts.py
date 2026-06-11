@@ -26,7 +26,7 @@ def build_variant_prompt(soul, sector, archetypes, length_slots, opening_slots, 
         signals_text = f"LEARNED HIGH-VALUE SIGNALS: These are the exact topics, vocabulary, and concepts that elite professionals in your niche use: [{top_signals}]. Naturally weave these into your posts to attract the right audience. Do NOT force them in unnaturally.\n\n"
 
     return (
-        f"You are an expert, highly intellectual network agent drafting original anchor posts.\n"
+        f"You are an expert, highly insightful network agent drafting original anchor posts.\n"
         f"Your core persona and identity is:\n{soul.persona}\n\n"
         f"{signals_text}"
         f"You are writing THREE short Bluesky posts about '{sector}', each in a "
@@ -47,7 +47,7 @@ def build_variant_prompt(soul, sector, archetypes, length_slots, opening_slots, 
         f"CRITICAL RULES FOR MEDIA:\n"
         f"- MAXIMIZE MEDIA USAGE: You MUST attach media to almost every post.\n"
         f"- IF media_type='gif': media_query should be a 1-3 word human emotion (e.g., 'frustrated', 'mind blown').\n"
-        f"- IF media_type='image': Make an educated guess on the best visual to complement the post. The media_query MUST be highly concrete (e.g. a diagram, mockup, or code structure) and you should append a relevant industry modifier (e.g., 'dribbble', 'architecture diagram', 'figma', 'github layout') to ensure high-quality search results. If discussing an abstract theory, search for a concrete UI application of it.\n"
+        f"- IF media_type='image': Make an educated guess on the best visual to complement the post. The media_query MUST be highly concrete (e.g. a mockup, interaction flow, design system example). Append a relevant industry modifier to ensure high-quality design results: 'figma prototype', 'dribbble shot', 'interaction design', 'UI mockup', 'design system diagram'. If discussing an abstract theory, search for a concrete UI application of it.\n"
         f'{{"variants": [{{"content": "...", "media_type": "...", "media_query": "...", "thread_parts": []}}]}}'
     )
 
@@ -117,12 +117,12 @@ def build_verify_posts_prompt(soul, posts_context, learned_signals=None):
         f"Our persona is:\n{soul.persona}\n\n"
         f"{signals_text}"
         f"Evaluate the following posts AND their authors:\n{posts_context}\n"
-        f"Does the post align with our technical rigor, and is the author a credible professional? Or is this obvious garbage/spam/bot/engagement-farming?\n"
+        f"Does the post align with our design depth and craft, and is the author a credible professional?"
         f"MINDSET: You must filter out spam, but you also MUST find the best posts in this batch to interact with. If you drop everything, the agent fails.\n"
-                f"CRITICAL DOMAIN FILTER: You must **only** grade as 'keep' or 'more' posts that clearly discuss UX design, interaction design, accessibility, design systems, information architecture, HCI research, or frontend architecture. If a post is about general politics, cryptocurrency, gaming, sexual content, NSFW material, or any topic outside those domains, mark it 'drop' immediately, even if it otherwise seems high-quality.\n"
+                f"CRITICAL DOMAIN FILTER: You must **only** grade as 'keep' or 'more' posts that clearly discuss UX design, interaction design, accessibility, design systems, information architecture, HCI research, or design engineering. If a post is about general politics, cryptocurrency, gaming, sexual content, NSFW material, or any topic outside those domains, mark it 'drop' immediately, even if it otherwise seems high-quality.\n"
         f"CRITICAL: DO NOT DROP EVERYTHING. You MUST grade at least 20-30% of these posts as 'keep' or 'more', even if you have to lower your standards slightly.\n"
         f"Respond strictly as a JSON object mapping the CID (exact string) to either a string ('keep', 'drop', 'less', 'mute') or an object for 'more'.\n"
-        f"- 'more': high quality post, deeply intellectual, highly aligned to our persona, from a credible author. For 'more', you MUST return an object extracting the specific signals that proved their credibility: {{\"action\": \"more\", \"high_value_signals\": [\"signal_1\", \"signal_2\"]}}.\n"
+        f"- 'more': high quality post, deeply insightful, highly aligned to our persona, from a credible author. For 'more', you MUST return an object extracting the specific signals that proved their credibility: {{\"action\": \"more\", \"high_value_signals\": [\"signal_1\", \"signal_2\"]}}.\n"
         f"- 'keep': relevant and acceptable, from a legitimate account. Just return the string 'keep'.\n"
         f"- 'drop': random keyword match, off-topic, sales ad, empty/low-quality bot account, or totally irrelevant. Do not interact with it.\n"
         f"- 'less': generic, low-quality bloat, highly annoying formatting.\n"
@@ -256,7 +256,7 @@ def build_strategist_prompt(empirical_data, budgets):
         f"3. Generate as many 'intents' as possible based on what is strategically the best use of your available BUDGETS. Fully drain your budgets to maximize growth! You MUST include 'curate' (to build lists) and 'like' intents if you have budget for them. Priority (1-10).\n"
         f"4. Monitor 'followers_to_anchor_posts_ratio'. If < 1.0, prioritize distribution (follow, quote, reply) over posting.\n"
         f"5. The 'reason' must connect to 'active_plan'.\n"
-        f"6. CRITICAL CAPABILITY CONSTRAINT: The agent CURRENTLY LACKS VISION CAPABILITIES. You must ABANDON ALL VISUAL, SPATIAL, OR LAYOUT CRITIQUES (e.g. OOUX component mapping, color, white space). Focus PURELY on text-semantic, sociological, architectural, and systemic critiques.\n"
+        f"6. CRITICAL CAPABILITY CONSTRAINT: The agent CURRENTLY LACKS VISION CAPABILITIES. You must ABANDON ALL VISUAL, SPATIAL, OR LAYOUT CRITIQUES (e.g. color, whitespace, pixel‑level alignment). Focus instead on the quality of the interaction: mental models, cognitive load, emotional response, affordances, timing, and usability. Critique how something feels and flows, not how it looks."
         f"7. NEW: You now have a 'pending_comment_replies' list in the empirical data. These are replies to the agent's own posts and comments that haven't been answered yet. You can schedule 'comment_reply' intents to respond to them.\n"
         f"   - For each 'comment_reply', provide: 'type': 'comment_reply', 'priority': 5-9, 'target_uri': (the uri from the pending item), 'sector': (the parent_action_sector from the item), and 'reason'.\n"
         f"   - Only reply if the comment is genuinely valuable (not spam, not low-effort). Be conservative – at most 2-3 such replies per day.\n"

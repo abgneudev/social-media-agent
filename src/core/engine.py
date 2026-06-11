@@ -38,6 +38,7 @@ from intelligence import prompts
 import threading
 from clients.llm import RateLimitError
 from atproto import exceptions
+from atproto import models 
 
 
 # ==========================================
@@ -672,101 +673,94 @@ class FollowerEngine:
             self.store.save_engine()
             logger.info(f"   [TRENDS] {hottest}: {kws}")
 
-    def _collect_own_thread_replies(self):
-        """Gather replies to the agent's own posts and replies that haven't been
-        replied to yet. Stores candidates in self.pending_comment_replies."""
-        # 1. Find our most promising content
-        candidates = []
-        for a in self.store.ledger:
-            if a["kind"] in ("post", "reply", "quote") and a.get("uri"):
-                # Use the engagement we already computed in _learn() if available,
-                # or fall back to a quick engagement check (optional).
-                # For simplicity, we pick the 3 highest‑engaged from the last 20.
-                if a["kind"] == "reply":
-                    # replies are even more likely to have sub‑threads
-                    candidates.append(a)
-                else:
-                    candidates.append(a)
-        
-        # Sort by engagement (use stored engagement if you want, else just get fresh)
-        # Here we just take the most recent 3 with high engagement from ledger.
-        # A better approach: query engagement for each candidate, but keep it cheap.
-        # For MVP, pick the 3 most recent of kind post/reply.
-        recent = [a for a in candidates if a["kind"] in ("post", "reply")]
-        recent.sort(key=lambda a: a.get("ts", 0), reverse=True)
-        targets = recent[:3]
-        
-        if not targets:
-            self.pending_comment_replies = []
+    def _collect_replies_from_notifications(self):
+        """Fetch recent Bluesky reply notifications and add new ones to pending_comment_replies."""
+        try:
+            resp = self.net.client.app.bsky.notification.list_notifications(
+                params={"limit": 50}
+            )
+        except Exception as e:
+            logger.warning(f"   [NOTIF] Failed to list notifications: {e}")
             return
-        
-        # 2. Fetch threads
+
+        notifications = getattr(resp, "notifications", []) or []
+        uris_to_fetch = []
+        # Collect URIs of replies we haven't acted on yet
+        for notif in notifications:
+            if notif.reason != "reply":
+                continue
+            reply_uri = notif.uri
+            if self.store.already_acted_on(f"reply:{reply_uri}"):
+                continue
+            uris_to_fetch.append(reply_uri)
+
+        if not uris_to_fetch:
+            return
+
+        # Fetch full post objects (needed for _helpful_reply, _is_bot, etc.)
+        try:
+            posts_resp = self.net.client.get_posts(uris_to_fetch)
+            posts = posts_resp.posts
+        except Exception as e:
+            logger.warning(f"   [NOTIF] Failed to fetch posts: {e}")
+            return
+
         new_replies = []
-        for t in targets:
-            try:
-                # Bluesky's getPostThread: depth=1 gives direct replies only
-                thread = self.net.client.app.bsky.feed.getPostThread(
-                    uri=t["uri"], depth=1, parent_height=0
-                )
-            except Exception as e:
-                logger.warning(f"   [COMMENT] thread fetch failed for {t['uri']}: {e}")
+        for reply_post in posts:
+            # Skip own replies (shouldn't happen but safe)
+            if reply_post.author.did == self.net.did:
                 continue
-            
-            # The structure: thread.thread is a post view, with replies in .replies
-            root = getattr(thread, "thread", None)
-            if not root:
+            # Quick bot check
+            if self._is_bot(reply_post.author):
                 continue
-            
-            # For root posts: replies are in root.replies (list of thread views)
-            # For replies: the thread may contain our reply as a child; we need to
-            # navigate to the exact node.
-            # A robust way: flatten the thread tree and find the node with our URI,
-            # then collect its .replies.
-            def find_node(node, target_uri):
-                if getattr(node, "post", None) and node.post.uri == target_uri:
-                    return node
-                for child in getattr(node, "replies", []) or []:
-                    found = find_node(child, target_uri)
-                    if found:
-                        return found
-                return None
-            
-            node = find_node(root, t["uri"])
-            if not node:
+            text = getattr(reply_post.record, "text", "")
+            if not text or len(text) < 2:
                 continue
-            
-            sub_replies = getattr(node, "replies", []) or []
-            for r in sub_replies:
-                reply_post = getattr(r, "post", None)
-                if not reply_post:
-                    continue
-                # Skip own replies
-                if getattr(reply_post.author, "did", None) == self.net.did:
-                    continue
-                # Skip if we already acted on this exact reply (like or replied)
-                if self.store.already_acted_on(f"reply:{reply_post.uri}"):
-                    continue
-                # Quick bot check
-                if self._is_bot(reply_post.author):
-                    continue
-                # Quick relevance gate (avoid empty/spam)
-                text = getattr(reply_post.record, "text", "")
-                if not text or len(text) < 2:
-                    continue
-                new_replies.append({
-                    "post": reply_post,                # the full post object
-                    "uri": reply_post.uri,
-                    "cid": getattr(reply_post, "cid", ""),
-                    "author_did": reply_post.author.did,
-                    "author_handle": reply_post.author.handle,
-                    "text": text,
-                    "parent_action_sector": t.get("sector", "general"),
-                    "parent_uri": t["uri"],            # the post the agent made that this replies to
-                })
-        
-        self.pending_comment_replies = new_replies
-        if new_replies:
-            logger.info(f"   [PERCEPTION] collected {len(new_replies)} unreplied comment(s) on our content")
+
+            # Determine which notification this came from (to get parent_uri)
+            parent_uri = None
+            for notif in notifications:
+                if notif.uri == reply_post.uri:
+                    parent_uri = notif.reason_subject
+                    break
+
+            # Try to find the sector from the parent post in the ledger
+            sector = "general"
+            for a in self.store.ledger:
+                if a.get("uri") == parent_uri:
+                    sector = a.get("sector", "general")
+                    break
+
+            new_replies.append({
+                "post": reply_post,
+                "uri": reply_post.uri,
+                "cid": reply_post.cid,
+                "author_did": reply_post.author.did,
+                "author_handle": reply_post.author.handle,
+                "text": text,
+                "parent_action_sector": sector,
+                "parent_uri": parent_uri,
+                "discovered_ts": time.time(),
+            })
+
+        if not new_replies:
+            return
+
+        # Merge into existing cache (same merge logic as before)
+        existing_uris = {cr["uri"] for cr in self.pending_comment_replies}
+        for nr in new_replies:
+            if nr["uri"] not in existing_uris:
+                self.pending_comment_replies.append(nr)
+                existing_uris.add(nr["uri"])
+
+        # Prune entries older than 24 hours
+        cutoff = time.time() - 86400
+        self.pending_comment_replies = [
+            cr for cr in self.pending_comment_replies
+            if cr.get("discovered_ts", 0) > cutoff
+        ]
+
+        logger.info(f"   [NOTIF] collected {len(new_replies)} new comment(s); total {len(self.pending_comment_replies)} cached")
 
     # ---- LEARN ----
     def _learn(self):
@@ -1866,7 +1860,7 @@ class FollowerEngine:
         self.store.save_engine()
 
     # ---- reply ----
-    def _helpful_reply(self, sector, hook, candidates, keyword=None, campaign_context=None):
+    def _helpful_reply(self, sector, hook, candidates, keyword=None, campaign_context=None, is_comment_reply=False):
         batch = ""
         safe_candidates = []
         for c in candidates:
@@ -1903,10 +1897,70 @@ class FollowerEngine:
             "to the top of their thread. You are strictly forbidden from acting "
             "contrarian to the original author. "
         )
-
+        
         # Vision is currently disabled due to provider limits
         top_image_b64 = None
         vision_hint = ""
+
+        if is_comment_reply:
+            comment_tone_guidance = (
+                "You are the original poster replying to someone's comment on YOUR content. "
+                "This is your house -- they've walked in and said something. Be a good host, not a performer.\n\n"
+                
+                "FINAL CHECK (do this first): If I received this reply, would I feel that a real person genuinely engaged with what I said? If the answer is no, rewrite.\n\n"
+                
+                "CORE PRINCIPLE: Discern before responding.\n"
+                "Quickly categorize what they've given you, then respond accordingly. "
+                "If the comment mixes types, prioritize the element they invested the most in -- usually an insight or personal story. Answer a direct question if it's central, but don't invent one.\n\n"
+                
+                "IF THEY SHARED AN INSIGHT OR OBSERVATION:\n"
+                "- They're not asking for more. They're offering you a gift.\n"
+                "- Acknowledge the specific insight they brought. Name what you appreciate about it.\n"
+                "- Close warmly. No return question, no 'building on that.'\n"
+                "- If their insight touches on a design feeling or UX observation, reflect that back as shared recognition, not a lesson.\n"
+                "- Example: 'You caught the tension I was trying to hold between those two ideas. Thank you for naming it.'\n\n"
+                
+                "IF THEY ASKED A THOUGHTFUL QUESTION:\n"
+                "- Answer it directly and substantively. They earned a real response.\n"
+                "- BUT: end with a period, not a question mark. No 'What do you think?' or 'Does that help?'\n"
+                "- You're answering, not interviewing. Give the answer and let it land.\n"
+                "- Example: 'I think the short answer is: not yet. The infrastructure isn't there, and honestly neither is the cultural readiness. But I'm watching [specific signal].'\n\n"
+                
+                "IF THEY SHARED A PERSONAL STORY, ANECDOTE, OR VULNERABILITY:\n"
+                "- They trusted you with something. Honor that.\n"
+                "- Reflect what you heard in their story. Don't one-up it or extract a lesson from it.\n"
+                "- No silver linings, no 'what I'd suggest is...', no relating it back to your framework.\n"
+                "- Example: 'That's a lot to carry. I really appreciate you sharing it here.'\n\n"
+                
+                "IF THEY DROPPED CODE, A REFERENCE, OR TECHNICAL DETAIL:\n"
+                "- They're speaking your language. Match their register.\n"
+                "- Engage with the substance, but always ground your reply in what that code *does for the person using it* -- feel, friction, clarity -- unless their comment is purely about algorithmic elegance.\n"
+                "- Still brief. This isn't a peer review. One substantive nod and out.\n"
+                "- Example: 'The recursion is clean. I like what that does for the loading sequence -- it'll feel instantaneous even on slow networks.'\n\n"
+                
+                "IF THEY'RE DISAGREEING OR PUSHING BACK RESPECTFULLY:\n"
+                "- Don't defend. Don't re-explain. Don't 'yes but.'\n"
+                "- Acknowledge the validity of their lens. You don't need to agree to honor it.\n"
+                "- Example: 'That's a fair pushback. I'm coming at this from [angle], but your framing makes me want to sit with it more.'\n\n"
+                
+                "IF THEY'RE BEING HUMOROUS OR PLAYFUL:\n"
+                "- Match energy. A laugh, an inside nod, a playful return.\n"
+                "- But don't try to be funnier. You're laughing with them, not doing a set.\n"
+                "- Example: 'I've been waiting for someone to notice that. You're my people.'\n\n"
+                
+                "IF THEY LEFT A SIMPLE COMPLIMENT OR TWO-WORD REACTION:\n"
+                "- A warm, brief acknowledgment is fine. Sound like you actually read it, not like a canned autoresponder.\n"
+                "- No need to invent depth. 'Appreciate that -- truly.' or 'That means a lot, thank you.'\n\n"
+                
+                "UNIVERSAL RULES (apply across all categories):\n"
+                "- ONE reply only. You are not starting a thread, you are completing an exchange.\n"
+                "- Reference something SPECIFIC from their comment. Prove you read it.\n"
+                "- Length: 1-3 sentences. You can say something real in that space.\n"
+                "- Tone: human, warm, unperformative. Like you're talking to someone you respect after a talk, not tweeting for an audience."
+            )
+            vision_hint = (vision_hint or "") + "\n" + comment_tone_guidance
+
+
         if campaign_context:
             vision_hint += f"\nCAMPAIGN STRATEGY: {campaign_context}\n"
 
@@ -2460,10 +2514,11 @@ class FollowerEngine:
                     # Reuse the standard reply mechanism (single candidate)
                     self._helpful_reply(
                         sector=sector,
-                        hook=reply_hook,                # or a specific hook for comments
+                        hook=reply_hook,
                         candidates=[target],
                         keyword=sector,
-                        campaign_context=intent.get("reason", "")
+                        campaign_context=intent.get("reason", ""),
+                        is_comment_reply=True   # <-- add this
                     )
                     # Mark the reply as acted upon so we don't double‑reply
                     self.store.mark_seen(f"reply:{target_uri}")
@@ -2543,8 +2598,8 @@ class FollowerEngine:
             if t % 4 == 0:
                 self._courtesy_follow_back()
 
-            if t % 7 == 0:
-                self._collect_own_thread_replies()
+            if t % 3 == 0:   # every 3 ticks, check for new replies
+                self._collect_replies_from_notifications()
             
             self.store.save_engine()
 

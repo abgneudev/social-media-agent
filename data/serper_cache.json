@@ -1819,6 +1819,65 @@
       "https://lh3.googleusercontent.com/a7hNqBD7wVZ2kVqWVmiHqu0PwElVSz8ioVFwGmX9VJhRkzgowaHufkpYRrxKofLoD6zmALQvHHvtxbPY7BNb1r1I4XTrynIT7DE_f7M=w1064-v0",
       "https://files.readme.io/86452b5-datepicker-options.jpg",
       "https://s3.eu-west-1.amazonaws.com/docx.flowx.ai/building-blocks/ui-designer/datepicker_form_field.png"
+    ],
+    "image:hig diagram apple": [
+      "https://miro.medium.com/1*5Hn1p3ZsCx4wgCYUQfUY8A.png",
+      "https://uithings.com/media/uithings/apple-human-interface-guidelines-components.jpg",
+      "https://cdn.prod.website-files.com/61f9082050036c6c4b4899f8/69aaece3df8ed0ca28f04c67_human-interface-guidelines-hig-1698155201242-2x.jpeg",
+      "https://docs-assets.developer.apple.com/published/214efefd347927407f3273dedbd8df7f/homepage-establish-hierarchy%402x.png",
+      "https://i.ytimg.com/vi/vtoiM8eps_U/maxresdefault.jpg",
+      "https://modelessdesign.com/resources/backdrop/images/hig-apple2-1985.png",
+      "https://designsystemsrepo.com/assets/static/apple.4250cd3.c5a23770181801b71715ce577913f0ee.jpg",
+      "https://miro.medium.com/v2/resize:fit:1200/1*l3lg7nHDERlYL6xC6vyRUA.png",
+      "https://res.cloudinary.com/jerrick/image/upload/d_642250b563292b35f27461a7.png,f_jpg,fl_progressive,q_auto,w_1024/654a013d3ee3b9001dc1e04a.jpg",
+      "https://uithings.com/media/uithings/apple-human-interface-guidelines-patterns.jpg"
+    ],
+    "image:carousel architecture diagram figma": [
+      "https://s3-alpha.figma.com/hub/file/3053610482/c4e598d5-2dd3-4c56-9f7e-3553194b38c0-cover.png",
+      "https://s3-alpha.figma.com/hub/file/4686203957/ea1714e3-94dd-4fab-a446-b1c337a0a1cd-cover.png",
+      "https://s3-alpha.figma.com/hub/file/1838060741/a3a8ecfc-cdda-439c-924f-69563d01a492-cover.png",
+      "https://s3-figma-hubfile-images-production.figma.com/hub/file/carousel/img/1bcabfdc74f24770e0a038ad050a6c88e472efdf",
+      "https://s3-alpha.figma.com/hub/file/4404716738/dc807d8d-d57b-4b9f-bf44-80d6f6255ab8-cover.png",
+      "https://s3-alpha.figma.com/hub/file/1254248167/a328935f-5d93-4858-a45e-2552d1982fc2-cover.png",
+      "https://miro.medium.com/1*WcrUJxVbeTrpnZ1ckFYwBw.gif",
+      "https://s3-alpha.figma.com/hub/file/2217944592276424772/c9b37367-f731-439c-ad07-8f66eb2b81ba-cover.png",
+      "https://s3-figma-hubfile-images-production.figma.com/hub/file/carousel/img/67c41046ae9c09e17728ac922871df4582b6a159",
+      "https://s3-figma-hubfile-images-production.figma.com/hub/file/carousel/img/213af401d13ae73bac6bb09fd2480382f6c5fa3f/59e86b1a528cca00c22235f8c2f127b622b40f5b"
+    ],
+    "image:state bomb architecture diagram github": [
+      "https://diagrams.mingrammer.com/img/stateful_architecture_diagram.png",
+      "https://raw.githubusercontent.com/jweissig/62-how-to-create-architecture-diagrams/master/high-level-arch.png",
+      "https://raw.githubusercontent.com/philippemerle/KubeDiagrams/refs/heads/main/examples/cassandra/default.png",
+      "https://user-images.githubusercontent.com/824194/58382647-ee7e1c00-7f89-11e9-8b7f-19cff4d2d911.png",
+      "https://cdn.activestate.com/wp-content/uploads/2024/03/Ingestion-1-600x404.png",
+      "https://diagrams.mingrammer.com/img/advanced_web_service_with_on-premises.png",
+      "https://miro.medium.com/v2/resize:fit:15064/1*VVXn0CESgM69_JKe-eeI6w.jpeg",
+      "https://media.licdn.com/dms/image/v2/D5612AQEGWjFrAEQiog/article-cover_image-shrink_720_1280/article-cover_image-shrink_720_1280/0/1696228715203?e=2147483647&v=beta&t=y6UOJN5fTAhJSNPdnd5SC5FJupBCtHyG-7Hlx1FGid0",
+      "https://raw.githubusercontent.com/gantFDT/icraft/main/public/images/banner.jpg",
+      "https://diagrams.mingrammer.com/img/event_processing_diagram.png"
+    ],
+    "image:AT Protocol architecture diagram github": [
+      "https://raw.githubusercontent.com/jweissig/62-how-to-create-architecture-diagrams/master/high-level-arch.png",
+      "https://github.com/microsoft/MIEngine/wiki/images/architecture.png",
+      "https://user-images.githubusercontent.com/6752989/168922741-d574b82c-656c-446a-bc81-43a578c75c06.png",
+      "https://media.licdn.com/dms/image/v2/D5612AQEGWjFrAEQiog/article-cover_image-shrink_720_1280/article-cover_image-shrink_720_1280/0/1696228715203?e=2147483647&v=beta&t=y6UOJN5fTAhJSNPdnd5SC5FJupBCtHyG-7Hlx1FGid0",
+      "https://i.imgur.com/E6DQDKs.png",
+      "https://user-images.githubusercontent.com/733074/45680168-85145680-bb3a-11e8-993c-61731aa67033.png",
+      "https://posit-dev.github.io/mcptools/reference/figures/r_as_a_server.png",
+      "https://user-images.githubusercontent.com/51343893/100281357-faec8780-2f26-11eb-8eed-0c3500a0cf60.png",
+      "https://substackcdn.com/image/fetch/$s_!M46r!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F4933a44e-1e75-47d7-99ae-84c02e0cdb52_2054x2060.png"
+    ],
+    "image:vite vs nextjs bundle analyzer": [
+      "https://miro.medium.com/v2/resize:fit:1358/format:webp/1*bE95K5hBs273KGn_excxQQ.png",
+      "https://miro.medium.com/v2/resize:fit:1200/1*97V_oV-PWWQSEzDUN2pAUg.png",
+      "https://miro.medium.com/1*bHL3OTUjHb_LDbDIclt54w.png",
+      "https://eu-central-1-shared-euc1-02.graphassets.com/AvHQ3RDvFSousA8iwElOKz/resize=width:2048/NnYy0GrfT12YFSuzmfLp",
+      "https://camo.githubusercontent.com/e1dcee65870949f6f6329b10a5a398086194ab55e3df2004b9ca312cc216afc4/68747470733a2f2f63646e2e6a7364656c6976722e6e65742f67682f6e6f6e7a7a7a2f766974652d62756e646c652d616e616c797a6572406c61746573742f696d67732f6e6f772e676966",
+      "https://rollbar.com/wp-content/uploads/2023/11/nextjs-vs-vitejs.jpg",
+      "https://substackcdn.com/image/fetch/$s_!YQi3!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Ff4fcd61c-ed06-43c1-9102-563a7151b93f_3840x2160.png",
+      "https://miro.medium.com/v2/resize:fit:1400/1*zEvkK0jGav1yrG0AqZGm3g.png",
+      "https://miro.medium.com/v2/resize:fit:1200/1*-8RLucdVbIuA8P9h0b98yg.png",
+      "https://media.licdn.com/dms/image/v2/D4D12AQEdG_mq0tlFsg/article-cover_image-shrink_720_1280/B4DZcVlwDAGgAI-/0/1748413908486?e=2147483647&v=beta&t=9HOd77vxDSjQ9Wtrud1z5JBOOILKkQxTPrTZ0VE83fs"
     ]
   },
   "daily_usage": {
@@ -1828,6 +1887,7 @@
     "2026-06-07": 72,
     "2026-06-08": 66,
     "2026-06-09": 99,
-    "2026-06-10": 121
+    "2026-06-10": 149,
+    "2026-06-11": 101
   }
 }
