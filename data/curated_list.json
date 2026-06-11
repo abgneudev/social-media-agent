@@ -47,5 +47,12 @@
     "uri": "at://did:plc:6xhueeorooawqum5rmoeqtat/app.bsky.graph.list/3mnxfrl6lep2d",
     "created_ts": 1781118353.1966507,
     "member_count": 1
+  },
+  {
+    "name": "On-Chain Interaction Design Heretics",
+    "description": "Engineers and designers who dissect the invisible UI of blockchain interactions, translating on-chain complexity into frictionless user experiences. They rage against the machine of gas fees, signature fatigue, and wallet UX hell.",
+    "uri": "at://did:plc:6xhueeorooawqum5rmoeqtat/app.bsky.graph.list/3mny2zoqvqe2d",
+    "created_ts": 1781141173.747061,
+    "member_count": 1
   }
 ]

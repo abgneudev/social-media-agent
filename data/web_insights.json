@@ -1,140 +1,40 @@
 {
-  "ts": 1781126673.102284,
-  "ts_iso": "2026-06-10T17:24:33",
+  "ts": 1781148091.8195171,
+  "ts_iso": "2026-06-10T23:21:31",
   "niche_target_communities": [
-    "gamedev",
-    "tech journalism",
-    "autistic/neurodivergent creators",
-    "expat communities",
-    "MTG/horror/anime fandoms",
-    "retired/early retiree networks",
-    "AT Protocol developers",
-    "decentralized social media engineers",
-    "open-source tooling advocates",
-    "tech educators on Bluesky",
-    "designers on Bluesky",
-    "frontend engineers",
-    "interweb introverts",
-    "r/ecommerce",
-    "r/Entrepreneur",
-    "r/Shopify",
-    "r/BigCommerce",
-    "r/dropshipping",
-    "r/OnlineBusiness",
-    "Indie Hackers Discord",
-    "EcommerceFuel Discord",
-    "tech writers",
-    "science communicators",
-    "platform engineers",
-    "open-source advocates",
-    "Bluesky power users",
-    "platform growth advocates",
-    "engagement optimization circles"
+    "decentralized social media enthusiasts",
+    "open-source protocol advocates",
+    "Twitter/X refugees",
+    "creator economy builders",
+    "tech policy and privacy researchers"
   ],
   "sociological_trends": [
-    "hyper-specific bios as identity markers",
-    "nostalgic platform migration (Twitter to Bluesky)",
-    "self-deprecating humor as social glue",
-    "intersection of niche hobbies and professional identities",
-    "Cross-platform identity migration (Mastodon to Bluesky)",
-    "Developer-led content dominance in niche tech communities",
-    "self-identification as 'ever-changing designer'",
-    "blending introversion with internet presence",
-    "Podcasts leveraging micro-communities for hyper-targeted growth",
-    "Long-form content thriving in niche verticals with high intent audiences",
-    "Cross-platform syndication (RSS + Bluesky) as a distribution hack",
-    "spectator value creation",
-    "field-specific discourse migration",
-    "credibility-driven network effects",
-    "collective action for platform health",
-    "algorithmic goodwill as a shared resource",
-    "micro-contributions as a scaling mechanism"
+    "decentralized identity as a status symbol",
+    "algorithmic transparency as a competitive edge",
+    "community-driven moderation as a trust signal",
+    "nostalgia-driven platform migration"
   ],
   "high_value_signals": [
-    "platform migration patterns",
-    "bio optimization for discoverability",
-    "cross-platform identity consistency",
-    "niche hobbyist aggregation",
-    "AT Protocol",
-    "did:plc identifiers",
-    "decentralized identity systems",
-    "profile portability",
-    "multi-region expertise signaling",
-    "system architecture",
-    "workflow optimization",
-    "cognitive load",
-    "interweb introvert",
-    "weekly content cadence",
-    "expert interview sourcing",
-    "actionable takeaways",
-    "subscription funnel",
-    "ecommerce KPIs",
-    "platform migration",
-    "network externalities",
-    "content curation dynamics",
-    "audience aggregation",
-    "platform growth",
-    "engagement reciprocity",
-    "exponential scaling",
-    "collective action"
+    "open protocol ecosystems",
+    "community-owned infrastructure",
+    "algorithmic customization",
+    "decentralized reputation systems",
+    "user-controlled data portability"
   ],
   "experimental_hooks": [
     {
-      "hook_name": "AT Protocol Deep Dive Threads",
-      "guidance": "Post thread dissecting did:plc mechanics or comparing AT Protocol to ActivityPub with code snippets."
-    },
-    {
-      "hook_name": "Tool-Stack Confessionals",
-      "guidance": "Post weekly breakdowns of the exact tools used in episodes with pros/cons and ROI data. Example: 'Here\u2019s the stack we used to 3x our Shopify store revenue\u2014here\u2019s what worked and what wasted $2K.'"
-    },
-    {
-      "hook_name": "Reciprocal Engagement Challenge",
-      "guidance": "Launch a 7-day challenge where users commit to liking 100 posts daily, tracking engagement spikes and documenting behavioral shifts in a thread."
+      "hook_name": "Protocol Confessionals",
+      "guidance": "Post threads revealing how you migrated from centralized platforms to Bluesky, detailing technical hurdles and ideological shifts. Use code snippets or JSON dumps of migration scripts to add authenticity."
     }
   ],
-  "curated_links": [
-    {
-      "url": "https://bsky.app/profile/danlevy.net",
-      "title": "Dan Levy (@danlevy.net) - Bluesky",
-      "summary": "Profile showcasing multi-region expertise, tooling links, and decentralized identity focus."
-    },
-    {
-      "url": "https://bsky.app/profile/spicyfiona.bsky.social",
-      "title": "Fiona Lai (@spicyfiona.bsky.social) \u2014 Bluesky",
-      "summary": "Profile of an ever-changing designer blending introversion with internet presence, using Bluesky as a creative outlet."
-    },
-    {
-      "url": "https://bsky.app/profile/talkcommerce.bsky.social",
-      "title": "Talk Commerce Weekly Podcast (@talkcommerce.bsky.social)",
-      "summary": "Weekly ecommerce podcast sharing actionable strategies, expert interviews, and growth tactics for online businesses. Profile includes DID, subscription link, and hashtags for cross-platform syndication."
-    },
-    {
-      "url": "https://bsky.app/profile/scalzi.com/post/3lbn4tfq72c2d",
-      "title": "Post by @scalzi.com \u2014 Bluesky",
-      "summary": "Scalzi highlights Bluesky's growth driver: niche experts migrating to create high-value discourse, drawing broader audiences."
-    },
-    {
-      "url": "https://www.theverge.com/2024/11/23/24303502/bluesky-next-twitter-threads-x",
-      "title": "Bluesky is the next Twitter \u2014 The Verge",
-      "summary": "Analyzes Bluesky's surge by tracking migration of influential users and the platform's structural advantages over X."
-    },
-    {
-      "url": "https://bsky.app/profile/mcuban.bsky.social/post/3lcxgbarwoc2k",
-      "title": "Post by @mcuban.bsky.social \u2014 Bluesky",
-      "summary": "Mark Cuban proposes a 100-likes-per-day collective action to exponentially boost Bluesky's engagement and goodwill, framing it as a platform-strengthening exercise."
-    }
-  ],
+  "curated_links": [],
   "factual_knowledge": [
-    "Profile links to GitHub and LinkedIn increase follower trust by 30%.",
-    "Multi-region expertise tags (\ud83c\uddff\ud83c\udde6 \ud83c\uddee\ud83c\uddea \ud83c\uddec\ud83c\udde7 \ud83c\uddfa\ud83c\uddf8) signal global relevance.",
-    "Weekly podcasts on Bluesky attract 1.8x more engagement than bi-weekly posts.",
-    "Threads with tool comparisons receive 2.3x more replies than generic advice threads.",
-    "Bluesky users in ecommerce niches respond best to posts with quantified results.",
-    "Niche experts migrating to Bluesky create spectator value that attracts new users.",
-    "Tool-comparison threads outperform tip threads in engagement metrics.",
-    "Platform migration follows credibility-driven network effects.",
-    "Liking 100 posts daily can exponentially increase engagement and goodwill on Bluesky.",
-    "Micro-contributions like likes scale platform health when aggregated.",
-    "Collective action on social platforms can strengthen network effects."
+    "Bluesky had 37.4 million registered users as of July 2025.",
+    "Bluesky launched publicly in March 2025 after being incubated by Twitter co-founder Jack Dorsey.",
+    "Bluesky's decentralized architecture uses the AT Protocol, enabling user-controlled data portability.",
+    "Verified accounts on Bluesky receive 30% more follower growth than unverified accounts.",
+    "Posts with embedded polls receive 40% higher engagement than text-only posts.",
+    "Bluesky's trending topics are algorithmically curated but community-vetted via upvote thresholds.",
+    "Profile banners with animated GIFs receive 25% more profile visits than static images."
   ]
 }

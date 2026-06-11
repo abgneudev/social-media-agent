@@ -14,7 +14,6 @@ import random
 
 
 from core import config
-from core import config
 from core.config import (
     logger,
     RATE_BUDGETS, GROWTH_PHASES,
@@ -138,6 +137,7 @@ class FollowerEngine:
         self.soul = soul
         self.net = platform
         self.store = Store(soul)
+        self._tick_llm_calls = 0    
         
 
         from clients import llm
@@ -155,6 +155,7 @@ class FollowerEngine:
                      for k, v in RATE_BUDGETS.items()}
         self.sector_activity = {}
         self.sector_posts = {}      # cache of fetched posts per sector, reused in _act
+        self.pending_comment_replies = []
         self.persona = self.soul.persona
         # niche_insights blob is re-read at tick boundaries (cheap, atomic
         # read). Cached here so the variant prompt and sampler do not race
@@ -671,6 +672,102 @@ class FollowerEngine:
             self.store.save_engine()
             logger.info(f"   [TRENDS] {hottest}: {kws}")
 
+    def _collect_own_thread_replies(self):
+        """Gather replies to the agent's own posts and replies that haven't been
+        replied to yet. Stores candidates in self.pending_comment_replies."""
+        # 1. Find our most promising content
+        candidates = []
+        for a in self.store.ledger:
+            if a["kind"] in ("post", "reply", "quote") and a.get("uri"):
+                # Use the engagement we already computed in _learn() if available,
+                # or fall back to a quick engagement check (optional).
+                # For simplicity, we pick the 3 highest‑engaged from the last 20.
+                if a["kind"] == "reply":
+                    # replies are even more likely to have sub‑threads
+                    candidates.append(a)
+                else:
+                    candidates.append(a)
+        
+        # Sort by engagement (use stored engagement if you want, else just get fresh)
+        # Here we just take the most recent 3 with high engagement from ledger.
+        # A better approach: query engagement for each candidate, but keep it cheap.
+        # For MVP, pick the 3 most recent of kind post/reply.
+        recent = [a for a in candidates if a["kind"] in ("post", "reply")]
+        recent.sort(key=lambda a: a.get("ts", 0), reverse=True)
+        targets = recent[:3]
+        
+        if not targets:
+            self.pending_comment_replies = []
+            return
+        
+        # 2. Fetch threads
+        new_replies = []
+        for t in targets:
+            try:
+                # Bluesky's getPostThread: depth=1 gives direct replies only
+                thread = self.net.client.app.bsky.feed.getPostThread(
+                    uri=t["uri"], depth=1, parent_height=0
+                )
+            except Exception as e:
+                logger.warning(f"   [COMMENT] thread fetch failed for {t['uri']}: {e}")
+                continue
+            
+            # The structure: thread.thread is a post view, with replies in .replies
+            root = getattr(thread, "thread", None)
+            if not root:
+                continue
+            
+            # For root posts: replies are in root.replies (list of thread views)
+            # For replies: the thread may contain our reply as a child; we need to
+            # navigate to the exact node.
+            # A robust way: flatten the thread tree and find the node with our URI,
+            # then collect its .replies.
+            def find_node(node, target_uri):
+                if getattr(node, "post", None) and node.post.uri == target_uri:
+                    return node
+                for child in getattr(node, "replies", []) or []:
+                    found = find_node(child, target_uri)
+                    if found:
+                        return found
+                return None
+            
+            node = find_node(root, t["uri"])
+            if not node:
+                continue
+            
+            sub_replies = getattr(node, "replies", []) or []
+            for r in sub_replies:
+                reply_post = getattr(r, "post", None)
+                if not reply_post:
+                    continue
+                # Skip own replies
+                if getattr(reply_post.author, "did", None) == self.net.did:
+                    continue
+                # Skip if we already acted on this exact reply (like or replied)
+                if self.store.already_acted_on(f"reply:{reply_post.uri}"):
+                    continue
+                # Quick bot check
+                if self._is_bot(reply_post.author):
+                    continue
+                # Quick relevance gate (avoid empty/spam)
+                text = getattr(reply_post.record, "text", "")
+                if not text or len(text) < 2:
+                    continue
+                new_replies.append({
+                    "post": reply_post,                # the full post object
+                    "uri": reply_post.uri,
+                    "cid": getattr(reply_post, "cid", ""),
+                    "author_did": reply_post.author.did,
+                    "author_handle": reply_post.author.handle,
+                    "text": text,
+                    "parent_action_sector": t.get("sector", "general"),
+                    "parent_uri": t["uri"],            # the post the agent made that this replies to
+                })
+        
+        self.pending_comment_replies = new_replies
+        if new_replies:
+            logger.info(f"   [PERCEPTION] collected {len(new_replies)} unreplied comment(s) on our content")
+
     # ---- LEARN ----
     def _learn(self):
         due = self.store.mature_actions()
@@ -900,21 +997,6 @@ class FollowerEngine:
                     if kw in self.store.keyword_map.get(sector, []):
                         self.store.keyword_map[sector].remove(kw)
                     self.store.save_keyword_telemetry()
-        logger.info(f"[OPTIMIZE] rewriting bio around best sector '{best_sector}'")
-        trends_info = ""
-        if best_sector in self.store.trends:
-            trends_info = f"Weave in these trends if natural: {', '.join(self.store.trends[best_sector])}. "
-        prompt = prompts.build_bio_prompt(self.soul, best_sector, trends_info)
-        raw = self._generate(prompt, dedup=False)
-        if not raw:
-            return
-        try:
-            bio = self.llm.parse_json(raw, fallback_dict={}).get("bio", "")[:256]
-            self.net.set_profile(self.soul.name, bio)
-            self.store.last_profile_opt_tick = self.store.tick
-            self.store.save_engine()
-        except Exception as e:
-            logger.info(f"   [OPTIMIZE] failed: {e}")
 
     # ---- DECIDE ----
     def _decide(self):
@@ -1127,13 +1209,13 @@ class FollowerEngine:
             text = post.record.text or ""
         handle = getattr(post.author, "handle", "") if hasattr(post, "author") else ""
         display = getattr(post.author, "display_name", "") if hasattr(post, "author") else ""
-        return is_relevant_text(f"{text} {handle} {display}")
+        return self.store.is_relevant_text(f"{text} {handle} {display}")
 
     # ---- like ----
     def _spray_likes(self, candidates):
         liked = 0
         for c in candidates:
-            if liked >= MAX_LIKES_PER_TICK or not self.rate["like"].try_consume():
+            if liked >= MAX_LIKES_PER_TICK:
                 break
             uri, cid = getattr(c, "uri", None), getattr(c, "cid", None)
             if not uri or not cid or self.store.already_acted_on(f"like:{uri}"):
@@ -1860,8 +1942,7 @@ class FollowerEngine:
             
         target = candidates[idx]
         try:
-            if self.rate["like"].try_consume():
-                self.net.like(target.uri, target.cid)
+            self.net.like(target.uri, target.cid)
             intent_id, uri = self._publish_with_reconcile(
                 kind="reply", text=text, sector=sector, hook=hook,
                 write_fn=lambda t: self.net.reply(target, t),
@@ -1889,6 +1970,7 @@ class FollowerEngine:
 
     # ---- generation + gates ----
     def _generate(self, prompt, dedup=False, image_b64=None, enable_tools=False, model_purpose="versatile"):
+        self._tick_llm_calls += 1
         dedup_texts = self.store.recent_content_texts(5) if dedup else None
         return self.llm.generate(prompt, dedup_texts=dedup_texts, image_b64=image_b64, enable_tools=enable_tools, model_purpose=model_purpose)
 
@@ -1952,47 +2034,36 @@ class FollowerEngine:
             except Exception as e:
                 logger.warning(f"   [STRATEGIST] Failed to read command file: {e}")
 
-        # If a command exists, track its start state the first time we see it
-        if command and self.store.command_start_followers is None:
-            # Extract target gain from the goal text
-            goal_text = command.get("goal", "")
-            target_gain = 0
-            match = re.search(r'(\d+)\s*(?:new\s+)?(?:real\s*)?followers?', goal_text, re.IGNORECASE)
-            if match:
-                target_gain = int(match.group(1))
-            self.store.command_start_followers = followers_count
+               # If a command exists, capture a full snapshot of current account state the first time we see it
+        if command and self.store.command_start_snapshot is None:
+            # Build a generic snapshot of everything the account knows about itself
+            self.store.command_start_snapshot = {
+                "followers": followers_count,
+                "anchor_posts": self.store.anchor_posts,
+                "total_replies": sum(1 for a in self.store.ledger if a.get("kind") == "reply"),
+                "total_likes_given": sum(1 for a in self.store.ledger if a.get("kind") == "like"),
+                "total_follows": sum(1 for a in self.store.ledger if a.get("kind") == "follow"),
+                "total_quotes": sum(1 for a in self.store.ledger if a.get("kind") == "quote"),
+                "total_posts": self.store.anchor_posts,
+            }
             self.store.command_start_time = now
-            self.store.command_target_gain = target_gain
             self.store.save_engine()
-            logger.info(f"   [STRATEGIST] Command tracking started: start={followers_count}, target_gain={target_gain}")
+            logger.info(f"   [STRATEGIST] Command tracking started. Snapshot: {self.store.command_start_snapshot}")
 
-        # Check if the goal has been achieved or timed out
-        if command and self.store.command_start_followers is not None:
-            followers_gained = followers_count - self.store.command_start_followers
-            target_met = self.store.command_target_gain > 0 and followers_gained >= self.store.command_target_gain
-            within_hours = command.get("within_hours", command.get("time_limit_hours"))
-            timed_out = within_hours and (now - self.store.command_start_time) > within_hours * 3600
-
-            if target_met:
-                logger.info(f"   [STRATEGIST] Command target achieved (+{followers_gained} followers). Removing command.")
+        # Simple timeout check – no goal‑specific logic
+        if command and self.store.command_start_time:
+            time_limit_hours = command.get("within_hours", command.get("time_limit_hours"))
+            if time_limit_hours and (now - self.store.command_start_time) > time_limit_hours * 3600:
+                logger.info(f"   [STRATEGIST] Command time limit ({time_limit_hours}h) expired. Removing command.")
                 command_file.unlink()
                 command = None
-                self.store.command_start_followers = None
+                self.store.command_start_snapshot = None
                 self.store.command_start_time = None
-                self.store.command_target_gain = None
-                self.store.save_engine()
-            elif timed_out:
-                logger.info(f"   [STRATEGIST] Command time limit ({within_hours}h) expired. Removing command.")
-                command_file.unlink()
-                command = None
-                self.store.command_start_followers = None
-                self.store.command_start_time = None
-                self.store.command_target_gain = None
                 self.store.save_engine()
         # --- End command override check ---
 
         time_since_actions = {}
-        for action_type in ["post", "reply", "follow", "like", "quote", "research", "meta_critic", "curate"]:
+        for action_type in ["post", "reply", "follow", "like", "quote", "research", "meta_critic", "curate", "comment_reply"]:
             last = self.last_action_time.get(action_type, 0)
             if last == 0:
                 time_since_actions[action_type] = "never"
@@ -2008,6 +2079,12 @@ class FollowerEngine:
             
         synthesized_knowledge = memory.recall_knowledge(query_context, limit=3)
         logger.info(f"   [DEBUG] recall_knowledge raw result: {repr(synthesized_knowledge)}")
+
+        knowledge_text = ""
+        if isinstance(synthesized_knowledge, str):
+            knowledge_text = synthesized_knowledge
+        elif isinstance(synthesized_knowledge, list):
+            knowledge_text = "\n".join(synthesized_knowledge)
 
         ratio = followers_count / max(1, self.store.anchor_posts)
 
@@ -2037,7 +2114,20 @@ class FollowerEngine:
             "consecutive_empty_ticks": self.store.consecutive_empty_ticks,
             "trends": self.store.trends,
             "active_sectors": list(self.sector_activity.keys()),
-            "time_since_last_action": time_since_actions
+            "time_since_last_action": time_since_actions,
+            # NEW:
+            "command_start_snapshot": self.store.command_start_snapshot if command else None,
+            "command_elapsed_hours": round((now - self.store.command_start_time) / 3600, 2) if command and self.store.command_start_time else None,
+            "daily_action_counts_so_far": self.store.daily_action_counts,
+            "pending_comment_replies": [
+                {
+                    "author_handle": cr["author_handle"],
+                    "text": cr["text"][:200],
+                    "parent_action_sector": cr["parent_action_sector"],
+                    "uri": cr["uri"],
+                }
+                for cr in self.pending_comment_replies[:5]  # limit to avoid huge prompt
+            ],
         }
         
         budgets = {}
@@ -2046,6 +2136,22 @@ class FollowerEngine:
         
 
         prompt = prompts.build_strategist_prompt(empirical_data, budgets)
+
+        # Append command progress report if command is active
+        if command and self.store.command_start_snapshot:
+            start = self.store.command_start_snapshot
+            elapsed = round((now - self.store.command_start_time) / 3600, 2) if self.store.command_start_time else 0
+            remaining = command.get("within_hours", command.get("time_limit_hours"))
+            progress_text = (
+                f"COMMAND PROGRESS REPORT:\n"
+                f"Goal: {command.get('goal', command.get('command', ''))}\n"
+                f"Start state ({elapsed} hours ago): {start}\n"
+                f"Current state: followers={followers_count}, anchor_posts={self.store.anchor_posts}, ...\n"
+                f"Remaining time: {remaining - elapsed if remaining else 'unlimited'} hours.\n"
+                "You can compare the start and current state to decide if the current plan is on track.\n"
+                "If the plan is failing, you may propose a completely new plan and set step_index=1.\n"
+            )
+            prompt += "\n" + progress_text
 
         # --- Prepend command override if present ---
         if command:
@@ -2062,8 +2168,8 @@ class FollowerEngine:
             prompt = override + prompt
         # --- End command override prepend ---
 
-        if synthesized_knowledge:
-            facts = [f for f in synthesized_knowledge.split('\n') if f.strip()]
+        if knowledge_text:
+            facts = [f for f in knowledge_text.split('\n') if f.strip()]
             if facts:
                 logger.info(f"   [STRATEGIST] Retrieved {len(facts)} knowledge facts: {facts[0][:80]}...")
                 kb_block = "\n".join([f"KNOWN FACT: {fact}" for fact in facts])
@@ -2080,8 +2186,10 @@ class FollowerEngine:
             resource_plan = parsed.get("resource_plan")
             if resource_plan:
                 self.store.resource_plan = resource_plan
+                # Reset daily counts to give the new plan a clean slate
+                self.store.daily_action_counts = {}
                 self.store.save_engine()
-                logger.info(f"   [STRATEGIST] Resource plan updated: {resource_plan}")
+                logger.info(f"   [STRATEGIST] Resource plan updated and daily counts reset.")
             
             new_plan = parsed.get("active_plan")
             if new_plan:
@@ -2099,7 +2207,7 @@ class FollowerEngine:
                 continue
             # Fix hallucination where LLM outputs {"follow": 8} instead of {"type": "follow", "priority": 8}
             if "type" not in intent:
-                for possible_type in ["follow", "reply", "like", "post", "quote", "research", "curate", "meta_critic"]:
+                for possible_type in ["follow", "reply", "like", "post", "quote", "research", "curate", "meta_critic", "comment_reply"]:
                     if possible_type in intent:
                         intent["type"] = possible_type
                         if isinstance(intent[possible_type], (int, float)):
@@ -2180,7 +2288,9 @@ class FollowerEngine:
     def orchestrate(self) -> int:
         """The OS Kernel. Pops intents, maps to resources, executes or yields, returns sleep time."""
         self._tick_actions = 0
+        self._tick_llm_calls = 0
         self._tick_active = True
+        now = time.time()   
         self._maybe_reset_daily_counts()
         
         # 0. Maintenance checks
@@ -2221,42 +2331,27 @@ class FollowerEngine:
         
         def is_executable(i_dict):
             act = i_dict.get("type")
-            
+
             # Algo constraints
-            if act in ("post", "reply", "follow", "like", "quote"):
+            if act in ("post", "reply", "follow", "like", "quote", "comment_reply"):
                 if algo_locked:
                     return False
-                    
-            # Platform & LLM constraints + strategist daily cap
-            if act == "post":
-                return (self.rate["post"].peek() and
-                        self.rate.get("llm_api", self.rate["post"]).peek() and
-                        self._within_daily_limit(act))
-            elif act == "reply":
-                return (self.rate["reply"].peek() and
-                        self.rate.get("llm_api", self.rate["reply"]).peek() and
-                        self._within_daily_limit(act))
-            elif act == "follow":
-                return self.rate["follow"].peek() and self._within_daily_limit(act)
-            elif act == "like":
-                return self.rate["like"].peek() and self._within_daily_limit(act)
-            elif act == "quote":
-                return (self.rate["quote"].peek() and
-                        self.rate.get("llm_api", self.rate["quote"]).peek() and
-                        self._within_daily_limit(act))
-            elif act == "research":
-                return (self.rate["research"].peek() and
-                        self.rate.get("llm_api", self.rate["research"]).peek() and
-                        self._within_daily_limit(act))
-            elif act == "meta_critic":
-                return (self.rate["meta_critic"].peek() and
-                        self.rate.get("llm_api", self.rate["meta_critic"]).peek() and
-                        self._within_daily_limit(act))
-            elif act == "curate":
-                return (self.rate["curate"].peek() and
-                        self.rate.get("llm_api", self.rate["curate"]).peek() and
-                        self._within_daily_limit(act))
-            return False
+
+            # 1) Strategist's daily max (the only strategic limit)
+            if not self._within_daily_limit(act):
+                return False
+
+            # 2) Platform‑safe spacing (prevents bans)
+            last = self.last_action_time.get(act, 0)
+            if last > 0 and (now - last) < self._min_interval_seconds(act):
+                return False
+
+            # 3) LLM provider protection (max 5 LLM calls per tick)
+            if act in ("post", "reply", "quote", "research", "meta_critic", "curate", "comment_reply"):
+                if self._tick_llm_calls >= 5:
+                    return False
+
+            return True
 
         intent = self.intent_queue.pop_next_executable(is_executable)
         
@@ -2293,30 +2388,30 @@ class FollowerEngine:
         executed = False
         
         try:
-            if action == "post" and self.rate["post"].try_consume() and self.rate.get("llm_api", self.rate["post"]).try_consume():
+            if action == "post":
                 self._original_post(sector, keyword=sector, campaign_context=intent.get("reason"))
                 executed = True
             elif action == "reply":
                 candidates, keyword = self._candidates_for(sector)
-                if candidates and self.rate["reply"].try_consume() and self.rate.get("llm_api", self.rate["reply"]).try_consume():
+                if candidates:
                     self._helpful_reply(sector, reply_hook, candidates, keyword, campaign_context=intent.get("reason"))
                     executed = True
             elif action == "follow":
                 candidates, keyword = self._candidates_for(sector)
-                if candidates and self.rate["follow"].try_consume():
+                if candidates:
                     self._strategic_follow(sector, post_hook, candidates, keyword, campaign_context=intent.get("reason"))
                     executed = True
             elif action == "like":
                 candidates, keyword = self._candidates_for(sector)
-                if candidates and self.rate["like"].try_consume():
+                if candidates:
                     self._spray_likes(candidates)
                     executed = True
             elif action == "quote":
                 candidates, keyword = self._candidates_for(sector)
-                if candidates and self.rate["quote"].try_consume() and self.rate.get("llm_api", self.rate["quote"]).try_consume():
+                if candidates:
                     self._quote_best(sector, post_hook, candidates, keyword, campaign_context=intent.get("reason"))
                     executed = True
-            elif action == "research" and self.rate["research"].try_consume() and self.rate.get("llm_api", self.rate["research"]).try_consume():
+            elif action == "research":
                 empirical_data = {
                     "bandit": self.store.bandit, 
                     "trends": self.store.trends,
@@ -2334,21 +2429,49 @@ class FollowerEngine:
                     executed = True
                 except Exception as e:
                     logger.warning(f"   [RESEARCH] failed: {e}")
-            elif action == "meta_critic" and self.rate["meta_critic"].try_consume() and self.rate.get("llm_api", self.rate["meta_critic"]).try_consume():
+            elif action == "meta_critic":
                 self._run_evolution()
                 executed = True
-            elif action == "curate" and self.rate["curate"].try_consume() and self.rate.get("llm_api", self.rate["curate"]).try_consume():
+            elif action == "curate":
                 try:
                     self._autonomous_curation()
                     executed = True
                 except Exception as e:
                     logger.warning(f"   [CURATE] failed: {e}")
-            elif action == "map_graph" and self.rate.get("llm_api", self.rate["curate"]).try_consume():
+            elif action == "map_graph":
                 try:
                     self._map_graph()
                     executed = True
                 except Exception as e:
                     logger.warning(f"   [MAPPER] map_graph failed: {e}")
+            elif action == "comment_reply":
+                # The intent should carry the target comment URI and maybe sector
+                target_uri = intent.get("target_uri") or intent.get("uri")
+                sector = intent.get("sector") or "general"
+                # Find the cached comment object from pending list
+                target = None
+                for cr in self.pending_comment_replies:
+                    if cr["uri"] == target_uri:
+                        target = cr["post"]
+                        break
+                if not target:
+                    logger.warning("   [COMMENT_REPLY] target comment not found in cache; skipping")
+                else:
+                    # Reuse the standard reply mechanism (single candidate)
+                    self._helpful_reply(
+                        sector=sector,
+                        hook=reply_hook,                # or a specific hook for comments
+                        candidates=[target],
+                        keyword=sector,
+                        campaign_context=intent.get("reason", "")
+                    )
+                    # Mark the reply as acted upon so we don't double‑reply
+                    self.store.mark_seen(f"reply:{target_uri}")
+                    # Clean up the pending list
+                    self.pending_comment_replies = [
+                        cr for cr in self.pending_comment_replies if cr["uri"] != target_uri
+                    ]
+                    executed = True
         except RateLimitError as e:
             logger.warning(f"   [OS KERNEL] Yielding action '{action}' due to RateLimitError: {e}")
             self.intent_queue.push(intent)
@@ -2419,6 +2542,9 @@ class FollowerEngine:
                 
             if t % 4 == 0:
                 self._courtesy_follow_back()
+
+            if t % 7 == 0:
+                self._collect_own_thread_replies()
             
             self.store.save_engine()
 
@@ -2445,3 +2571,15 @@ class FollowerEngine:
         self.store.daily_action_counts[action_type] = \
             self.store.daily_action_counts.get(action_type, 0) + 1
         self.store.save_engine()
+
+    def _min_interval_seconds(self, action_type: str) -> float:
+        """Safe minimum seconds between two actions of the same type.
+        Based on Bluesky's real rate limits – not a strategy decision."""
+        return {
+            "follow": 2.0,      # Bluesky allows ~30/min → 2s is very safe
+            "like":   0.5,
+            "reply":  5.0,
+            "comment_reply": 5.0,
+            "quote":  10.0,
+            "post":   3600.0,   # posting is already handled by daily cap
+        }.get(action_type, 1.0)

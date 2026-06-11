@@ -1795,6 +1795,30 @@
       "https://uploads-us-west-2.insided.com/figma-en/attachment/e67c8373d68cd0a15ffed8815e85fbb7e53bff16.jpg",
       "https://bitsofco.de/img/t6dm0cUbqD-780.png",
       "https://miro.medium.com/1*E4tqZOL0Tnun4dzAXKCF2A.png"
+    ],
+    "image:accordion performance impact chrome devtools": [
+      "https://developer.chrome.com/static/docs/devtools/performance/image/hovering-a-frame.png",
+      "https://developer.chrome.com/static/docs/devtools/performance/image/the-cpu-chart-summary.png",
+      "https://developer.chrome.com/static/docs/devtools/performance/image/viewing-screenshot.png",
+      "https://developer.chrome.com/static/docs/devtools/performance/reference/image/the-paint-profiler-tab-36054fb3a177c.png",
+      "https://developer.chrome.com/static/docs/devtools/performance/reference/image/event-initiators.png",
+      "https://developer.chrome.com/static/docs/devtools/performance/reference/image/network-timing-tab.png",
+      "https://www.debugbear.com/dimg/a50d76b15c239b1a6826e938bb8f89eb.png",
+      "https://developer.chrome.com/static/docs/devtools/performance/image/more-information.png",
+      "https://www.debugbear.com/dimg/ef36207ec84dcaae4cdc7fde383069aa.png",
+      "https://developer.chrome.com/static/docs/devtools/performance/reference/image/raster.png"
+    ],
+    "image:date picker field architecture diagram": [
+      "https://help.octopuspro.com/wp-content/uploads/2025/12/applying_custom_fields_across_system.jpg",
+      "https://success.outsystems.com/TK_Resource/ff8edf13-7bc6-4f80-80cf-0cbbb0025bb3",
+      "https://www.coderfrontline.com/wp-content/uploads/sites/2/2016/07/Smart-Date-Picker-Data-Flow.png",
+      "https://help.octopuspro.com/wp-content/uploads/2026/01/custom_fields_date_field.jpg",
+      "https://miro.medium.com/v2/resize:fit:1400/1*1UvldSc4nP30Do5Ey7gr-g.png",
+      "https://www.researchgate.net/publication/383205058/figure/fig5/AS:11431281272195729@1723949544762/Overview-At-the-core-of-LCARS-C-M-widgets-eg-text-fields-date-picker-checkboxes.jpg",
+      "https://framerusercontent.com/images/8AcXP8ssW3Rwu28ZmkLHSG00x9w.png?width=800&height=420",
+      "https://lh3.googleusercontent.com/a7hNqBD7wVZ2kVqWVmiHqu0PwElVSz8ioVFwGmX9VJhRkzgowaHufkpYRrxKofLoD6zmALQvHHvtxbPY7BNb1r1I4XTrynIT7DE_f7M=w1064-v0",
+      "https://files.readme.io/86452b5-datepicker-options.jpg",
+      "https://s3.eu-west-1.amazonaws.com/docx.flowx.ai/building-blocks/ui-designer/datepicker_form_field.png"
     ]
   },
   "daily_usage": {
@@ -1804,6 +1828,6 @@
     "2026-06-07": 72,
     "2026-06-08": 66,
     "2026-06-09": 99,
-    "2026-06-10": 92
+    "2026-06-10": 121
   }
 }
